@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  m75-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: m75-manager
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      # Security headers
+      - SECURITY_HEADERS_ENABLED=true
+      - RATE_LIMIT_ENABLED=true
+      # Audit logging (preparation for email alerts)
+      - AUDIT_LOG_ENABLED=true
+      - AUDIT_LOG_RETENTION_DAYS=90
+      # Database
+      - DB_PATH=/app/data/data.db
+      # Email notification (prepared, not active yet)
+      - EMAIL_ALERTS_ENABLED=false
+      - EMAIL_SMTP_HOST=${SMTP_HOST}
+      - EMAIL_SMTP_PORT=${SMTP_PORT:-587}
+      - EMAIL_SMTP_USER=${SMTP_USER}
+      - EMAIL_SMTP_PASS=${SMTP_PASS}
+      - EMAIL_ALERT_RECIPIENT=${ADMIN_EMAIL}
+    volumes:
+      # Persist database
+      - ./data:/app/data
+      # Persist uploads
+      - ./uploads:/app/uploads
+      # Logs for audit trail
+      - ./logs:/app/logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    networks:
+      - m75-network
+
+  # Optional: Reverse proxy with SSL (nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: m75-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - m75-manager
+    networks:
+      - m75-network
+    profiles:
+      - with-ssl
+
+networks:
+  m75-network:
+    driver: bridge
