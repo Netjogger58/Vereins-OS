@@ -29,66 +29,29 @@
 | **Deployment** | Docker + docker-compose |
 | **Server** | Hetzner Cloud |
 
-> ⚠️ **Planänderung:** Ursprünglich war Python/FastAPI als Backend geplant.  
-> Umgesetzt wurde Node.js/Express/TypeScript — funktional identisch, bessere Integration mit dem React-Frontend.
-
 ---
 
 ## 3. IMPLEMENTIERTE FEATURES (STAND JUNI 2026)
 
 ### ✅ 3.1 Authentifizierung & Benutzerverwaltung
 - Email + Passwort Login
-- **Magic Link Login** (passwordless)
-  - Per Email (24h gültig, einmalig)
-  - Per SMS mit Länderkennung (+352, +49, +33, +32)
-- Rollenbasiertes Berechtigungssystem:
-  - Präsident (Vollzugriff)
-  - Admin (Systemverwaltung)
-  - Trainer (Teams, Spiele)
-  - Secrétaire (Dokumente, Anmeldungen)
-  - Kassenwart (Finanzen)
-  - Spieler (eigene Daten)
+- **Magic Link Login** (passwordless) per Email & SMS
+- Rollenbasiert: Präsident, Admin, Trainer, Secrétaire, Kassenwart, Spieler
 
 ### ✅ 3.2 Spiel- & Ligastatistiken
-- Spiele (CRUD): Datum, Teams, Score, Status, Wettbewerb, Saison
-- Torschützen erfassen: Tore, Vorlagen, 7-Meter, Feldtore
-- Strafen: 2-Minuten-Strafen, Disziplin-Tracking
-- **Automatische Ligatabellen**: Punkte, Tordifferenz, Siege/Niederlagen
+- Spiele, Torschützen, Strafen, automatische Ligatabellen
 
 ### ✅ 3.3 FLH Import (handball4all.de)
-- Einzelimport per URL
-- **Batch-Import**: 86 SBO-Spielberichte automatisch
-- Automatisches Scraping der Spieldaten
-- Fuzzy-Matching: FLH-Spielernamen ↔ Mersch75-Mitglieder
+- Einzel- & Batch-Import (86 SBO-Berichte), Fuzzy-Matching
 
 ### ✅ 3.4 Spielerstatistiken
-- Individuelle Statistiken (Tore, Vorlagen, Strafen, Spiele)
-- Top-Scorer Rangliste
-- Filter nach Saison & Wettbewerb
+- Individuelle Stats, Top-Scorer, Filter nach Saison & Wettbewerb
 
 ### ✅ 3.5 Teams & Mitglieder
-- Teams verwalten (Seniors, Damen, etc.)
-- Mitgliederverwaltung pro Team
-- Kontaktdaten, Rollen im Team
-
-### ✅ 3.6 Kalender & Events
-- Spiele, Training, Events
-- Wiederkehrende Termine
-- ICS-Export für externe Kalender-Apps
-
-### ✅ 3.7 Finanzen (Kassenwart)
-- Mitgliedsbeiträge + Zahlungsstatus
-- Ausgaben dokumentieren (Kategorien, Beleg-Upload)
-- Einnahmen/Ausgaben Berichte + PDF-Export
-
-### ✅ 3.8 Dokumente (Secrétaire)
-- Dokument-Upload (PDFs, Bilder)
-- Kategorisierung + Versionierung
-- Online-Formulare (Anmeldungen, Freigaben)
-
-### ✅ 3.9 Kommunikation
-- Email-Versand an Teams/Mitglieder (Templates, Verteilerlisten)
-- WhatsApp-Gruppen-Links
+### ✅ 3.6 Kalender & Events (ICS-Export)
+### ✅ 3.7 Finanzen (Beiträge, Ausgaben, PDF-Berichte)
+### ✅ 3.8 Dokumente (Upload, Kategorien, Formulare)
+### ✅ 3.9 Kommunikation (Email-Templates, WhatsApp)
 
 ---
 
@@ -116,129 +79,197 @@
 - Zugriff: Alle Mitglieder (lesend), Admin (bearbeiten)
 
 #### FLH-Reglemente (Fédération Luxembourgeoise de Handball)
-- FLH-Statuten hinterlegen
-- Wettbewerbsreglement / Spielordnung
-- Disziplinarordnung
-- Schiedsrichterregeln
-- Direktlink zur offiziellen FLH-Webseite (flh.lu)
-- Automatische Benachrichtigung wenn neue Version verfügbar (optional)
+- FLH-Statuten, Spielordnung, Disziplinarordnung, Schiedsrichterregeln
+- Direktlink: [flh.lu](https://www.flh.lu)
+- Automatische Benachrichtigung bei neuer Version (optional)
 
 #### KI-Assistent für Regelwerk & Statuten
-- Mitglieder/Trainer können Fragen stellen:  
-  *„Wie viele Spieler müssen auf dem Spielbericht stehen?"*  
-  *„Was passiert bei einer roten Karte?"*  
-  *„Was steht in § 12 der Vereinsstatuten?"*
-- KI durchsucht die hochgeladenen PDF-Dokumente und antwortet mit Quellenangabe (Seitenzahl, Artikel)
+- Fragen wie: *„Was passiert bei einer roten Karte?"* oder *„Was steht in § 12?"*
+- KI durchsucht PDFs und antwortet mit Quellenangabe (Seite, Artikel)
 - Sprachen: Deutsch, Französisch, Luxemburgisch
-- Technologie: RAG (Retrieval-Augmented Generation) über lokale PDFs
+- Technologie: RAG (Retrieval-Augmented Generation)
 
 ---
 
-### 🛡️ 5.2 Versicherungsmodul
+### 🛡️ 5.2 Versicherungs- & Sportrechts-Modul
 
-**Ziel:** Alle Versicherungsinformationen zentral verwalten — was ist versichert, was kostet es, was tun im Schadensfall.
+**Ziel:** Alle Versicherungen, Behörden und Pflichten zentral verwalten — was ist gedeckt, was kostet es, was tun im Schadensfall.
 
-#### Aktuelle Versicherungen (Handball Mersch 75)
+---
 
-| Versicherer | Bereich | Status |
-|---|---|---|
-| **AXA** | _(Details ausstehend — bitte ergänzen)_ | ✅ aktiv |
-| **CSMS** | _(Details ausstehend — bitte ergänzen)_ | ✅ aktiv |
+#### 🏥 CSMS — Caisse de Secours Médico-Sportive
+> **Quelle:** [sports.public.lu/csms](https://sports.public.lu/fr/programs/assurances/csms.html)
 
-> ⚠️ **TODO:** Bitte die genauen Versicherungspolicen / Deckungsumfang nachreichen damit diese Tabelle vervollständigt werden kann.
+Die CSMS ist die staatliche Sportkrankenversicherung Luxemburgs — **Pflicht für alle lizenzierten Sportler**.
 
-#### Geplante Inhalte pro Versicherung
-- Versicherer, Policen-Nummer
-- Ansprechpartner + Notfallkontakt
-- **Was ist gedeckt** (Unfälle beim Training, Spiel, Auswärtsfahrten, Material...)
-- **Was ist NICHT gedeckt** (Ausschlüsse)
-- Jahresprämie / Kosten
-- Ablaufdatum / Erneuerungsdatum
-- PDF der Police (Upload)
-- Schadensmeldungs-Formular (direkt in der App ausfüllbar)
+**Was deckt die CSMS ab (bei Sportunfällen):**
 
-#### Schadensfall-Workflow
+| Leistung | Deckung |
+|---|---|
+| Arztkosten & Medikamente | Découvert nach CNS (Restzahlung) |
+| Nicht erstattungsfähige Medikamente | 60% des Rechnungsbetrags |
+| Zahnprothesen | Doppelter CNS-Tarif |
+| Krankenwagen | 20% (Rest nach Krankenkasse) |
+| Krankenhausaufenthalt | CNS-Eigenbeteiligung + bis 40€/Tag (1. Klasse) |
+| Physiotherapie | 20% (Rest nach Krankenkasse) |
+| Brillen / Kontaktlinsen | bis 35€, max. 2 Paar / 36 Monate |
+| Kniebandagen, Bandagen | Pauschalbeträge je nach Typ |
+| Orthopädische Prothesen | Beteiligung auf Basis CNS-Tarife |
+| Verdienstausfall (Selbständige) | Entschädigung auf Basis Mindestlohn |
+
+**⚠️ Wichtig — Was die CSMS NICHT zahlt:**
+- Wenn der verletzte Spieler **nicht krankenversichert** (CNS) ist → keine CSMS-Leistung
+- Aktivitäten die **nicht offiziell lizenziert/genehmigt** sind
+- Unfälle bei LASEP/LASEL-Aktivitäten → dort greift Unfallversicherung (AAA)
+
+**Im Schadensfall:**
+1. Arzt aufsuchen, Unfall als Sportunfall melden
+2. Alle Belege sammeln (Arzt, Apotheke, Physiotherapie)
+3. Einreichung über die Krankenkasse (CNS) → CSMS übernimmt Restzahlung automatisch
+4. Policen-Nummer des Vereins bereithalten
+
+---
+
+#### 🏛️ ALIS — Agence Luxembourgeoise pour l'Intégrité dans le Sport
+> **Quelle:** [alis.lu](https://www.alis.lu)
+
+ALIS ist die luxemburgische Behörde für **Sportintegrität** — kein Versicherer, aber für Vereine wichtig.
+
+**Zuständig für:**
+- **Anti-Doping** — Kontrollen, Regeln, Meldepflichten
+- **Safeguarding** — Schutz vor Missbrauch, Belästigung (besonders bei Jugendlichen!)
+- **Spielmanipulation** — Meldestelle für verdächtige Anfragen
+
+**Was Handball Mersch 75 beachten muss:**
+- Trainer & Betreuer die mit Minderjährigen arbeiten → **Safeguarding-Pflichten**
+- Kein Spieler darf bei Dopingkontrolle unvorbereitet sein
+- Verdächtige Kontaktaufnahmen (Wetten, Spielmanipulation) → **sofort an ALIS melden**
+- Regelmäßige Schulungen empfohlen
+
+**In der App geplant:**
+- ALIS-Kontakt & Meldestelle direkt verlinkt
+- Checkliste Safeguarding für Trainer
+- KI beantwortet Fragen: *„Was muss ich tun wenn ein Spieler auf Doping getestet wird?"*
+
+---
+
+#### 🏃 INAPS — Institut National des Sports
+> **Quelle:** [inaps.public.lu](https://inaps.public.lu/fr.html)  
+> Ministerium: Ministère des Sports | Ministerin: Martine Hansen  
+> Kontakt Presse: presse@inaps.etat.lu
+
+INAPS ist das staatliche Sportinstitut — zuständig für Sportförderung, medizinische Sportüberwachung und Ausbildung.
+
+**Relevant für Handball Mersch 75:**
+- **Medizinische Sportüberwachung** (contrôle médico-sportif) — Pflichtuntersuchungen für Lizenzspieler
+- Subventionen & Fördergelder für Vereine
+- Sportliche Ausbildung (Trainerlizenzen, Schiedsrichter)
+- Kontrollstelle für medizinisch nicht rückerstattungsfähige Medikamente (Freigabe für CSMS)
+
+**In der App geplant:**
+- Übersicht welche Spieler ihre Pflichtuntersuchung erledigt haben
+- Reminder wenn Untersuchung abläuft
+- Links zu Förderanträgen
+
+---
+
+#### 🔵 AXA — Vereinsversicherung
+> **Status:** Police noch ausstehend — wird nach Erhalt ergänzt
+
+**Geplante Inhalte (nach Erhalt der Police):**
+- Policen-Nummer, Laufzeit, Jahresprämie
+- Deckungsumfang (Haftpflicht, Material, Veranstaltungen, ...)
+- Ansprechpartner & Notfallnummer
+- PDF der Police hinterlegen
+- Was bei Schaden zu tun ist
+
+---
+
+#### 📋 Schadensfall-Workflow (in der App)
 ```
-Unfall passiert
-    → Formular in der App ausfüllen (Datum, Ort, Betroffene, Beschreibung)
-    → App zeigt: "Was jetzt tun?" — schrittweise Anleitung
+Unfall/Schaden passiert
+    → App: Formular ausfüllen (Datum, Ort, Betroffene, Beschreibung)
+    → App zeigt: "Was jetzt tun?" — Schritt-für-Schritt-Anleitung
+    → Je nach Art: CSMS-Weg ODER AXA-Weg
     → Automatische Email an Secrétaire + Versicherungskontakt
-    → Schadensfall wird gespeichert (Archiv)
-    → Status-Tracking (gemeldet → in Bearbeitung → abgeschlossen)
+    → Schadensfall gespeichert (Archiv + Status-Tracking)
+    → KI beantwortet Folgefragen
 ```
 
-#### KI-Assistent für Versicherungsfragen
-- Mitglieder können fragen:  
-  *„Bin ich bei einem Auswärtsspiel in Deutschland versichert?"*  
-  *„Was mache ich wenn ein Spieler sich verletzt?"*  
-  *„Ist unser Material in der Halle versichert?"*
-- KI antwortet basierend auf hinterlegten Policen-Dokumenten
-- Bei unklaren Fällen: Direkt-Link zum Versicherungsberater
+#### 🤖 KI-Assistent für Versicherungs- & Rechtsfragen
+Beispielfragen die die KI beantworten kann:
+- *„Ein Spieler hat sich beim Training verletzt — was tun?"*
+- *„Bin ich bei einem Freundschaftsspiel in Belgien versichert?"*
+- *„Was muss ich als Trainer bei Minderjährigen beachten (Safeguarding)?"*
+- *„Wann muss ein Spieler zur Pflichtuntersuchung bei INAPS?"*
+- *„Wie melde ich einen Dopingverdacht?"*
 
 ---
 
-## 6. NOCH AUSSTEHEND (ORIGINALPLAN)
+## 6. NOCH AUSSTEHEND
 
 | Feature | Priorität |
 |---|---|
-| Excel-Import (~445 Mitglieder aus GC 2026-Datei) | Hoch |
+| Excel-Import (~445 Mitglieder) | Hoch |
 | Matrix/Element Chat-Integration | Mittel |
 | KI-Agenten (n8n/Prefect Workflow) | Mittel |
-| JoinUs-Parser (Anmeldungen → Datenbank) | Mittel |
-| Nextcloud-Anbindung (Dateien/Dokumente) | Niedrig |
-| Statistiken aus bestehendem WP-System migrieren | Mittel |
+| JoinUs-Parser | Mittel |
+| Nextcloud-Anbindung | Niedrig |
 | Live-Center aus VS Code integrieren | Mittel |
-| PDF-Formulare aus bestehendem System | Niedrig |
 
 ---
 
-## 7. API-ENDPUNKTE (ÜBERSICHT)
+## 7. ROADMAP
 
-```
-# Auth
-POST   /api/auth/magic-link
-GET    /api/auth/verify-magic-link?token=xxx
+### ✅ Phase 1 & 2 — Grundgerüst + Handball-Kern (abgeschlossen)
+### 🔄 Phase 3 — Datenmigration
+- [ ] Excel-Import (445 Mitglieder), Datenbereinigung
 
-# Spiele
-GET    /api/matches
-POST   /api/matches
-PUT    /api/matches/:id
-DELETE /api/matches/:id
-POST   /api/matches/import-flh
-POST   /api/matches/batch-import-flh
+### 🔄 Phase 4 — Integrationen
+- [ ] Matrix-Bot, KI-Agenten, Nextcloud, JoinUs-Parser
 
-# Statistiken
-GET    /api/player-statistics?playerId=1&season=2025/26
-GET    /api/top-scorers?competition=League&limit=20
+### 🔄 Phase 5 — Assets & Statistiken
+- [ ] Live-Center, Poster Generator, Medien-Verwaltung
 
-# Tabellen
-GET    /api/standings?competition=League&season=2025/26
+### 🔄 Phase 6 — Statuten, Versicherungen & Sportrecht
+- [ ] Vereinsstatuten & FLH-Reglemente hochladen
+- [ ] KI-Assistent (RAG über PDFs)
+- [ ] CSMS-Modul mit Schadensfall-Workflow
+- [ ] AXA-Police hinterlegen (nach Erhalt)
+- [ ] ALIS Safeguarding-Checklisten
+- [ ] INAPS Pflichtuntersuchungs-Tracker
 
-# (geplant) Dokumente & Statuten
-POST   /api/documents/upload
-GET    /api/documents
-POST   /api/documents/ask          ← KI-Frage an Dokument
-
-# (geplant) Versicherungen
-GET    /api/insurance
-POST   /api/insurance/claim        ← Schadensfall melden
-GET    /api/insurance/claim/:id
-```
+### 🔄 Phase 7 — Deployment & Testing
+- [ ] Hetzner produktiv, CI/CD, Security-Audit, Beta Mersch75
 
 ---
 
-## 8. SICHERHEIT
+## 8. OFFENE INFORMATIONEN (BITTE ERGÄNZEN)
 
-- OAuth2/JWT + Session-Auth
-- HTTPS (Let's Encrypt)
-- Input-Sanitization (SQL-Injection, XSS)
-- Rate-Limiting
-- Audit-Logs
-- Rollenbasierter Zugriff
+| Was fehlt | Wer liefert es |
+|---|---|
+| AXA: Police (PDF), Policen-Nr., Deckung, Kosten, Kontakt | Kassenwart / Präsident |
+| Vereinsstatuten Mersch75 (PDF) | Secrétaire |
+| FLH-Reglemente (PDF oder Link) | Trainer / Präsident |
 
 ---
 
-## 9. TEAM
+## 9. EXTERNE LINKS & KONTAKTE
+
+| Organisation | Link | Funktion |
+|---|---|---|
+| CSMS | [sports.public.lu/csms](https://sports.public.lu/fr/programs/assurances/csms.html) | Sportkrankenversicherung |
+| ALIS | [alis.lu](https://www.alis.lu) | Anti-Doping, Safeguarding |
+| INAPS | [inaps.public.lu](https://inaps.public.lu/fr.html) | Sportinstitut, med. Überwachung |
+| FLH | [flh.lu](https://www.flh.lu) | Handballverband Luxemburg |
+| AXA | ausstehend | Vereinsversicherung |
+
+---
+
+## 10. SICHERHEIT
+- OAuth2/JWT + Session-Auth, HTTPS, Rate-Limiting, Audit-Logs, Rollenbasierter Zugriff
+
+## 11. TEAM
 
 | Rolle | Person |
 |---|---|
@@ -246,85 +277,12 @@ GET    /api/insurance/claim/:id
 | Co-Entwickler / Backup | Sohn (remote) |
 | KI-Assistenz | GitHub Copilot |
 
-> ⚠️ Offene Punkte: Contributor Agreement mit Sohn, Rechtsklärung KI-Code (Windsurf/Copilot AGB)
-
----
-
-## 10. MARKT & VERKAUFSPOTENZIAL
-
-- **Zielmarkt:** DACH + Luxemburg (Sportvereine)
-- **Unterschied zu OpenSports:** Open Source, KI-Agenten, Matrix, Self-Hosted
-- **Modell:** Einmaliger Kauf + Wartung **oder** SaaS-Subskription
-- **Branding international:** `club-os` oder `association-os`
-- **Domain-Optionen:** vereins-os.de, club-os.com
-
----
-
-## 11. ROADMAP
-
-### ✅ Phase 1 — Grundgerüst (abgeschlossen)
-- GitHub Repository, Docker-Setup, FastAPI → Node.js Backend
-- Basis-Auth, Mitglieder-API, Frontend-Grundgerüst
-
-### ✅ Phase 2 — Handball-Kern (abgeschlossen)
-- FLH Import, Spielerstatistiken, Ligatabellen
-- Magic Link Login, Rollen-System
-
-### 🔄 Phase 3 — Datenmigration (ausstehend)
-- [ ] Excel-Import Skript (445 Mitglieder)
-- [ ] Datenbereinigung
-- [ ] Mersch75-Produktivdaten einlesen
-
-### 🔄 Phase 4 — Integrationen (ausstehend)
-- [ ] Matrix-Bot
-- [ ] KI-Agenten (n8n/Prefect)
-- [ ] Nextcloud-Anbindung
-- [ ] JoinUs-Parser
-
-### 🔄 Phase 5 — Assets & Statistiken (ausstehend)
-- [ ] Live-Center integrieren
-- [ ] Poster Generator fertigstellen
-- [ ] PDF-Formulare
-- [ ] Medien-Verwaltung (Fotos/Videos)
-
-### 🔄 Phase 6 — Statuten, Reglemente & Versicherungen (ausstehend)
-- [ ] Vereinsstatuten hochladen & verwalten
-- [ ] FLH-Reglemente hinterlegen
-- [ ] KI-Assistent für Regelwerk-Fragen (RAG)
-- [ ] Versicherungsmodul (AXA, CSMS) einrichten
-- [ ] Schadensfall-Workflow implementieren
-- [ ] KI-Assistent für Versicherungsfragen
-
-### 🔄 Phase 7 — Deployment & Testing (ausstehend)
-- [ ] Hetzner-Server produktiv einrichten
-- [ ] CI/CD Pipeline (GitHub Actions)
-- [ ] Security-Audit
-- [ ] Beta-Test mit Mersch75
-- [ ] Mehrsprachigkeit (DE/FR/LU)
-
----
-
-## 12. OFFENE INFORMATIONEN (BITTE ERGÄNZEN)
-
-| Was fehlt | Wer kann es liefern |
-|---|---|
-| AXA: Policen-Nummer, Deckungsumfang, Kosten, Kontakt | Kassenwart / Präsident |
-| CSMS: Was genau ist versichert? Kosten? Kontakt? | Kassenwart / Präsident |
-| Weitere Versicherungen vorhanden? | Kassenwart |
-| Vereinsstatuten (PDF) | Secrétaire |
-| FLH-Reglemente (PDF oder Link) | Trainer / Präsident |
-
----
-
-## 13. OFFENE RECHTSFRAGEN
-- [ ] Rechtsanwalt: Verkaufsrechte, KI-generierter Code
-- [ ] Windsurf/Copilot Business AGB prüfen
-- [ ] Contributor Agreement mit Sohn finalisieren
+## 12. OFFENE RECHTSFRAGEN
+- [ ] Rechtsanwalt: Verkaufsrechte, KI-Code
+- [ ] Contributor Agreement mit Sohn
 - [ ] Domain registrieren (vereins-os.de?)
 
----
-
-## 14. DEMO-ZUGÄNGE (nur intern)
+## 13. DEMO-ZUGÄNGE (nur intern)
 
 | Rolle | Email | Passwort |
 |---|---|---|
