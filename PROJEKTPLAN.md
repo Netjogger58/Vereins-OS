@@ -79,8 +79,27 @@
 - Zugriff: Alle Mitglieder (lesend), Admin (bearbeiten)
 
 #### FLH-Reglemente (Fédération Luxembourgeoise de Handball)
-- FLH-Statuten, Spielordnung, Disziplinarordnung, Schiedsrichterregeln
-- Direktlink: [flh.lu](https://www.flh.lu)
+> **Quelle:** [flh.lu/f-l-h/statuts-et-reglements](https://www.flh.lu/f-l-h/statuts-et-reglements)
+
+Alle offiziellen FLH-Dokumente als direkte PDF-Links — können in der App hinterlegt und per KI durchsucht werden:
+
+| # | Dokument | Direktlink PDF |
+|---|---|---|
+| 1 | Statuts FLH | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/1STATUTS_FLH.pdf) |
+| 2 | Code du Handball | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/2CODE_DU_HANDBALL.pdf) |
+| 3 | Règlement Championnat Seniors | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/3REGLEMENT_CHAMPIONNAT_SENIORS.pdf) |
+| 4 | Règlement Coupe | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/4REGLEMENT_DE_COUPE.pdf) |
+| 5 | Affiliations – Transferts – Prêts | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/5AFFILIATIONS_TRANSFERTS_PRETS.pdf) |
+| 6 | Instances Judiciaires | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/6INSTANCES_JUDICIAIRES.pdf) |
+| 7 | Règlement Récompenses | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/7REGLEMENT_RECOMPENSES.pdf) |
+| 8 | Règlement Admission Nouveaux Clubs | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/8REGLEMENT_ADMISSION_NOUVEAUX_CLUBS.pdf) |
+| 9 | Demandes en Grâce | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/9DEMANDES_EN_GRACE.pdf) |
+| 10 | Règlement Publicités | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/10REGLEMENT_PUBLICITE.pdf) |
+| 11 | Règlement Dopage | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/11REGLEMENT_DOPAGE.pdf) |
+| 13 | Commission Luxembourgeoise d'Arbitrage pour le Sport (CLAS) | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/13CLAS.pdf) |
+
+**In der App geplant:**
+- Alle 12 PDFs automatisch importieren & indexieren
 - Automatische Benachrichtigung bei neuer Version (optional)
 
 #### KI-Assistent für Regelwerk & Statuten
@@ -232,7 +251,8 @@ Beispielfragen die die KI beantworten kann:
 - [ ] Live-Center, Poster Generator, Medien-Verwaltung
 
 ### 🔄 Phase 6 — Statuten, Versicherungen & Sportrecht
-- [ ] Vereinsstatuten & FLH-Reglemente hochladen
+- [x] FLH-Reglemente & Direktlinks dokumentiert (12 PDFs)
+- [ ] Vereinsstatuten Mersch75 hochladen (PDF ausstehend)
 - [ ] KI-Assistent (RAG über PDFs)
 - [ ] CSMS-Modul mit Schadensfall-Workflow
 - [ ] AXA-Police hinterlegen (nach Erhalt)
@@ -250,7 +270,6 @@ Beispielfragen die die KI beantworten kann:
 |---|---|
 | AXA: Police (PDF), Policen-Nr., Deckung, Kosten, Kontakt | Kassenwart / Präsident |
 | Vereinsstatuten Mersch75 (PDF) | Secrétaire |
-| FLH-Reglemente (PDF oder Link) | Trainer / Präsident |
 
 ---
 
@@ -261,7 +280,7 @@ Beispielfragen die die KI beantworten kann:
 | CSMS | [sports.public.lu/csms](https://sports.public.lu/fr/programs/assurances/csms.html) | Sportkrankenversicherung |
 | ALIS | [alis.lu](https://www.alis.lu) | Anti-Doping, Safeguarding |
 | INAPS | [inaps.public.lu](https://inaps.public.lu/fr.html) | Sportinstitut, med. Überwachung |
-| FLH | [flh.lu](https://www.flh.lu) | Handballverband Luxemburg |
+| FLH Statuts | [flh.lu/f-l-h/statuts-et-reglements](https://www.flh.lu/f-l-h/statuts-et-reglements) | Handballverband — alle Reglements |
 | AXA | ausstehend | Vereinsversicherung |
 
 ---
