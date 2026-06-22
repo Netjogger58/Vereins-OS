@@ -1,6 +1,7 @@
 # VEREINS-OS — PROJEKTPLAN
 > **Zuletzt aktualisiert:** 22. Juni 2026  
-> **Status:** In aktiver Entwicklung — Pilot: Handball Mersch 75
+> **Status:** In aktiver Entwicklung — Pilot: Handball Mersch 75  
+> **Vision:** Eine lebendige, weitgehend automatisierte Vereinsplattform — minimal manuelle Arbeit, maximal open source & kostenlos
 
 ---
 
@@ -11,9 +12,10 @@
 | **Name** | Vereins-OS |
 | **Repository** | github.com/Netjogger58/Vereins-OS (privat) |
 | **Lizenz** | Privat (kommerzieller Verkauf geplant) |
-| **Ziel** | Vereinsmanagement-System für Sportvereine |
+| **Ziel** | Vollautomatisiertes Vereinsmanagement für Sportvereine |
 | **Pilot** | Handball Mersch 75 (mersch75.lu) |
 | **Hosting** | Hetzner Cloud |
+| **Philosophie** | Open Source first · Kostenlos wo möglich · Automatisierung vor Manualarbeit |
 
 ---
 
@@ -34,8 +36,7 @@
 ## 3. IMPLEMENTIERTE FEATURES (STAND JUNI 2026)
 
 ### ✅ 3.1 Authentifizierung & Benutzerverwaltung
-- Email + Passwort Login
-- **Magic Link Login** (passwordless) per Email & SMS
+- Email + Passwort Login, Magic Link (passwordless) per Email & SMS
 - Rollenbasiert: Präsident, Admin, Trainer, Secrétaire, Kassenwart, Spieler
 
 ### ✅ 3.2 Spiel- & Ligastatistiken
@@ -69,21 +70,77 @@
 
 ## 5. GEPLANTE NEUE MODULE
 
-### 📋 5.1 Statuten & Reglemente
+---
 
-**Ziel:** Alle wichtigen Vereins- und Verbandsdokumente zentral abrufbar + KI-gestützte Suche darin.
+### 🌐 5.1 Website-Integration (mersch75.lu ↔ Vereins-OS)
+
+**Ziel:** Die öffentliche Website zeigt automatisch aktuelle Daten aus der App — kein manuelles Pflegen mehr.
+
+| Was | Wie |
+|---|---|
+| Ligatabelle auf Website | REST-API → JavaScript Widget auf mersch75.lu |
+| Nächste Spiele | API-Endpoint → automatisch auf Homepage |
+| Torschützenliste | Live-Daten via JSON-Feed |
+| News / Spielberichte | Auto-Post aus App → Website |
+| Spielerprofile | Optionale öffentliche Profile |
+| Hallenkarte Marker | Hallen-Daten aus DB → Karte automatisch aktuell |
+
+**Technologie:**
+- Vereins-OS Backend stellt öffentliche REST-API bereit
+- Website (GitHub Pages / Jekyll) ruft Daten per `fetch()` ab
+- CORS korrekt konfiguriert für mersch75.lu
+
+---
+
+### 🗄️ 5.2 Saison-Archiv & Statistik-Export
+
+**Ziel:** Jede abgeschlossene Saison wird archiviert und bleibt dauerhaft abrufbar.
+
+**Funktionen:**
+- **Saison abschließen**: Ein-Klick → alle Daten dieser Saison werden eingefroren
+- **Archiv-Ordner**: Saison 2023/24, 2024/25, ... — jede separat abrufbar
+- **Export-Formate:**
+  - 📄 PDF — Saisonbericht (Tabelle, Torschützen, Highlights)
+  - 📊 Excel (.xlsx) — Rohdaten für eigene Auswertung
+  - 📦 ZIP — komplettes Archiv einer Saison
+  - 🔗 Permalink — öffentlicher Link zu Saison-Statistik
+
+**Automatisierung:**
+- Am Saisonende → automatischer Archiv-Job
+- Email an Präsident & Secrétaire mit Archiv-Link
+- Archiv erscheint automatisch auf der Website
+
+---
+
+### 📊 5.3 PowerPoint / PPTX-Generator
+
+**Ziel:** Präsentationen auf Knopfdruck — für Jahresversammlungen, Sponsoren, Trainingsplanung.
+
+**Vorlagen (automatisch befüllt):**
+| Vorlage | Inhalt |
+|---|---|
+| **Jahresbericht** | Saisonstatistiken, Finanzen, Highlights, Ausblick |
+| **Spielanalyse** | Tore, Strafen, Gegner-Vergleich, Karte |
+| **Sponsorenpräsentation** | Vereinszahlen, Medienpräsenz, Angebote |
+| **Trainingsplan** | Wochenprogramm, Ziele, Aufstellungen |
+| **Mitgliederversammlung** | Tagesordnung, Berichte, Abstimmungen |
+
+**Technologie:** `pptxgenjs` (kostenlos, open source) — kein Microsoft Office nötig  
+**Export:** .pptx (kompatibel mit PowerPoint, LibreOffice, Google Slides)
+
+---
+
+### 📋 5.4 Statuten & Reglemente
+
+**Ziel:** Alle wichtigen Vereins- und Verbandsdokumente zentral abrufbar + KI-gestützte Suche.
 
 #### Vereinsstatuten (Handball Mersch 75)
-- Statuten als PDF hinterlegen (Upload durch Admin)
-- Versionierung (alte Versionen bleiben erhalten)
-- Zugriff: Alle Mitglieder (lesend), Admin (bearbeiten)
+- PDF hinterlegen, versioniert, für alle Mitglieder lesbar
 
 #### FLH-Reglemente (Fédération Luxembourgeoise de Handball)
 > **Quelle:** [flh.lu/f-l-h/statuts-et-reglements](https://www.flh.lu/f-l-h/statuts-et-reglements)
 
-Alle offiziellen FLH-Dokumente als direkte PDF-Links — können in der App hinterlegt und per KI durchsucht werden:
-
-| # | Dokument | Direktlink PDF |
+| # | Dokument | PDF |
 |---|---|---|
 | 1 | Statuts FLH | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/1STATUTS_FLH.pdf) |
 | 2 | Code du Handball | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/2CODE_DU_HANDBALL.pdf) |
@@ -96,183 +153,234 @@ Alle offiziellen FLH-Dokumente als direkte PDF-Links — können in der App hint
 | 9 | Demandes en Grâce | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/9DEMANDES_EN_GRACE.pdf) |
 | 10 | Règlement Publicités | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/10REGLEMENT_PUBLICITE.pdf) |
 | 11 | Règlement Dopage | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/11REGLEMENT_DOPAGE.pdf) |
-| 13 | Commission Luxembourgeoise d'Arbitrage pour le Sport (CLAS) | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/13CLAS.pdf) |
+| 13 | CLAS (Arbitrage) | [Download](https://www.flh.lu/fileadmin/flh/documents/Statuts_et_Reglements/13CLAS.pdf) |
 
-**In der App geplant:**
-- Alle 12 PDFs automatisch importieren & indexieren
-- Automatische Benachrichtigung bei neuer Version (optional)
-
-#### KI-Assistent für Regelwerk & Statuten
-- Fragen wie: *„Was passiert bei einer roten Karte?"* oder *„Was steht in § 12?"*
-- KI durchsucht PDFs und antwortet mit Quellenangabe (Seite, Artikel)
-- Sprachen: Deutsch, Französisch, Luxemburgisch
-- Technologie: RAG (Retrieval-Augmented Generation)
+#### KI-Assistent (RAG über PDFs)
+- Fragen in Deutsch/Französisch/Luxemburgisch
+- Antwort mit Quellenangabe (Seite, Artikel)
 
 ---
 
-### 🛡️ 5.2 Versicherungs- & Sportrechts-Modul
-
-**Ziel:** Alle Versicherungen, Behörden und Pflichten zentral verwalten — was ist gedeckt, was kostet es, was tun im Schadensfall.
-
----
+### 🛡️ 5.5 Versicherungs- & Sportrechts-Modul
 
 #### 🏥 CSMS — Caisse de Secours Médico-Sportive
-> **Quelle:** [sports.public.lu/csms](https://sports.public.lu/fr/programs/assurances/csms.html)
+> [sports.public.lu/csms](https://sports.public.lu/fr/programs/assurances/csms.html)
 
-Die CSMS ist die staatliche Sportkrankenversicherung Luxemburgs — **Pflicht für alle lizenzierten Sportler**.
-
-**Was deckt die CSMS ab (bei Sportunfällen):**
+Staatliche Sportkrankenversicherung — Pflicht für alle lizenzierten Spieler.
 
 | Leistung | Deckung |
 |---|---|
-| Arztkosten & Medikamente | Découvert nach CNS (Restzahlung) |
-| Nicht erstattungsfähige Medikamente | 60% des Rechnungsbetrags |
-| Zahnprothesen | Doppelter CNS-Tarif |
-| Krankenwagen | 20% (Rest nach Krankenkasse) |
-| Krankenhausaufenthalt | CNS-Eigenbeteiligung + bis 40€/Tag (1. Klasse) |
-| Physiotherapie | 20% (Rest nach Krankenkasse) |
-| Brillen / Kontaktlinsen | bis 35€, max. 2 Paar / 36 Monate |
-| Kniebandagen, Bandagen | Pauschalbeträge je nach Typ |
-| Orthopädische Prothesen | Beteiligung auf Basis CNS-Tarife |
-| Verdienstausfall (Selbständige) | Entschädigung auf Basis Mindestlohn |
+| Arzt & Medikamente | Découvert nach CNS |
+| Nicht erstattungsfähige Medikamente | 60% |
+| Krankenhaus | CNS-Anteil + bis 40€/Tag |
+| Physiotherapie | 20% (Rest nach CNS) |
+| Krankenwagen | 20% |
+| Brillen/Kontaktlinsen | bis 35€, max. 2 Paar/36 Monate |
+| Verdienstausfall (Selbständige) | auf Basis Mindestlohn |
 
-**⚠️ Wichtig — Was die CSMS NICHT zahlt:**
-- Wenn der verletzte Spieler **nicht krankenversichert** (CNS) ist → keine CSMS-Leistung
-- Aktivitäten die **nicht offiziell lizenziert/genehmigt** sind
-- Unfälle bei LASEP/LASEL-Aktivitäten → dort greift Unfallversicherung (AAA)
+**Schadensfall:** Arzt → alle Belege → CNS-Einreichung → CSMS zahlt Restzahlung automatisch.
 
-**Im Schadensfall:**
-1. Arzt aufsuchen, Unfall als Sportunfall melden
-2. Alle Belege sammeln (Arzt, Apotheke, Physiotherapie)
-3. Einreichung über die Krankenkasse (CNS) → CSMS übernimmt Restzahlung automatisch
-4. Policen-Nummer des Vereins bereithalten
+#### 🏛️ ALIS — Sportintegrität
+> [alis.lu](https://www.alis.lu) | info@alis.lu | (+352) 247 83453 | 2 rue Thomas Edison, L-1445 Strassen
 
----
-
-#### 🏛️ ALIS — Agence Luxembourgeoise pour l'Intégrité dans le Sport
-> **Quelle:** [alis.lu](https://www.alis.lu)
-
-ALIS ist die luxemburgische Behörde für **Sportintegrität** — kein Versicherer, aber für Vereine wichtig.
-
-**Zuständig für:**
-- **Anti-Doping** — Kontrollen, Regeln, Meldepflichten
-- **Safeguarding** — Schutz vor Missbrauch, Belästigung (besonders bei Jugendlichen!)
-- **Spielmanipulation** — Meldestelle für verdächtige Anfragen
-
-**Was Handball Mersch 75 beachten muss:**
-- Trainer & Betreuer die mit Minderjährigen arbeiten → **Safeguarding-Pflichten**
-- Kein Spieler darf bei Dopingkontrolle unvorbereitet sein
-- Verdächtige Kontaktaufnahmen (Wetten, Spielmanipulation) → **sofort an ALIS melden**
-- Regelmäßige Schulungen empfohlen
-
-**In der App geplant:**
-- ALIS-Kontakt & Meldestelle direkt verlinkt
-- Checkliste Safeguarding für Trainer
-- KI beantwortet Fragen: *„Was muss ich tun wenn ein Spieler auf Doping getestet wird?"*
-
----
+Anti-Doping · Safeguarding · Spielmanipulation. Schulungen für Trainer Pflicht bei Minderjährigen.
 
 #### 🏃 INAPS — Institut National des Sports
-> **Quelle:** [inaps.public.lu](https://inaps.public.lu/fr.html)  
-> Ministerium: Ministère des Sports | Ministerin: Martine Hansen  
-> Kontakt Presse: presse@inaps.etat.lu
+> [inaps.public.lu](https://inaps.public.lu/fr.html) | Ministerin: Martine Hansen
 
-INAPS ist das staatliche Sportinstitut — zuständig für Sportförderung, medizinische Sportüberwachung und Ausbildung.
-
-**Relevant für Handball Mersch 75:**
-- **Medizinische Sportüberwachung** (contrôle médico-sportif) — Pflichtuntersuchungen für Lizenzspieler
-- Subventionen & Fördergelder für Vereine
-- Sportliche Ausbildung (Trainerlizenzen, Schiedsrichter)
-- Kontrollstelle für medizinisch nicht rückerstattungsfähige Medikamente (Freigabe für CSMS)
-
-**In der App geplant:**
-- Übersicht welche Spieler ihre Pflichtuntersuchung erledigt haben
-- Reminder wenn Untersuchung abläuft
-- Links zu Förderanträgen
-
----
+Pflichtuntersuchungen, Fördergelder, Trainerlizenzen.
 
 #### 🔵 AXA — Vereinsversicherung
-> **Status:** Police noch ausstehend — wird nach Erhalt ergänzt
+> Police ausstehend — wird nach Erhalt ergänzt.
 
-**Geplante Inhalte (nach Erhalt der Police):**
-- Policen-Nummer, Laufzeit, Jahresprämie
-- Deckungsumfang (Haftpflicht, Material, Veranstaltungen, ...)
-- Ansprechpartner & Notfallnummer
-- PDF der Police hinterlegen
-- Was bei Schaden zu tun ist
+#### 📋 Schadensfall-Workflow
+```
+Unfall → App-Formular → "Was jetzt tun?" Anleitung
+→ CSMS-Weg oder AXA-Weg → Email an Secrétaire
+→ Archiv + Status-Tracking → KI beantwortet Folgefragen
+```
 
 ---
 
-#### 📋 Schadensfall-Workflow (in der App)
-```
-Unfall/Schaden passiert
-    → App: Formular ausfüllen (Datum, Ort, Betroffene, Beschreibung)
-    → App zeigt: "Was jetzt tun?" — Schritt-für-Schritt-Anleitung
-    → Je nach Art: CSMS-Weg ODER AXA-Weg
-    → Automatische Email an Secrétaire + Versicherungskontakt
-    → Schadensfall gespeichert (Archiv + Status-Tracking)
-    → KI beantwortet Folgefragen
-```
+### 🤝 5.6 Ehrenamt & Bénévolat-Modul
+> [benevolat.lu](https://benevolat.lu) | 9, Avenue Guillaume L-1651 Lux | (+352) 26 12 10
 
-#### 🤖 KI-Assistent für Versicherungs- & Rechtsfragen
-Beispielfragen die die KI beantworten kann:
-- *„Ein Spieler hat sich beim Training verletzt — was tun?"*
-- *„Bin ich bei einem Freundschaftsspiel in Belgien versichert?"*
-- *„Was muss ich als Trainer bei Minderjährigen beachten (Safeguarding)?"*
-- *„Wann muss ein Spieler zur Pflichtuntersuchung bei INAPS?"*
-- *„Wie melde ich einen Dopingverdacht?"*
+- Bénévole-Rolle im System, Aufgaben & Stunden erfassen
+- Offene Stellen auf benevolat.lu veröffentlichen
+- Jubiläen automatisch anzeigen (5/10/20 Jahre)
+- Prix du Mérite Nominierung direkt aus App
+- **Congé bénévole**: Luxemburger Recht — bezahlter Urlaub für Ehrenamtliche
 
 ---
 
-### 🤝 5.3 Ehrenamt & Bénévolat-Modul
+### 💬 5.7 Kommunikations-Zentrale (Chat, Mail, Benachrichtigungen)
 
-> **Quelle:** [benevolat.lu](https://benevolat.lu)  
-> **Agence du Bénévolat Luxembourg** (a.s.b.l.)  
-> 9, Avenue Guillaume — L-1651 Luxembourg  
-> Tél.: (+352) 26 12 10  
-> Seit 2002 tätig — offizielle nationale Anlaufstelle für Ehrenamt in Luxemburg
+**Ziel:** Alle Kanäle an einem Ort — automatisiert und kostenlos.
 
-**Ziel:** Ehrenamtliche Helfer verwalten, wertschätzen und neue Freiwillige finden — der Verein lebt vom Ehrenamt!
+#### Matrix / Element (Open Source, selbst-gehostet)
+- **Matrix Server (Synapse)** auf Hetzner → eigene Instanz, kostenlos
+- **Element** als Client (Web + Mobile App)
+- Vereins-Räume: #allgemein, #trainer, #seniors-männer, #finanzen, ...
+- **Bot** postet automatisch: Spielergebnisse, Termine, Benachrichtigungen
+- Integration in Vereins-OS → Nachrichten direkt aus der App senden
 
-#### Was die Agence du Bénévolat bietet:
+#### Email (SMTP — kostenlos)
+- **Postfix** auf Hetzner oder **Mailcow** (Docker, open source)
+- Automatische Emails: Termine, Beitragsmahnungen, Spielberichte
+- Newsletter an alle Mitglieder per Knopfdruck
+- Templates in der App (DE/FR/LU)
 
-| Service | Nutzen für Mersch75 |
-|---|---|
-| **Annuaire des Missions** | Offene Ehrenamtsstellen veröffentlichen (Kassenwart, Materialwart, etc.) |
-| **Annuaire des Associations** | Vereinsprofil auf nationalem Portal pflegen |
-| **Formations pour bénévoles** | Schulungen für Vereinsverantwortliche (Vereinsführung, Buchhaltung) |
-| **Label de Qualité** | Qualitätszertifikat für vorbildliche Vereinsführung |
-| **Prix du Mérite** | Ehrenamtliche offiziell auszeichnen lassen |
-| **Espace ressources** | Muster-Verträge, Leitfäden, rechtliche Infos |
-| **FAQ / Rechtliches** | Congé bénévole (bezahlter Urlaub für Ehrenamtliche), Haftung |
+#### Hermes — Überwachung & Orchestrierung
+- **Hermes** als zentraler Messaging-Router / Monitoring-Layer
+- Überwacht alle Dienste (Matrix, Email, App, Server)
+- Alarmierung wenn etwas ausfällt (Email + Matrix-Nachricht)
+- Optionen: selbst entwickelter Hermes-Daemon OR Nutzung von **n8n** (open source Workflow-Automation)
 
-#### Rechtlicher Rahmen (Luxemburg):
-- **Congé bénévole**: Arbeitnehmer haben in Luxemburg Anspruch auf bezahlten Sonderurlaub für Ehrenamtsaufgaben
-- **Haftpflicht**: Ehrenamtliche sind über den Verein (AXA-Police) mitversichert — wichtig bei Veranstaltungen
-- **Datenschutz (RGPD)**: Ehrenamtliche-Daten unterliegen denselben Datenschutzregeln wie Mitglieder
+#### WhatsApp / Signal (Brücken)
+- Matrix Bridges → **mautrix-whatsapp** oder **mautrix-signal**
+- Nachrichten aus Matrix-Räumen erscheinen in WhatsApp-Gruppen (und umgekehrt)
+- Keine extra App nötig für Spieler die WhatsApp bevorzugen
 
-#### In der App geplant:
+---
 
-**Ehrenamtlichen-Verwaltung:**
-- Eigene Kategorie neben „Spieler" und „Trainer": **Bénévole**
-- Aufgaben/Rollen hinterlegen (Kassenwart, Materialwart, Hallenwart, Schiri-Betreuer, ...)
-- Einsatz-Stunden erfassen (freiwillig, für interne Wertschätzung)
-- Geburtstage & Jubiläen automatisch anzeigen (5 Jahre, 10 Jahre Ehrenamt)
+### 🤖 5.8 KI & Automatisierung
 
-**Neue Ehrenamtliche finden:**
-- Direktlink zu [benevolat.lu/annuaire-missions](https://benevolat.lu/annuaire-missions/) um offene Stellen zu veröffentlichen
-- Formular in der App → veröffentlicht Mission auf benevolat.lu (API, falls verfügbar)
+**Ziel:** Maximale Automatisierung — minimale manuelle Arbeit.
 
-**Wertschätzung & Anerkennung:**
-- Jährliche Zusammenfassung: *„Danke an unsere X Ehrenamtlichen mit insgesamt Y Stunden"*
-- Nominierung für **Prix du Mérite** direkt aus der App initiieren
-- Bewerbung für **Label de Qualité** (Checkliste in der App)
+#### Ollama (lokale KI — kostenlos, kein Cloud-Abo)
+- Läuft auf dem Hetzner-Server
+- Modelle: `llama3`, `mistral`, `phi3` (je nach Speicher)
+- Aufgaben:
+  - Regelwerk-Assistent (RAG über FLH-PDFs)
+  - Spielbericht automatisch formulieren aus Statistik
+  - Mitglieder-Email auf Knopfdruck generieren
+  - Fragen zu Versicherungen, Statuten beantworten
 
-**KI-Fragen zum Ehrenamt:**
-- *„Wie viele Urlaubstage hat ein Ehrenamtlicher in Luxemburg?"*
-- *„Was passiert wenn ein Helfer beim Aufbau verletzt wird?"*
-- *„Wie veröffentliche ich eine Ehrenamtsstelle auf benevolat.lu?"*
+#### n8n — Workflow-Automation (open source, kostenlos selbst-gehostet)
+- Visueller Editor für Automatisierungen (wie Zapier, aber kostenlos)
+- Beispiel-Workflows:
+  - FLH Spielergebnis → automatisch in DB importieren → Matrix-Nachricht
+  - Neues Mitglied → Willkommensmail → Beitragsrechnung
+  - Saisonende → Archiv erstellen → PDF-Bericht → Email an Vorstand
+  - Geburtstag Ehrenamtlicher → automatische Gratulations-Mail
+
+#### Odysseus — Browser-Automation
+- Web-Scraping & Browser-Automation (Playwright / Puppeteer)
+- Automatisches Abholen von FLH-Spielberichten (handball4all.de)
+- Monitoring ob neue FLH-Reglemente veröffentlicht wurden
+- Screenshots von Ligatabellen für Social Media
+
+#### Pi.ai / externe KI-Assistenten
+- Integration externer KI-Dienste als Fallback wenn Ollama nicht ausreicht
+- API-Keys verwaltet in Vereins-OS (verschlüsselt)
+
+---
+
+### 🗃️ 5.9 Vollständige Datenbank-Architektur
+
+**Ziel:** Eine einzige Datenbank, die alles kennt — Spieler, Spiele, Finanzen, Dokumente, Kommunikation.
+
+#### Datenbankschema (geplant, Erweiterung von SQLite → PostgreSQL für Produktion)
+
+```
+PERSONEN
+├── Mitglieder (Spieler, Trainer, Vorstand, Bénévole)
+├── Kontakte (Externe: Schiedsrichter, Gegnervereine, Sponsoren)
+└── Benutzer (Login-Daten, Rollen, Session)
+
+SPORT
+├── Teams & Staffeln
+├── Saisons (Archiv-fähig)
+├── Spiele (Heim/Auswärts, Datum, Gegner, Ergebnis)
+├── Spielstatistiken (Tore, Strafen, Assists)
+└── Spielerlizenzen (FLH-Nummer, Ablauf, INAPS-Untersuchung)
+
+FINANZEN
+├── Mitgliedsbeiträge (Fälligkeit, Status, Mahnungen)
+├── Einnahmen & Ausgaben (Kategorien)
+├── Budgets pro Saison
+├── Versicherungsdaten (Police, Laufzeit, Deckung)
+└── Subventionen (INAPS, Gemeinde, Sponsors)
+
+KOMMUNIKATION
+├── Email-Logs
+├── Matrix-Nachrichten (Referenzen)
+├── Benachrichtigungen (gesendete Push/SMS/Email)
+└── Newsletter-Archiv
+
+DOKUMENTE & ARCHIV
+├── Hochgeladene Dateien (Statuten, Police, Formulare)
+├── Saison-Archive (eingefroren, versioniert)
+├── Generierte PDFs & PPTX (Berichte, Präsentationen)
+└── FLH-Dokumente (Cache der 12 Reglements-PDFs)
+
+EHRENAMT
+├── Bénévole-Profile
+├── Aufgaben & Einsatzstunden
+└── Auszeichnungen & Jubiläen
+
+SCHADENFÄLLE
+├── Unfallberichte
+├── CSMS/AXA-Status
+└── Dokumente & Korrespondenz
+```
+
+---
+
+### 📱 5.10 Mobile App (PWA → Native)
+
+**Phase 1:** Progressive Web App (PWA) — funktioniert auf jedem Smartphone, kein App Store nötig  
+**Phase 2:** React Native App (iOS + Android) — identischer Code, nativer Look  
+
+**Mobile-Funktionen:**
+- Spielplan & Ergebnisse (Offline-fähig)
+- Push-Benachrichtigungen (Spielstart, Ergebnis, Terminänderungen)
+- QR-Code Check-in bei Training
+- Verletzungsmeldung direkt nach Spiel
+- Chat via Matrix (Element Mobile)
+
+---
+
+### 📡 5.11 Automatisierung & Monitoring
+
+**Ziel:** Der Verein läuft weitgehend von selbst.
+
+#### Automatische Jobs (täglich/wöchentlich):
+| Job | Frequenz | Was passiert |
+|---|---|---|
+| FLH-Spielberichte importieren | Nach jedem Spieltag | Ergebnisse automatisch in DB |
+| Ligatabelle aktualisieren | Täglich | Website zeigt aktuelle Tabelle |
+| Geburtstags-Grüße | Täglich | Matrix/Email an Mitglied & Team |
+| Beitrags-Mahnung | Monatlich | Email bei offenen Beiträgen |
+| Backup | Täglich | DB + Dateien auf Hetzner Volumes |
+| INAPS-Erinnerung | 30 Tage vorher | Email wenn Pflichtuntersuchung fällig |
+| Wöchentlicher Bericht | Montag | Trainer-Zusammenfassung per Matrix |
+| Saison-Archiv | Saisonende | Automatisch einfrieren & exportieren |
+
+#### Monitoring (Hermes-Layer):
+- Server-Health (CPU, RAM, Disk) → Alarm bei Problem
+- App erreichbar? → automatischer Restart wenn nicht
+- Backup erfolgreich? → Bestätigung täglich
+- Werkzeug: **Uptime Kuma** (open source, Docker, kostenlos)
+
+---
+
+### 🔗 5.12 Integrationen & Schnittstellen
+
+| Dienst | Zweck | Kosten |
+|---|---|---|
+| **Matrix/Synapse** | Chat-Server selbst-gehostet | Kostenlos |
+| **Element** | Chat-Client (Web + Mobile) | Kostenlos |
+| **n8n** | Workflow-Automation | Kostenlos (self-hosted) |
+| **Ollama** | Lokale KI / LLM | Kostenlos |
+| **Nextcloud** | Datei-Ablage, Kalender-Sync | Kostenlos (self-hosted) |
+| **Uptime Kuma** | Monitoring Dashboard | Kostenlos |
+| **Mailcow** | Email-Server | Kostenlos (self-hosted) |
+| **Playwright** | Browser-Automation (Odysseus) | Kostenlos |
+| **Mautrix-Bridges** | WhatsApp/Signal ↔ Matrix | Kostenlos |
+| **handball4all.de** | FLH Spielberichte Import | Kostenlos (API) |
+| **benevolat.lu** | Ehrenamts-Plattform | Kostenlos |
+| **GitHub Actions** | CI/CD automatisches Deployment | Kostenlos |
 
 ---
 
@@ -280,73 +388,139 @@ Beispielfragen die die KI beantworten kann:
 
 | Feature | Priorität |
 |---|---|
-| Excel-Import (~445 Mitglieder) | Hoch |
-| Matrix/Element Chat-Integration | Mittel |
-| KI-Agenten (n8n/Prefect Workflow) | Mittel |
-| JoinUs-Parser | Mittel |
-| Nextcloud-Anbindung | Niedrig |
-| Live-Center aus VS Code integrieren | Mittel |
+| Excel-Import (~445 Mitglieder) | 🔴 Hoch |
+| Website-API (mersch75.lu ↔ App) | 🔴 Hoch |
+| Saison-Archiv + Export | 🟡 Mittel |
+| PPTX-Generator | 🟡 Mittel |
+| Matrix Server + Bot | 🟡 Mittel |
+| Ollama KI-Integration | 🟡 Mittel |
+| n8n Workflow-Automation | 🟡 Mittel |
+| PWA (Mobile App) | 🟡 Mittel |
+| Nextcloud-Anbindung | 🟢 Niedrig |
+| PostgreSQL Migration | 🟢 Niedrig |
+| Matrix Bridges (WhatsApp) | 🟢 Niedrig |
+| Native Mobile App | 🟢 Niedrig |
 
 ---
 
 ## 7. ROADMAP
 
 ### ✅ Phase 1 & 2 — Grundgerüst + Handball-Kern (abgeschlossen)
+
 ### 🔄 Phase 3 — Datenmigration
 - [ ] Excel-Import (445 Mitglieder), Datenbereinigung
+- [ ] Spielerlizenzen & FLH-Nummern vervollständigen
 
-### 🔄 Phase 4 — Integrationen
-- [ ] Matrix-Bot, KI-Agenten, Nextcloud, JoinUs-Parser
+### 🔄 Phase 4 — Website-Integration
+- [ ] Öffentliche REST-API (Tabelle, Spielplan, Stats)
+- [ ] mersch75.lu Widgets (Tabelle, nächste Spiele)
+- [ ] Hallenkarte-Daten aus DB automatisch aktuell
 
-### 🔄 Phase 5 — Assets & Statistiken
-- [ ] Live-Center, Poster Generator, Medien-Verwaltung
+### 🔄 Phase 5 — Archiv & Export
+- [ ] Saison-Archiv (einfrieren, abrufen)
+- [ ] PDF-Saisonbericht Generator
+- [ ] PPTX-Präsentations-Generator (pptxgenjs)
+- [ ] Excel-Export aller Statistiken
 
-### 🔄 Phase 6 — Statuten, Versicherungen & Sportrecht
-- [x] FLH-Reglemente & Direktlinks dokumentiert (12 PDFs)
-- [ ] Vereinsstatuten Mersch75 hochladen (PDF ausstehend)
-- [ ] KI-Assistent (RAG über PDFs)
-- [ ] CSMS-Modul mit Schadensfall-Workflow
-- [ ] AXA-Police hinterlegen (nach Erhalt)
+### 🔄 Phase 6 — Kommunikation & Automation
+- [ ] Matrix Server (Synapse) auf Hetzner deployen
+- [ ] Matrix Bot (Spielergebnisse, Termine, Nachrichten)
+- [ ] n8n installieren & erste Workflows
+- [ ] Automatische Beitrags-Mahnungen
+- [ ] FLH-Spielberichte automatisch importieren (Playwright)
+
+### 🔄 Phase 7 — KI & Assistenten
+- [ ] Ollama auf Hetzner (llama3 / mistral)
+- [ ] RAG über FLH-PDFs & Vereinsstatuten
+- [ ] Spielbericht-Generator (KI formuliert aus Statistik)
+- [ ] Versicherungs- & Regelwerk-Assistent
+
+### 🔄 Phase 8 — Statuten, Versicherungen & Sportrecht
+- [x] FLH-Reglemente & Direktlinks (12 PDFs) ✅
+- [ ] Vereinsstatuten hochladen (PDF ausstehend)
+- [ ] CSMS-Schadensfall-Workflow
+- [ ] AXA-Police hinterlegen
 - [ ] ALIS Safeguarding-Checklisten
 - [ ] INAPS Pflichtuntersuchungs-Tracker
 
-### 🔄 Phase 7 — Ehrenamt & Bénévolat
-- [ ] Ehrenamtlichen-Verwaltung (Rolle, Aufgaben, Stunden)
-- [ ] Integration benevolat.lu — Missions veröffentlichen
-- [ ] Wertschätzungs-Modul (Jubiläen, Prix du Mérite)
-- [ ] Label de Qualité — Checkliste
+### 🔄 Phase 9 — Ehrenamt
+- [ ] Bénévole-Rolle & Aufgaben-Verwaltung
+- [ ] Integration benevolat.lu
+- [ ] Jubiläen, Prix du Mérite
 
-### 🔄 Phase 8 — Deployment & Testing
-- [ ] Hetzner produktiv, CI/CD, Security-Audit, Beta Mersch75
+### 🔄 Phase 10 — Mobile & Monitoring
+- [ ] PWA (Progressive Web App) fertigstellen
+- [ ] Push-Benachrichtigungen
+- [ ] Uptime Kuma Monitoring
+- [ ] Automatische Backups (täglich)
+- [ ] CI/CD (GitHub Actions → Hetzner)
+
+### 🔄 Phase 11 — Brücken & Erweiterungen
+- [ ] WhatsApp ↔ Matrix Bridge (mautrix)
+- [ ] Nextcloud (Dateien, Kalender-Sync)
+- [ ] PostgreSQL Migration (wenn Skalierung nötig)
+- [ ] Native Mobile App (React Native)
+
+### 🏁 Phase 12 — Go-Live & Verkauf
+- [ ] Security-Audit, Datenschutz (RGPD)
+- [ ] Dokumentation für andere Vereine
+- [ ] Lizenzmodell (SaaS für andere Clubs)
+- [ ] Domain vereins-os.lu / vereins-os.de
 
 ---
 
-## 8. OFFENE INFORMATIONEN (BITTE ERGÄNZEN)
+## 8. ZIEL-ZUSTAND (WENN FERTIG)
+
+```
+Montag früh, 07:00 Uhr — automatisch passiert:
+  ✅ FLH-Spielberichte vom Wochenende importiert
+  ✅ Ligatabelle auf Website aktualisiert
+  ✅ Wochenbericht an Trainer per Matrix gesendet
+  ✅ Geburtstagsgüße an Spieler verschickt
+  ✅ Backup der Datenbank abgeschlossen
+  ✅ INAPS-Erinnerungen für ablaufende Untersuchungen gesendet
+
+Einzige manuelle Aufgabe: Ins Spiel fahren und Tore werfen! 🏐
+```
+
+---
+
+## 9. OFFENE INFORMATIONEN (BITTE ERGÄNZEN)
 
 | Was fehlt | Wer liefert es |
 |---|---|
-| AXA: Police (PDF), Policen-Nr., Deckung, Kosten, Kontakt | Kassenwart / Präsident |
+| AXA: Police (PDF), Policen-Nr., Deckung, Kosten | Kassenwart / Präsident |
 | Vereinsstatuten Mersch75 (PDF) | Secrétaire |
+| Hetzner: Server-IP, SSH-Zugang | Netjogger58 |
+| Mixvoip: SMS-Gateway Zugangsdaten | Netjogger58 |
 
 ---
 
-## 9. EXTERNE LINKS & KONTAKTE
+## 10. EXTERNE LINKS & KONTAKTE
 
 | Organisation | Link | Funktion |
 |---|---|---|
 | CSMS | [sports.public.lu/csms](https://sports.public.lu/fr/programs/assurances/csms.html) | Sportkrankenversicherung |
-| ALIS | [alis.lu](https://www.alis.lu) | Anti-Doping, Safeguarding |
-| INAPS | [inaps.public.lu](https://inaps.public.lu/fr.html) | Sportinstitut, med. Überwachung |
-| FLH Statuts | [flh.lu/f-l-h/statuts-et-reglements](https://www.flh.lu/f-l-h/statuts-et-reglements) | Handballverband — alle Reglements |
-| Agence du Bénévolat | [benevolat.lu](https://benevolat.lu) | Ehrenamt Luxembourg, Missions, Ressourcen |
+| ALIS | [alis.lu](https://www.alis.lu) — info@alis.lu — (+352) 247 83453 | Anti-Doping, Safeguarding |
+| INAPS | [inaps.public.lu](https://inaps.public.lu/fr.html) | Sportinstitut |
+| FLH Statuts | [flh.lu/f-l-h/statuts-et-reglements](https://www.flh.lu/f-l-h/statuts-et-reglements) | 12 Reglements-PDFs |
+| Agence du Bénévolat | [benevolat.lu](https://benevolat.lu) — (+352) 26 12 10 | Ehrenamt Luxembourg |
 | AXA | ausstehend | Vereinsversicherung |
+| n8n | [n8n.io](https://n8n.io) | Workflow-Automation (open source) |
+| Ollama | [ollama.com](https://ollama.com) | Lokale KI (kostenlos) |
+| Matrix/Element | [matrix.org](https://matrix.org) | Chat (open source) |
+| Nextcloud | [nextcloud.com](https://nextcloud.com) | Dateien & Kalender |
+| Uptime Kuma | [uptime.kuma.pet](https://uptime.kuma.pet) | Monitoring |
 
 ---
 
-## 10. SICHERHEIT
+## 11. SICHERHEIT
 - OAuth2/JWT + Session-Auth, HTTPS, Rate-Limiting, Audit-Logs, Rollenbasierter Zugriff
+- Tägliche verschlüsselte Backups
+- Alle Passwörter gehasht (bcrypt)
+- RGPD-konform (Datenschutz Luxemburg / EU)
 
-## 11. TEAM
+## 12. TEAM
 
 | Rolle | Person |
 |---|---|
@@ -354,12 +528,13 @@ Beispielfragen die die KI beantworten kann:
 | Co-Entwickler / Backup | Sohn (remote) |
 | KI-Assistenz | GitHub Copilot |
 
-## 12. OFFENE RECHTSFRAGEN
-- [ ] Rechtsanwalt: Verkaufsrechte, KI-Code
+## 13. OFFENE RECHTSFRAGEN
+- [ ] Rechtsanwalt: Verkaufsrechte, KI-Code-Lizenz
 - [ ] Contributor Agreement mit Sohn
-- [ ] Domain registrieren (vereins-os.de?)
+- [ ] Domain registrieren (vereins-os.lu / vereins-os.de)
+- [ ] RGPD-Beauftragter benennen
 
-## 13. DEMO-ZUGÄNGE (nur intern)
+## 14. DEMO-ZUGÄNGE (nur intern)
 
 | Rolle | Email | Passwort |
 |---|---|---|
@@ -370,4 +545,5 @@ Beispielfragen die die KI beantworten kann:
 
 ---
 
-*Dieser Plan wird bei jeder Weiterentwicklung aktualisiert.*
+*Dieser Plan wird bei jeder Weiterentwicklung automatisch aktualisiert.*  
+*Prioritäten werden nach Verfügbarkeit & Bedarf angepasst — alle Punkte sind umsetzbar.*
