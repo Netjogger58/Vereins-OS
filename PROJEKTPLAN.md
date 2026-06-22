@@ -225,6 +225,57 @@ Beispielfragen die die KI beantworten kann:
 
 ---
 
+### 🤝 5.3 Ehrenamt & Bénévolat-Modul
+
+> **Quelle:** [benevolat.lu](https://benevolat.lu)  
+> **Agence du Bénévolat Luxembourg** (a.s.b.l.)  
+> 9, Avenue Guillaume — L-1651 Luxembourg  
+> Tél.: (+352) 26 12 10  
+> Seit 2002 tätig — offizielle nationale Anlaufstelle für Ehrenamt in Luxemburg
+
+**Ziel:** Ehrenamtliche Helfer verwalten, wertschätzen und neue Freiwillige finden — der Verein lebt vom Ehrenamt!
+
+#### Was die Agence du Bénévolat bietet:
+
+| Service | Nutzen für Mersch75 |
+|---|---|
+| **Annuaire des Missions** | Offene Ehrenamtsstellen veröffentlichen (Kassenwart, Materialwart, etc.) |
+| **Annuaire des Associations** | Vereinsprofil auf nationalem Portal pflegen |
+| **Formations pour bénévoles** | Schulungen für Vereinsverantwortliche (Vereinsführung, Buchhaltung) |
+| **Label de Qualité** | Qualitätszertifikat für vorbildliche Vereinsführung |
+| **Prix du Mérite** | Ehrenamtliche offiziell auszeichnen lassen |
+| **Espace ressources** | Muster-Verträge, Leitfäden, rechtliche Infos |
+| **FAQ / Rechtliches** | Congé bénévole (bezahlter Urlaub für Ehrenamtliche), Haftung |
+
+#### Rechtlicher Rahmen (Luxemburg):
+- **Congé bénévole**: Arbeitnehmer haben in Luxemburg Anspruch auf bezahlten Sonderurlaub für Ehrenamtsaufgaben
+- **Haftpflicht**: Ehrenamtliche sind über den Verein (AXA-Police) mitversichert — wichtig bei Veranstaltungen
+- **Datenschutz (RGPD)**: Ehrenamtliche-Daten unterliegen denselben Datenschutzregeln wie Mitglieder
+
+#### In der App geplant:
+
+**Ehrenamtlichen-Verwaltung:**
+- Eigene Kategorie neben „Spieler" und „Trainer": **Bénévole**
+- Aufgaben/Rollen hinterlegen (Kassenwart, Materialwart, Hallenwart, Schiri-Betreuer, ...)
+- Einsatz-Stunden erfassen (freiwillig, für interne Wertschätzung)
+- Geburtstage & Jubiläen automatisch anzeigen (5 Jahre, 10 Jahre Ehrenamt)
+
+**Neue Ehrenamtliche finden:**
+- Direktlink zu [benevolat.lu/annuaire-missions](https://benevolat.lu/annuaire-missions/) um offene Stellen zu veröffentlichen
+- Formular in der App → veröffentlicht Mission auf benevolat.lu (API, falls verfügbar)
+
+**Wertschätzung & Anerkennung:**
+- Jährliche Zusammenfassung: *„Danke an unsere X Ehrenamtlichen mit insgesamt Y Stunden"*
+- Nominierung für **Prix du Mérite** direkt aus der App initiieren
+- Bewerbung für **Label de Qualité** (Checkliste in der App)
+
+**KI-Fragen zum Ehrenamt:**
+- *„Wie viele Urlaubstage hat ein Ehrenamtlicher in Luxemburg?"*
+- *„Was passiert wenn ein Helfer beim Aufbau verletzt wird?"*
+- *„Wie veröffentliche ich eine Ehrenamtsstelle auf benevolat.lu?"*
+
+---
+
 ## 6. NOCH AUSSTEHEND
 
 | Feature | Priorität |
@@ -259,7 +310,13 @@ Beispielfragen die die KI beantworten kann:
 - [ ] ALIS Safeguarding-Checklisten
 - [ ] INAPS Pflichtuntersuchungs-Tracker
 
-### 🔄 Phase 7 — Deployment & Testing
+### 🔄 Phase 7 — Ehrenamt & Bénévolat
+- [ ] Ehrenamtlichen-Verwaltung (Rolle, Aufgaben, Stunden)
+- [ ] Integration benevolat.lu — Missions veröffentlichen
+- [ ] Wertschätzungs-Modul (Jubiläen, Prix du Mérite)
+- [ ] Label de Qualité — Checkliste
+
+### 🔄 Phase 8 — Deployment & Testing
 - [ ] Hetzner produktiv, CI/CD, Security-Audit, Beta Mersch75
 
 ---
@@ -281,6 +338,7 @@ Beispielfragen die die KI beantworten kann:
 | ALIS | [alis.lu](https://www.alis.lu) | Anti-Doping, Safeguarding |
 | INAPS | [inaps.public.lu](https://inaps.public.lu/fr.html) | Sportinstitut, med. Überwachung |
 | FLH Statuts | [flh.lu/f-l-h/statuts-et-reglements](https://www.flh.lu/f-l-h/statuts-et-reglements) | Handballverband — alle Reglements |
+| Agence du Bénévolat | [benevolat.lu](https://benevolat.lu) | Ehrenamt Luxembourg, Missions, Ressourcen |
 | AXA | ausstehend | Vereinsversicherung |
 
 ---
