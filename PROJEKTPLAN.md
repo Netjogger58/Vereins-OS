@@ -104,7 +104,80 @@
 
 ---
 
-## 5. NOCH AUSSTEHEND (ORIGINALPLAN)
+## 5. GEPLANTE NEUE MODULE
+
+### 📋 5.1 Statuten & Reglemente
+
+**Ziel:** Alle wichtigen Vereins- und Verbandsdokumente zentral abrufbar + KI-gestützte Suche darin.
+
+#### Vereinsstatuten (Handball Mersch 75)
+- Statuten als PDF hinterlegen (Upload durch Admin)
+- Versionierung (alte Versionen bleiben erhalten)
+- Zugriff: Alle Mitglieder (lesend), Admin (bearbeiten)
+
+#### FLH-Reglemente (Fédération Luxembourgeoise de Handball)
+- FLH-Statuten hinterlegen
+- Wettbewerbsreglement / Spielordnung
+- Disziplinarordnung
+- Schiedsrichterregeln
+- Direktlink zur offiziellen FLH-Webseite (flh.lu)
+- Automatische Benachrichtigung wenn neue Version verfügbar (optional)
+
+#### KI-Assistent für Regelwerk & Statuten
+- Mitglieder/Trainer können Fragen stellen:  
+  *„Wie viele Spieler müssen auf dem Spielbericht stehen?"*  
+  *„Was passiert bei einer roten Karte?"*  
+  *„Was steht in § 12 der Vereinsstatuten?"*
+- KI durchsucht die hochgeladenen PDF-Dokumente und antwortet mit Quellenangabe (Seitenzahl, Artikel)
+- Sprachen: Deutsch, Französisch, Luxemburgisch
+- Technologie: RAG (Retrieval-Augmented Generation) über lokale PDFs
+
+---
+
+### 🛡️ 5.2 Versicherungsmodul
+
+**Ziel:** Alle Versicherungsinformationen zentral verwalten — was ist versichert, was kostet es, was tun im Schadensfall.
+
+#### Aktuelle Versicherungen (Handball Mersch 75)
+
+| Versicherer | Bereich | Status |
+|---|---|---|
+| **AXA** | _(Details ausstehend — bitte ergänzen)_ | ✅ aktiv |
+| **CSMS** | _(Details ausstehend — bitte ergänzen)_ | ✅ aktiv |
+
+> ⚠️ **TODO:** Bitte die genauen Versicherungspolicen / Deckungsumfang nachreichen damit diese Tabelle vervollständigt werden kann.
+
+#### Geplante Inhalte pro Versicherung
+- Versicherer, Policen-Nummer
+- Ansprechpartner + Notfallkontakt
+- **Was ist gedeckt** (Unfälle beim Training, Spiel, Auswärtsfahrten, Material...)
+- **Was ist NICHT gedeckt** (Ausschlüsse)
+- Jahresprämie / Kosten
+- Ablaufdatum / Erneuerungsdatum
+- PDF der Police (Upload)
+- Schadensmeldungs-Formular (direkt in der App ausfüllbar)
+
+#### Schadensfall-Workflow
+```
+Unfall passiert
+    → Formular in der App ausfüllen (Datum, Ort, Betroffene, Beschreibung)
+    → App zeigt: "Was jetzt tun?" — schrittweise Anleitung
+    → Automatische Email an Secrétaire + Versicherungskontakt
+    → Schadensfall wird gespeichert (Archiv)
+    → Status-Tracking (gemeldet → in Bearbeitung → abgeschlossen)
+```
+
+#### KI-Assistent für Versicherungsfragen
+- Mitglieder können fragen:  
+  *„Bin ich bei einem Auswärtsspiel in Deutschland versichert?"*  
+  *„Was mache ich wenn ein Spieler sich verletzt?"*  
+  *„Ist unser Material in der Halle versichert?"*
+- KI antwortet basierend auf hinterlegten Policen-Dokumenten
+- Bei unklaren Fällen: Direkt-Link zum Versicherungsberater
+
+---
+
+## 6. NOCH AUSSTEHEND (ORIGINALPLAN)
 
 | Feature | Priorität |
 |---|---|
@@ -119,7 +192,7 @@
 
 ---
 
-## 6. API-ENDPUNKTE (ÜBERSICHT)
+## 7. API-ENDPUNKTE (ÜBERSICHT)
 
 ```
 # Auth
@@ -140,11 +213,21 @@ GET    /api/top-scorers?competition=League&limit=20
 
 # Tabellen
 GET    /api/standings?competition=League&season=2025/26
+
+# (geplant) Dokumente & Statuten
+POST   /api/documents/upload
+GET    /api/documents
+POST   /api/documents/ask          ← KI-Frage an Dokument
+
+# (geplant) Versicherungen
+GET    /api/insurance
+POST   /api/insurance/claim        ← Schadensfall melden
+GET    /api/insurance/claim/:id
 ```
 
 ---
 
-## 7. SICHERHEIT
+## 8. SICHERHEIT
 
 - OAuth2/JWT + Session-Auth
 - HTTPS (Let's Encrypt)
@@ -155,7 +238,7 @@ GET    /api/standings?competition=League&season=2025/26
 
 ---
 
-## 8. TEAM
+## 9. TEAM
 
 | Rolle | Person |
 |---|---|
@@ -167,7 +250,7 @@ GET    /api/standings?competition=League&season=2025/26
 
 ---
 
-## 9. MARKT & VERKAUFSPOTENZIAL
+## 10. MARKT & VERKAUFSPOTENZIAL
 
 - **Zielmarkt:** DACH + Luxemburg (Sportvereine)
 - **Unterschied zu OpenSports:** Open Source, KI-Agenten, Matrix, Self-Hosted
@@ -177,7 +260,7 @@ GET    /api/standings?competition=League&season=2025/26
 
 ---
 
-## 10. ROADMAP
+## 11. ROADMAP
 
 ### ✅ Phase 1 — Grundgerüst (abgeschlossen)
 - GitHub Repository, Docker-Setup, FastAPI → Node.js Backend
@@ -204,7 +287,15 @@ GET    /api/standings?competition=League&season=2025/26
 - [ ] PDF-Formulare
 - [ ] Medien-Verwaltung (Fotos/Videos)
 
-### 🔄 Phase 6 — Deployment & Testing (ausstehend)
+### 🔄 Phase 6 — Statuten, Reglemente & Versicherungen (ausstehend)
+- [ ] Vereinsstatuten hochladen & verwalten
+- [ ] FLH-Reglemente hinterlegen
+- [ ] KI-Assistent für Regelwerk-Fragen (RAG)
+- [ ] Versicherungsmodul (AXA, CSMS) einrichten
+- [ ] Schadensfall-Workflow implementieren
+- [ ] KI-Assistent für Versicherungsfragen
+
+### 🔄 Phase 7 — Deployment & Testing (ausstehend)
 - [ ] Hetzner-Server produktiv einrichten
 - [ ] CI/CD Pipeline (GitHub Actions)
 - [ ] Security-Audit
@@ -213,7 +304,19 @@ GET    /api/standings?competition=League&season=2025/26
 
 ---
 
-## 11. OFFENE RECHTSFRAGEN
+## 12. OFFENE INFORMATIONEN (BITTE ERGÄNZEN)
+
+| Was fehlt | Wer kann es liefern |
+|---|---|
+| AXA: Policen-Nummer, Deckungsumfang, Kosten, Kontakt | Kassenwart / Präsident |
+| CSMS: Was genau ist versichert? Kosten? Kontakt? | Kassenwart / Präsident |
+| Weitere Versicherungen vorhanden? | Kassenwart |
+| Vereinsstatuten (PDF) | Secrétaire |
+| FLH-Reglemente (PDF oder Link) | Trainer / Präsident |
+
+---
+
+## 13. OFFENE RECHTSFRAGEN
 - [ ] Rechtsanwalt: Verkaufsrechte, KI-generierter Code
 - [ ] Windsurf/Copilot Business AGB prüfen
 - [ ] Contributor Agreement mit Sohn finalisieren
@@ -221,7 +324,7 @@ GET    /api/standings?competition=League&season=2025/26
 
 ---
 
-## 12. DEMO-ZUGÄNGE (nur intern)
+## 14. DEMO-ZUGÄNGE (nur intern)
 
 | Rolle | Email | Passwort |
 |---|---|---|
