@@ -427,14 +427,24 @@ Magic-Link-Login · Random-No-/Admin-Login · FLH-Import · Spieler-/Ligastatist
 
 ---
 
-## Support & Kontakt
+## Zugänge & Login-Wege
 
-**Admin Login:** admin@mersch75.lu / demo1234
+Es gibt **drei** Wege, sich anzumelden (siehe Abschnitt 1):
 
-**Demo-Zugänge:**
+**1. Admin-Login (Punkt im Logo)**
+- Passwort über Umgebungsvariable `ADMIN_PASSWORD` (Default `mersch75`).
+- Legt bei Bedarf `admin@mersch75.lu` an und meldet als Rolle *admin* an.
+
+**2. Random-No / Karten-Login**
+- Login per Karten-ID (Random-No) aus der Mitgliederliste — kein Passwort nötig.
+
+**3. Passwort-Login (E-Mail + Passwort) — Demo-Zugänge:**
 - Präsident: praesident@mersch75.lu / demo123
 - Trainer: trainer@mersch75.lu / demo123
 - Spieler: spieler@mersch75.lu / demo123
+- Admin (Passwort-Konto): admin@mersch75.lu / demo1234
+
+> Hinweis: Das Admin-**Passwort-Konto** (`demo1234`) ist getrennt vom **Admin-Login über `ADMIN_PASSWORD`** (Punkt im Logo). Demo-Passwörter vor dem Produktivbetrieb ändern.
 
 ---
 
