@@ -42,6 +42,7 @@ import Budget from "@/pages/Budget";
 import Newsletter from "@/pages/Newsletter";
 import GdprTools from "@/pages/GdprTools";
 import Website from "@/pages/Website";
+import CheckIn from "@/pages/CheckIn";
 import { Logo } from "@/components/Logo";
 
 function AppRouter() {
@@ -95,6 +96,7 @@ function AppRouter() {
         <Route path="/newsletter" component={Newsletter} />
         <Route path="/gdpr" component={GdprTools} />
         <Route path="/website" component={Website} />
+        <Route path="/checkin" component={CheckIn} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

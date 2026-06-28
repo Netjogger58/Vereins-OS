@@ -51,6 +51,17 @@ export const members = sqliteTable("members", {
   photoUrl: text("photo_url"),
   faceDescriptor: text("face_descriptor"), // JSON-encoded float array
   userId: integer("user_id"),
+  cardId: text("card_id"), // Random-No / Karten-ID (z.B. LNS6S2DM), aus Mitgliederliste
+  clubFunction: text("club_function"), // Funktion im Verein (z.B. Mitglied, Spieler, Comité, Officiel, Entraîneur)
+  nationality: text("nationality"), // Langue / Nationalité
+  internalCategory: text("internal_category"), // Catégorie interne Mersch75
+  flhCategory: text("flh_category"), // Catégorie Listing FLH 2025-2026
+  teamCategory: text("team_category"), // abgeleitet aus U-Flags (z.B. U13H)
+  passNumber: text("pass_number"), // Pass Nummer / Lizenz
+  matricule: text("matricule"), // nationale Matricule
+  medicoNext: text("medico_next"), // Prochain Médico
+  joinDate: text("join_date"), // date début membre
+  rawData: text("raw_data"), // JSON aller Originalspalten aus der Excel
 });
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true });
 export type InsertMember = z.infer<typeof insertMemberSchema>;

@@ -2,7 +2,7 @@ import type { Express, Response } from "express";
 import type { Server } from "node:http";
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { storage, seedIfEmpty } from "./storage";
+import { storage, seedIfEmpty, seedTestCards } from "./storage";
 import {
   authMiddleware,
   requireAuth,
@@ -50,6 +50,61 @@ import { initEmailTransporter, queueEmail, processPendingEmails, getWelcomeEmail
 function qs(val: string | string[] | undefined): string | undefined {
   if (Array.isArray(val)) return val[0];
   return val;
+}
+
+// ─── Member-Card-ID Helpers (kompatibel mit mersch75.lu join.html / kees-scanner.html) ───
+const CARD_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function generateCardId(): string {
+  const bytes = randomBytes(8);
+  let out = "";
+  for (let i = 0; i < 8; i++) out += CARD_ID_ALPHABET[bytes[i] % CARD_ID_ALPHABET.length];
+  return out;
+}
+
+async function generateUniqueCardId(): Promise<string> {
+  for (let tries = 0; tries < 6; tries++) {
+    const id = generateCardId();
+    const existing = await storage.getMemberCardByCardNumber(id);
+    if (!existing) return id;
+  }
+  return generateCardId();
+}
+
+// Extracts the canonical 8-char Card-ID from any payload:
+// raw 8-char, "Card-ID: XXXXXXXX", JSON {cardNumber}, or "M75-XXXX-XXXX".
+function extractCardId(input: string): string {
+  const raw = String(input || "");
+
+  // JSON payload (legacy M75 format)
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.cardNumber) return extractCardId(String(parsed.cardNumber));
+  } catch { /* not JSON */ }
+
+  // M75-XXXX-XXXX → join the two 4-char groups
+  const m75 = raw.toUpperCase().match(/M75-([A-Z0-9]{4})-([A-Z0-9]{4})/);
+  if (m75) return (m75[1] + m75[2]);
+
+  // explicit "Card-ID: XXXXXXXX"
+  const explicit = raw.match(/CARD[- ]?ID\s*[:=]\s*([A-Z0-9]{8})/i);
+  if (explicit) return explicit[1].toUpperCase();
+
+  // bare 8-char token
+  const compact = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (compact.length === 8) return compact;
+  const any = raw.toUpperCase().match(/\b[A-Z0-9]{8}\b/);
+  if (any) return any[0];
+
+  // fallback: M75 + 8 chars compacted
+  if (compact.startsWith("M75") && compact.length >= 11) return compact.slice(3, 11);
+  return compact.slice(0, 8);
+}
+
+// Display format: M75-XXXX-XXXX
+function formatCardNumber(cardId: string): string {
+  const id = String(cardId || "").toUpperCase();
+  return id.length === 8 ? `M75-${id.slice(0, 4)}-${id.slice(4)}` : id;
 }
 
 
@@ -112,6 +167,7 @@ function generateFinancePdfHtml(transactions: any[]) {
 
 export async function registerRoutes(_httpServer: Server, app: Express): Promise<Server> {
   await seedIfEmpty();
+  seedTestCards();
 
   // Health check endpoint (used by Docker HEALTHCHECK)
   app.get("/api/health", (_req, res) => {
@@ -146,6 +202,92 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   app.get("/api/auth/me", (req: AuthedRequest, res: Response) => {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
     res.json(publicUser(req.user));
+  });
+
+  // ─── Random-No (Karten-)Login ──────────────────────────
+  // Mapping Vereinsfunktion -> App-Rolle (Test-Version).
+  // HINWEIS: In Produktion sollten erhöhte Rollen (Comité/Officiel/Trainer)
+  // eine 2. Stufe (Passwort/Code) erfordern – siehe Admin-Login.
+  const FUNCTION_ROLE: Record<string, string> = {
+    Admin: "admin",
+    Comité: "präsident",
+    Officiel: "secretaire",
+    Entraîneur: "trainer",
+    Arbitre: "spieler",
+    Spieler: "spieler",
+    Mitglied: "spieler",
+  };
+  const roleForFunction = (f?: string | null) => (f && FUNCTION_ROLE[f]) || "spieler";
+
+  // Nur Identität anzeigen (Name + Funktion), ohne Login
+  app.post("/api/auth/identify-card", async (req: AuthedRequest, res: Response) => {
+    const cardId = String((req.body || {}).cardId || "").trim();
+    if (!cardId) return res.status(400).json({ message: "Random-No erforderlich" });
+    const member = await storage.getMemberByCardId(cardId);
+    if (!member) return res.json({ found: false });
+    res.json({
+      found: true,
+      name: member.name,
+      clubFunction: member.clubFunction || "Mitglied",
+      teamCategory: member.teamCategory || null,
+      role: roleForFunction(member.clubFunction),
+    });
+  });
+
+  // Login per Random-No: verknüpften User finden/anlegen + Session
+  app.post("/api/auth/card-login", async (req: AuthedRequest, res: Response) => {
+    const cardId = String((req.body || {}).cardId || "").trim();
+    if (!cardId) return res.status(400).json({ message: "Random-No erforderlich" });
+    const member = await storage.getMemberByCardId(cardId);
+    if (!member) return res.status(401).json({ message: "Unbekannte Random-No" });
+
+    const role = roleForFunction(member.clubFunction);
+    const email = `card.${(member.cardId || "").toLowerCase()}@m75.local`;
+
+    let user = member.userId ? await storage.getUser(member.userId) : undefined;
+    if (!user) user = await storage.getUserByEmail(email);
+    if (!user) {
+      const hash = await bcrypt.hash(randomBytes(16).toString("hex"), 10);
+      user = await storage.createUser({
+        email,
+        passwordHash: hash,
+        name: member.name,
+        role: role as any,
+        active: true,
+      });
+      await storage.updateMember(member.id, { userId: user.id });
+    } else if (user.role !== role || user.name !== member.name) {
+      user = (await storage.updateUser(user.id, { role: role as any, name: member.name })) || user;
+      if (!member.userId) await storage.updateMember(member.id, { userId: user.id });
+    }
+
+    const token = createSession(user.id);
+    setSessionCookie(res, token);
+    res.json({ ...publicUser(user), _token: token, memberName: member.name, clubFunction: member.clubFunction });
+  });
+
+  // Admin-Login (Punkt im Logo) per Passwort
+  app.post("/api/auth/admin-login", async (req: AuthedRequest, res: Response) => {
+    const password = String((req.body || {}).password || "");
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "mersch75";
+    if (!password || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ message: "Falsches Passwort" });
+    }
+    const email = "admin@mersch75.lu";
+    let user = await storage.getUserByEmail(email);
+    if (!user) {
+      const hash = await bcrypt.hash(randomBytes(16).toString("hex"), 10);
+      user = await storage.createUser({
+        email,
+        passwordHash: hash,
+        name: "Administrator",
+        role: "admin" as any,
+        active: true,
+      });
+    }
+    const token = createSession(user.id);
+    setSessionCookie(res, token);
+    res.json({ ...publicUser(user), _token: token });
   });
 
   app.patch("/api/auth/password", requireAuth(), async (req: AuthedRequest, res: Response) => {
@@ -1187,21 +1329,33 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     const user = await storage.getUser(parseInt(userId));
     if (!user) return res.status(404).json({ message: "Benutzer nicht gefunden" });
     
-    // Generate unique card number
-    const year = new Date().getFullYear();
-    const count = await storage.listMemberCards();
-    const cardNumber = `M75-${year}-${String(count.length + 1).padStart(4, '0')}`;
-    
-    // Generate QR code data
-    const qrData = JSON.stringify({
-      cardNumber,
-      userId: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      issuedAt: new Date().toISOString()
-    });
-    
+    // Reuse a provided Card-ID (e.g. generated at JoinUs registration) instead of
+    // generating a new one. Only generate when none is supplied.
+    let cardId: string;
+    const provided = extractCardId(String(req.body.cardNumber ?? req.body.cardId ?? ""));
+    if (provided) {
+      if (!/^[A-Z0-9]{8}$/.test(provided)) {
+        return res.status(400).json({ message: "Ungültige Card-ID (8 Zeichen A–Z/0–9 erwartet)" });
+      }
+      const clash = await storage.getMemberCardByCardNumber(provided);
+      if (clash) {
+        return res.status(409).json({ message: "Card-ID bereits vergeben", cardNumber: formatCardNumber(provided) });
+      }
+      cardId = provided;
+    } else {
+      cardId = await generateUniqueCardId();
+    }
+    const cardNumber = cardId; // canonical 8-char id (displayed as M75-XXXX-XXXX)
+
+    // QR payload in the SAME text format as the website (join.html / kees-scanner.html)
+    const qrData = [
+      "MEMBERSKAART MERSCH75",
+      "Card-ID: " + cardId,
+      "Numm: " + (user.name || "-"),
+      "Roll/Relatioun: " + (user.role || "-"),
+      "Lizenz: -",
+    ].join("\n");
+
     const card = await storage.createMemberCard({
       userId: user.id,
       cardNumber,
@@ -1213,6 +1367,53 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     });
     
     res.json(card);
+  });
+
+  app.get("/api/member-cards", requireAuth(), async (_req: any, res: any) => {
+    const cards = await storage.listMemberCards();
+    const users = await storage.listUsers();
+    const userById = new Map<number, any>(users.map((u: any) => [u.id, u]));
+    const enriched = cards.map((card: any) => {
+      const u = userById.get(card.userId);
+      return {
+        ...card,
+        cardNumberDisplay: formatCardNumber(card.cardNumber),
+        userName: u?.name || null,
+        userRole: u?.role || null,
+        userEmail: u?.email || null,
+      };
+    });
+    res.json(enriched);
+  });
+
+  // Verify a scanned card (accepts raw QR payload, "M75-XXXX-XXXX" or 8-char Card-ID)
+  app.post("/api/member-cards/verify", requireAuth(), async (req, res) => {
+    const source = req.body?.raw || req.body?.cardNumber || "";
+    const cardId = extractCardId(String(source));
+
+    if (!cardId) {
+      return res.json({ status: "invalid", reason: "Keine Karten-Nummer erkannt", card: null, user: null });
+    }
+
+    const card = await storage.getMemberCardByCardNumber(cardId);
+    if (!card) {
+      return res.json({ status: "unknown", reason: "Karte nicht in der Datenbank", card: null, user: null, cardNumber: formatCardNumber(cardId) });
+    }
+
+    const user = await storage.getUser(card.userId);
+    const now = new Date();
+    let status = "valid";
+    let reason = "Gültiger Mitgliedsausweis";
+
+    if (!card.active) {
+      status = "blocked";
+      reason = "Karte ist deaktiviert";
+    } else if (card.validUntil && new Date(card.validUntil) < now) {
+      status = "expired";
+      reason = "Karte ist abgelaufen";
+    }
+
+    res.json({ status, reason, card: { ...card, cardNumberDisplay: formatCardNumber(card.cardNumber) }, user: user || null });
   });
 
   app.get("/api/member-cards/:userId", requireAuth(), async (req, res) => {
@@ -2013,13 +2214,52 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     res.json(checkins);
   });
   app.post("/api/qr/checkin", requireAuth(), async (req: any, res: any) => {
+    const eventId = Number(req.body.eventId);
+    if (!eventId) return res.status(400).json({ message: "eventId erforderlich" });
+
+    let memberId: number | null = req.body.memberId ? Number(req.body.memberId) : null;
+    let cardholderUserId: number | null = null;
+    let resolvedName: string | null = null;
+
+    // Resolve a scanned card → cardholder user → member
+    const cardSource = req.body.raw || req.body.cardNumber;
+    if (cardSource) {
+      const cardId = extractCardId(String(cardSource));
+      const card = cardId ? await storage.getMemberCardByCardNumber(cardId) : undefined;
+      if (!card) {
+        return res.status(404).json({ message: "Karte nicht gefunden", status: "unknown" });
+      }
+      if (!card.active) {
+        return res.status(409).json({ message: "Karte ist deaktiviert", status: "blocked" });
+      }
+      if (card.validUntil && new Date(card.validUntil) < new Date()) {
+        return res.status(409).json({ message: "Karte ist abgelaufen", status: "expired" });
+      }
+      cardholderUserId = card.userId;
+      const cardUser = await storage.getUser(card.userId);
+      resolvedName = cardUser?.name || null;
+      const allMembers = await storage.listMembers();
+      const matchedMember = allMembers.find((m: any) => m.userId === card.userId);
+      if (matchedMember) memberId = matchedMember.id;
+    }
+
+    // Prevent duplicate check-ins for the same event (match on member or cardholder user)
+    const existing = await storage.listQrCheckins(eventId);
+    const duplicate = existing.find((c: any) =>
+      (memberId != null && c.memberId === memberId) ||
+      (cardholderUserId != null && c.userId === cardholderUserId)
+    );
+    if (duplicate) {
+      return res.status(200).json({ ...duplicate, status: "duplicate", name: resolvedName, message: "Bereits eingecheckt" });
+    }
+
     const checkin = await storage.createQrCheckin({
-      eventId: req.body.eventId,
-      memberId: req.body.memberId,
-      userId: (req as any).user.id,
+      eventId,
+      memberId: memberId ?? undefined,
+      userId: cardholderUserId ?? (req as any).user.id,
       method: req.body.method || "qr",
     });
-    res.status(201).json(checkin);
+    res.status(201).json({ ...checkin, status: "valid", name: resolvedName });
   });
 
   // Lineups

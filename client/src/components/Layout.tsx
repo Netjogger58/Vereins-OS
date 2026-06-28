@@ -36,6 +36,7 @@ import {
   Send,
   ShieldCheck,
   Globe,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoLockup, Logo } from "./Logo";
@@ -63,6 +64,7 @@ const NAV: NavItem[] = [
   { href: "/teams", label: "Teams", icon: Shield, section: "Verein" },
   { href: "/members", label: "Mitglieder", icon: Users, section: "Verein" },
   { href: "/registrations", label: "Anmeldungen", icon: UserPlus, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
+  { href: "/checkin", label: "Ausweis & Check-in", icon: QrCode, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
   { href: "/training-schedules", label: "Trainingsplan", icon: CalendarClock, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
   { href: "/attendance", label: "Anwesenheit", icon: ClipboardCheck, section: "Sport", roles: ["präsident", "admin", "trainer"] },
   { href: "/matches", label: "Spiele", icon: Trophy, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire", "spieler"] },

@@ -6,6 +6,8 @@ interface AuthCtx {
   user: PublicUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  cardLogin: (cardId: string) => Promise<{ name: string; clubFunction?: string }>;
+  adminLogin: (password: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   setUser: (u: PublicUser | null) => void;
@@ -53,6 +55,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userdata as PublicUser);
   };
 
+  const cardLogin = async (cardId: string) => {
+    const res = await apiRequest("POST", "/api/auth/card-login", { cardId });
+    const data = await res.json();
+    if (data._token) setAuthToken(data._token);
+    const { _token, memberName, clubFunction, ...userdata } = data;
+    setUser(userdata as PublicUser);
+    return { name: memberName as string, clubFunction: clubFunction as string | undefined };
+  };
+
+  const adminLogin = async (password: string) => {
+    const res = await apiRequest("POST", "/api/auth/admin-login", { password });
+    const data = await res.json();
+    if (data._token) setAuthToken(data._token);
+    const { _token, ...userdata } = data;
+    setUser(userdata as PublicUser);
+  };
+
   const logout = async () => {
     try { await apiRequest("POST", "/api/auth/logout"); } catch {}
     setAuthToken(null);
@@ -61,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ user, loading, login, logout, refresh, setUser }}>
+    <Ctx.Provider value={{ user, loading, login, cardLogin, adminLogin, logout, refresh, setUser }}>
       {children}
     </Ctx.Provider>
   );

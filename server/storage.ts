@@ -287,7 +287,18 @@ function init() {
       membership_status TEXT NOT NULL DEFAULT 'active',
       photo_url TEXT,
       face_descriptor TEXT,
-      user_id INTEGER
+      user_id INTEGER,
+      card_id TEXT,
+      club_function TEXT,
+      nationality TEXT,
+      internal_category TEXT,
+      flh_category TEXT,
+      team_category TEXT,
+      pass_number TEXT,
+      matricule TEXT,
+      medico_next TEXT,
+      join_date TEXT,
+      raw_data TEXT
     );
     CREATE TABLE IF NOT EXISTS attendance (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -849,6 +860,17 @@ function init() {
       method TEXT DEFAULT "qr",
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS member_cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      card_number TEXT NOT NULL UNIQUE,
+      qr_code_data TEXT NOT NULL,
+      valid_from TEXT NOT NULL,
+      valid_until TEXT,
+      active INTEGER NOT NULL DEFAULT 1,
+      issued_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      issued_by INTEGER
+    );
     CREATE TABLE IF NOT EXISTS lineups (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       match_id INTEGER NOT NULL,
@@ -896,6 +918,43 @@ function init() {
 }
 init();
 
+// ─── Lightweight migrations (idempotent) ────────────────
+// SQLite CREATE TABLE IF NOT EXISTS does not add new columns to existing tables,
+// so we add them defensively here for already-existing databases.
+function safeAddColumn(table: string, column: string, definition: string) {
+  try {
+    const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (!cols.some((c) => c.name === column)) {
+      sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    }
+  } catch (e) {
+    console.error(`[migrate] failed to add ${table}.${column}:`, e);
+  }
+}
+
+function runMigrations() {
+  safeAddColumn("members", "card_id", "TEXT");
+  safeAddColumn("members", "club_function", "TEXT");
+  safeAddColumn("members", "nationality", "TEXT");
+  safeAddColumn("members", "internal_category", "TEXT");
+  safeAddColumn("members", "flh_category", "TEXT");
+  safeAddColumn("members", "team_category", "TEXT");
+  safeAddColumn("members", "pass_number", "TEXT");
+  safeAddColumn("members", "matricule", "TEXT");
+  safeAddColumn("members", "medico_next", "TEXT");
+  safeAddColumn("members", "join_date", "TEXT");
+  safeAddColumn("members", "raw_data", "TEXT");
+  // Unique index for card_id (allows multiple NULLs)
+  try {
+    sqlite.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_members_card_id ON members(card_id) WHERE card_id IS NOT NULL`
+    );
+  } catch (e) {
+    console.error("[migrate] failed to create idx_members_card_id:", e);
+  }
+}
+runMigrations();
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -916,6 +975,7 @@ export interface IStorage {
   listMembers(): Promise<Member[]>;
   listMembersByTeam(teamId: number): Promise<Member[]>;
   getMember(id: number): Promise<Member | undefined>;
+  getMemberByCardId(cardId: string): Promise<Member | undefined>;
   createMember(member: InsertMember): Promise<Member>;
   updateMember(id: number, data: Partial<InsertMember>): Promise<Member | undefined>;
   deleteMember(id: number): Promise<void>;
@@ -1387,6 +1447,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(members).where(eq(members.teamId, teamId)).all();
   }
   async getMember(id: number) { return db.select().from(members).where(eq(members.id, id)).get(); }
+  async getMemberByCardId(cardId: string) { return db.select().from(members).where(eq(members.cardId, cardId)).get(); }
   async createMember(m: InsertMember) { return db.insert(members).values(m).returning().get(); }
   async updateMember(id: number, data: Partial<InsertMember>) {
     return db.update(members).set(data).where(eq(members.id, id)).returning().get();
@@ -3776,4 +3837,32 @@ export async function seedIfEmpty() {
   }
 
   console.log("[seed] initial data seeded + archive season 2024/25");
+}
+
+// ─── Test-Random-Nos (Demo) ─────────────────────────────
+// Idempotent: legt 5 Test-Mitglieder mit festen Random-Nos je Funktion an,
+// damit man den Karten-Login pro Rolle ausprobieren kann.
+export const TEST_CARDS: { cardId: string; name: string; clubFunction: string }[] = [
+  { cardId: "ABCDEFG1", name: "TEST Admin", clubFunction: "Admin" },
+  { cardId: "ABCDEFG2", name: "TEST Präsident", clubFunction: "Comité" },
+  { cardId: "ABCDEFG3", name: "TEST Trainer", clubFunction: "Entraîneur" },
+  { cardId: "ABCDEFG4", name: "TEST Spieler", clubFunction: "Spieler" },
+  { cardId: "ABCDEFG5", name: "TEST Mitglied", clubFunction: "Mitglied" },
+];
+
+export function seedTestCards() {
+  for (const c of TEST_CARDS) {
+    const existing = db.select().from(members).where(eq(members.cardId, c.cardId)).get();
+    if (!existing) {
+      db.insert(members)
+        .values({
+          name: c.name,
+          membershipStatus: "active",
+          cardId: c.cardId,
+          clubFunction: c.clubFunction,
+        })
+        .run();
+    }
+  }
+  console.log("[seed] test random-no cards ensured (ABCDEFG1–5)");
 }
