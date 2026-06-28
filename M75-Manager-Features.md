@@ -15,6 +15,68 @@
 
 ---
 
+## Status-Legende
+
+- ✅ **Verfügbar** — voll ausgebautes Modul, im Einsatz nutzbar.
+- 🟡 **Basis** — Modul vorhanden und nutzbar, aber bewusst einfach (einfaches Anlegen/Liste/Löschen); Ausbau folgt.
+- 🔄 **In Arbeit** — teilweise umgesetzt.
+- 📋 **Geplant** — noch nicht als Oberfläche vorhanden (teils Datenmodell bereits vorbereitet).
+
+---
+
+## Module auf einen Blick
+
+Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschnitte weiter unten beschreiben den **Zielumfang**; die Symbole hier zeigen den **aktuellen Ausbaugrad**.
+
+**Mitglieder & Teams**
+- ✅ Dashboard — Übersicht & Schnellzugriffe
+- ✅ Mitglieder (+ Mitglieder-Detail)
+- ✅ Mitglieder-Import (Excel 2025/26) · *neu*
+- ✅ Teams
+- ✅ Profil (eigene Daten, Passwort)
+
+**Spielbetrieb & Statistik**
+- ✅ Spiele (Matches) inkl. FLH-Import
+- ✅ Statistiken
+- ✅ Spielerstatistiken / Top-Scorer
+- ✅ Aufstellungen / Nominierungen
+
+**Trainings & Anwesenheit**
+- ✅ Trainingspläne
+- ✅ Anwesenheit
+- ✅ Check-In / Karten-Scan (QR) · *neu*
+
+**Organisation**
+- ✅ Kalender & Events
+- ✅ Sitzungen (Meetings)
+- ✅ Dokumente
+- ✅ Anmeldungen (intern) + öffentliches Anmeldeformular
+- 🟡 Dienste (Duties)
+- 🟡 Hallen / Facilities
+- 🟡 Warteliste
+- 🟡 DSGVO-Tools
+
+**Finanzen**
+- ✅ Finanzen (Konten/Buchungen)
+- ✅ Beiträge (Fees)
+- 🟡 Budget
+
+**Kommunikation**
+- ✅ Ankündigungen
+- ✅ Chat
+- ✅ E-Mail-Einstellungen
+- 🟡 Newsletter
+
+**Außendarstellung**
+- ✅ Website-Hub (mersch75.lu verwalten) · *neu*
+- 🟡 Galerie
+- 🟡 Sponsoren
+- 🟡 Shop
+
+> Mehrsprachigkeit (DE/FR/LU/EN/PT) ist über `i18n` bereits aktiv und wird modulweise ergänzt (🔄).
+
+---
+
 ## 1. Authentifizierung & Login
 
 ### 1.1 Passwort-Login
@@ -336,16 +398,32 @@ GET    /api/standings?competition=League&season=2025/26
 
 ---
 
-## Zukünftige Features (Roadmap)
+## Geplant & in Arbeit
 
-1. ✅ Magic Link Authentication
-2. ✅ FLH Import
-3. ✅ Spielerstatistiken
-4. 🔄 SMS Gateway (Mixvoip) - wartet auf Zugangsdaten
-5. 🔄 Poster Generator Integration
-6. 🔄 Live Center Integration
-7. 🔄 Mobile App (PWA)
-8. 🔄 Mehrsprachigkeit (DE/FR/LU)
+### 🔄 In Arbeit
+- **Mehrsprachigkeit (DE/FR/LU/EN/PT)** — `i18n` aktiv, wird modulweise vervollständigt.
+- **Ausbau der 🟡-Basis-Module** (Budget, Galerie, Sponsoren, Shop, Dienste, Hallen, Warteliste, Newsletter, DSGVO-Tools).
+
+### 📋 Geplant — Integrationen
+- **Poster-Generator** (Spielplakate/Social-Media) — Anbindung an das Website-Tool.
+- **Live-Center** (Live-Ergebnisse via handball4all.de).
+- **SMS-Gateway (Mixvoip)** für Magic-Link per SMS — wartet auf Zugangsdaten.
+- **Mobile App / PWA**.
+
+### � Geplant — Datenmodell vorbereitet, Oberfläche folgt
+Folgende Bereiche sind in der Datenbank bereits angelegt, haben aber noch **keine eigene Oberfläche**:
+- **Archiv** (Saisons, Teams, Spiele, Events, Exporte)
+- **Schiedsrichter-Einsätze** (Referees / Assignments)
+- **Material & Inventar** (Inventory / Loans)
+- **Verletzungen & Reha**
+- **Abstimmungen / Umfragen** (Polls)
+- **Gegner-Scouting & Spielberichte** (Opponents / Match-Reports)
+- **Fahrgemeinschaften** (Carpools)
+- **Fan-Content & Live-Ticker**
+- **Externe Kalender-Synchronisation** (SEPA-Mandate sind in Finanzen/Beiträgen bereits angelegt)
+
+### ✅ Bereits erledigt (Auswahl)
+Magic-Link-Login · Random-No-/Admin-Login · FLH-Import · Spieler-/Ligastatistiken · Mitglieder-Import 2025/26 · Website-Hub · Check-In/Karten-Scan.
 
 ---
 
