@@ -1,6 +1,17 @@
 # M75 Manager - Funktionsübersicht
 
-## Stand: Mai 2026
+## Stand: Juni 2026
+
+---
+
+## Änderungen Juni 2026 (Zusammenfassung)
+
+- **Login erweitert:** Random-No-/Karten-Login (Login per Karten-ID) und Admin-Login (Punkt im Logo, `ADMIN_PASSWORD`).
+- **Mitglieder-Import 2025/26:** Excel-Import inkl. Karten-IDs; neue Felder `cardId`, `clubFunction`, `licenseNumber`, `rawData`.
+- **Website-Hub:** Verwaltung von mersch75.lu im Manager (Seitenliste, Live-Vorschau, GitHub-Editor).
+- **Check-In:** QR-Scan der Mitgliederkarten mit Status (gültig/duplikat/gesperrt/abgelaufen).
+
+> Details siehe Abschnitte 1, 7, 14 und 15.
 
 ---
 
@@ -11,7 +22,21 @@
 - Rollenbasierte Berechtigungen
 - Demo-Zugänge verfügbar
 
-### 1.2 Magic Link (Passwordless Login)
+### 1.2 Random-No / Karten-Login (Neu — Juni 2026)
+Login ohne Passwort über die **Random-No** (Karten-ID, z. B. `LNS6S2DM`) aus der Mitgliederliste.
+
+- `POST /api/auth/identify-card` — zeigt nur **Name + Vereinsfunktion** zur Bestätigung (kein Login).
+- `POST /api/auth/card-login` — meldet an: findet/legt den verknüpften User an und startet die Session.
+- **Funktion → App-Rolle** (Test-Mapping):
+  - `Comité` → präsident · `Officiel` → secrétaire · `Entraîneur` → trainer · `Arbitre`/`Spieler`/`Mitglied` → spieler · `Admin` → admin
+- **Sicherheitshinweis:** Erhöhte Rollen (Comité/Officiel/Trainer) sollten in Produktion eine 2. Stufe (Passwort/Code) erfordern.
+
+### 1.3 Admin-Login (Neu — Juni 2026)
+- Versteckter Einstieg über den **Punkt im Logo**.
+- Passwort-geschützt über Umgebungsvariable `ADMIN_PASSWORD` (Default `mersch75`).
+- `POST /api/auth/admin-login` → legt bei Bedarf `admin@mersch75.lu` an und startet die Session.
+
+### 1.4 Magic Link (Passwordless Login)
 **Neu implementiert!**
 
 #### Per Email
@@ -143,6 +168,20 @@ https://spo.handball4all.de/misc/sboPublicReports.php?sGID=3424376
 - Kontaktdaten
 - Rollen innerhalb des Teams
 
+### 7.3 Mitglieder-Import 2025/26 (Neu — Juni 2026)
+Einmal-Import der offiziellen Mitgliederliste (Excel) inkl. Karten-IDs in `data.db`.
+
+- Skript: `scripts/import_members_2025_2026.ts`
+- Aufruf: `npx tsx scripts/import_members_2025_2026.ts "/Pfad/zur/MEMBERSLESCHT.xlsx"`
+- **Idempotent:** Abgleich über `card_id` (Random-No) — vorhandene Einträge werden aktualisiert, neue angelegt; Demo-Mitglieder ohne `card_id` bleiben unangetastet.
+- Robust: erkennt Spalten automatisch, bereinigt Platzhalter (`///`, `NA`), parst Geburtsdaten (DD.MM.YYYY & Excel-Serial).
+
+### 7.4 Erweiterte Mitglieder-Felder (Neu — Juni 2026)
+- `licenseNumber` — FLH-Lizenznummer
+- `cardId` — Random-No / Karten-ID (z. B. `LNS6S2DM`)
+- `clubFunction` — Vereinsfunktion (Mitglied, Spieler, Comité, Officiel, Entraîneur …)
+- `rawData` — JSON aller Originalspalten der Excel (Audit/Nachvollziehbarkeit)
+
 ---
 
 ## 8. Kalender & Events
@@ -222,14 +261,40 @@ https://spo.handball4all.de/misc/sboPublicReports.php?sGID=3424376
 
 ---
 
+## 14. Website-Verwaltung (Hub) (Neu — Juni 2026)
+
+Verwaltung der öffentlichen Website **mersch75.lu** direkt aus dem Manager (`client/src/pages/Website.tsx`).
+
+- **Seitenliste** aller Website-Seiten (Startseite, News, Live-Center, Intern, Galerie …).
+- **Live-Vorschau** der ausgewählten Seite per iframe (mit Neu-laden-Button).
+- **„Diese Seite bearbeiten"** → öffnet den **GitHub-Editor** (`/edit/main/<datei>`); nach Commit veröffentlicht GitHub Pages automatisch.
+- Schnellzugriffe: Website öffnen, GitHub-Repo, Poster-Generator.
+- Repo: `Netjogger58/mersch75test.github.io` · Branch `main`.
+
+> Hinweis: Die Website (`mersch75.lu`) und die Manager-App (`Vereins-OS`) sind **zwei getrennte GitHub-Repos** und werden jeweils einzeln gepflegt/deployt.
+
+---
+
+## 15. Check-In / Mitgliederkarten (Neu — Juni 2026)
+
+Einlass-/Anwesenheits-Check per **QR-Code-Scan** der Mitgliederkarten (`client/src/pages/CheckIn.tsx`, Lib `jsQR`).
+
+- **Kamera-Scan** oder manuelle Eingabe der Kartennummer.
+- Status-Rückmeldung: **Gültig · Bereits da (Duplikat) · Unbekannt · Gesperrt · Abgelaufen · Ungültig**.
+- Karten-Daten: `cardNumber`, `qrCodeData`, `validFrom`/`validUntil`, `active`, verknüpfter User.
+- Auswahl pro **Event** möglich; Export der Check-in-Liste.
+
+---
+
 ## Technische Details
 
 ### Backend
 - **Framework:** Node.js + Express
 - **Sprache:** TypeScript
 - **ORM:** Drizzle ORM
-- **Datenbank:** SQLite (data.db)
-- **Auth:** Session-based + Magic Links
+- **Datenbank:** SQLite (`data.db`, better-sqlite3)
+- **Auth:** Session-based (Cookie + Bearer-Token) · Passwort · Random-No/Karten-Login · Admin-Login · Magic Links
+- **Import/Scan:** xlsx (Mitglieder-Import) · jsQR (Karten-Scan)
 
 ### Frontend
 - **Framework:** React
@@ -242,6 +307,14 @@ https://spo.handball4all.de/misc/sboPublicReports.php?sGID=3424376
 
 ```
 # Auth
+POST   /api/auth/login
+POST   /api/auth/logout
+GET    /api/auth/me
+POST   /api/auth/identify-card     # Random-No: Name+Funktion anzeigen
+POST   /api/auth/card-login        # Random-No: einloggen
+POST   /api/auth/admin-login       # Admin (Punkt im Logo)
+PATCH  /api/auth/password
+PATCH  /api/auth/profile
 POST   /api/auth/magic-link
 GET    /api/auth/verify-magic-link
 
@@ -287,4 +360,4 @@ GET    /api/standings?competition=League&season=2025/26
 
 ---
 
-*Dokumentation erstellt: Mai 2026*
+*Dokumentation erstellt: Mai 2026 · Aktualisiert: Juni 2026 (Random-No-/Admin-Login, Website-Hub, Mitglieder-Import 2025/26, Check-In)*
