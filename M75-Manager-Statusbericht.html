@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<title>Vereins-OS / M75-Manager — Statusbericht</title>
+<style>
+  :root { --blue:#002F65; --yellow:#FFDE00; --ink:#1c2530; --muted:#5b6675; --line:#e4e8ee; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink); line-height: 1.55; font-size: 12px; margin: 0; padding: 0;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 8px 0; }
+  h1 { font-size: 24px; color: var(--blue); border-bottom: 4px solid var(--yellow); padding-bottom: 8px; margin: 24px 0 12px; }
+  h2 { font-size: 18px; color: var(--blue); margin: 26px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h3 { font-size: 14px; color: var(--ink); margin: 18px 0 6px; }
+  p { margin: 8px 0; }
+  a { color: var(--blue); }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; background: #f2f4f7; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  pre { background: #0f1b2d; color: #e7eef7; padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 11px; line-height: 1.45; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  blockquote { margin: 10px 0; padding: 8px 14px; background: #fffbe6; border-left: 4px solid var(--yellow); color: #4a4a2e; border-radius: 0 6px 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--blue); color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #f7f9fc; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
+  @page { size: A4; margin: 16mm 14mm; }
+  h1, h2, h3 { page-break-after: avoid; }
+  table, pre, blockquote { page-break-inside: avoid; }
+</style>
+</head>
+<body><div class="wrap">
+<h1>Vereins-OS / M75-Manager — Statusbericht &amp; Ausbau-Empfehlungen</h1>
+<blockquote><strong>Erstellt:</strong> 29. Juni 2026 · <strong>Autor:</strong> Cascade (KI-Assistenz) · <strong>Basis:</strong> Code-Analyse des Repos <code>Netjogger58/Vereins-OS</code> <strong>Zweck:</strong> Ehrlicher Ist-Zustand (fertig / ausbaufähig / nur Idee), Bewertung von Struktur, Komplexität, Aufbau &amp; Visuellem — plus konkrete Anregungen inkl. KI-/Automatisierungs-/Monitoring-Konzept.</blockquote>
+<hr/>
+<h2>0. Kurzfazit (TL;DR)</h2>
+<p>Vereins-OS ist <strong>kein Prototyp mehr, sondern eine ernsthafte, große Anwendung</strong>: ~16.700 Zeilen App-Code, <strong>233 API-Endpunkte</strong>, <strong>80 Datenbank-Tabellen</strong>, 35 Seiten, 47 UI-Komponenten. Der <strong>handballsportliche Kern</strong> (Spiele, Statistik, FLH-Import, Teams, Mitglieder, Finanzen, Training, Check-in) ist real implementiert und nutzbar.</p>
+<p>Die wichtigste Erkenntnis: <strong>Das Datenmodell ist der Oberfläche weit voraus.</strong> Für viele geplante Module (Schiedsrichter, Verletzungen/Reha, Umfragen, Fahrgemeinschaften, Gegner-Scouting, Saison-Archiv, Live-Ticker) <strong>existieren bereits Tabellen, aber noch keine bzw. nur Platzhalter-UI</strong>. Das ist eine sehr gute Ausgangslage: der teure Teil (Schema-Design) ist gemacht.</p>
+<p>Größtes Risiko aktuell: <strong>Reife-Gefälle</strong> zwischen voll ausgebauten und Platzhalter-Seiten (9 identische 89-Zeilen-Stubs), plus operative Themen (SQLite/WAL, Demo-Passwörter, fehlende KI-/Automations-Schicht, die im Plan steht, aber noch nicht läuft).</p>
+<hr/>
+<h2>1. Kennzahlen (gemessen am Code)</h2>
+<table>
+<thead><tr><th>Metrik</th><th>Wert</th><th>Anmerkung</th></tr></thead>
+<tbody>
+<tr><td>API-Endpunkte (<code>routes.ts</code>)</td><td><strong>233</strong></td><td><code>app.get/post/put/patch/delete</code></td></tr>
+<tr><td>Datenbank-Tabellen (<code>schema.ts</code>)</td><td><strong>80</strong></td><td>Drizzle <code>sqliteTable</code></td></tr>
+<tr><td>Frontend-Seiten</td><td><strong>35</strong></td><td><code>client/src/pages/*.tsx</code></td></tr>
+<tr><td><code>useQuery</code>-Aufrufe</td><td><strong>93</strong></td><td>React-Query-Anbindung</td></tr>
+<tr><td>shadcn/ui-Komponenten</td><td><strong>47</strong></td><td><code>components/ui</code></td></tr>
+<tr><td>Backend-Code</td><td>~7.990 Zeilen</td><td><code>server/*.ts</code></td></tr>
+<tr><td>Frontend-Seiten-Code</td><td>~8.713 Zeilen</td><td>nur <code>pages/</code>, ohne UI-Lib</td></tr>
+<tr><td><code>storage.ts</code></td><td>~160 KB</td><td>zentrale Datenzugriffs-Schicht</td></tr>
+<tr><td><code>routes.ts</code></td><td>~102 KB</td><td>gesamte API</td></tr>
+<tr><td><code>schema.ts</code></td><td>~73 KB</td><td>Datenmodell</td></tr>
+</tbody></table>
+<p><strong>Einordnung:</strong> Das ist die Größenordnung eines kleinen kommerziellen SaaS, nicht eines Hobby-Projekts.</p>
+<hr/>
+<h2>2. Architektur &amp; Programmaufbau</h2>
+<h3>2.1 Schichten</h3>
+<pre><code>Browser (React SPA, Hash-Routing)
+   │  fetch + Bearer-Token / Cookie
+   ▼
+Express API (server/routes.ts, 233 Endpunkte)
+   │
+   ▼
+storage.ts  (Daten-/Geschäftslogik-Schicht, ~160 KB)
+   │  Drizzle ORM
+   ▼
+SQLite (data.db, WAL-Modus)</code></pre>
+<h3>2.2 Frontend</h3>
+<ul>
+<li><strong>React + TypeScript + Vite</strong>, Routing via <strong>wouter</strong> (<code>useHashLocation</code> → läuft auch in iframes / ohne Server-Rewrites).</li>
+<li><strong>State/Server-Cache:</strong> TanStack React Query (93 Queries, zentrale <code>queryClient</code>).</li>
+<li><strong>UI:</strong> TailwindCSS + <strong>shadcn/ui</strong> (47 Komponenten) — modernes, konsistentes Design-System.</li>
+<li><strong>i18n:</strong> <code>i18next</code> + Browser-Detector, Sprachen <strong>DE/FR/EN/LU</strong>, Persistenz in <code>localStorage</code> (<code>m75_lang</code>), Fallback DE.</li>
+<li><strong>Auth-Context:</strong> <code>lib/auth.tsx</code> mit Passwort-, Karten- (Random-No) und Admin-Login; Bearer-Token im Speicher (für iframe-Fälle).</li>
+<li><strong>Fehler-Robustheit:</strong> <strong>ErrorBoundary</strong> (neu, 29.06.) umschließt den Seiteninhalt → kein Totalabsturz mehr, Navigation bleibt nutzbar.</li>
+</ul>
+<h3>2.3 Backend</h3>
+<ul>
+<li><strong>Node.js + Express + TypeScript</strong>, Einstieg <code>server/index.ts</code>.</li>
+<li><strong>Sicherheits-Middleware</strong> (<code>security.ts</code>, ~10 KB): Rate-Limiting (100 Req/15 min), Threat-Detection, Security-Header, Audit-Logging.</li>
+<li><strong>Spezial-Module:</strong> <code>flhImport.ts</code> (handball4all.de), <code>import.ts</code> (Excel-Mitgliederimport), <code>importSboLinks.ts</code> (SBO-Berichte), <code>email.ts</code> (SMTP/Templates), <code>auth.ts</code>.</li>
+<li><strong>ORM:</strong> Drizzle + better-sqlite3; <code>drizzle-kit push</code> für Schema-Sync.</li>
+</ul>
+<h3>2.4 Betrieb / DevOps</h3>
+<ul>
+<li><strong>Docker + docker-compose</strong>, <code>Dockerfile</code>, <code>README-HETZNER.md</code> → Ziel-Hosting <strong>Hetzner Cloud</strong>.</li>
+<li><strong>Build:</strong> <code>tsx script/build.ts</code>; Start <code>node dist/index.cjs</code>.</li>
+<li><strong>QA:</strong> statische Screenshots (<code>qa-*.png</code>) vorhanden — noch keine automatisierten E2E-Tests.</li>
+</ul>
+<h3>2.5 Bewertung Aufbau</h3>
+<ul>
+<li><strong>Stark:</strong> klare Schichtung, eine zentrale Storage-Schicht, typisiertes Schema, konsequentes UI-System, durchdachte Auth-Wege, Security-Middleware vorhanden.</li>
+<li><strong>Schwächen / Schulden:</strong></li>
+<li><code>routes.ts</code> (102 KB) und <code>storage.ts</code> (160 KB) sind <strong>Monolith-Dateien</strong> → schwer wartbar; sollten modular nach Domäne aufgeteilt werden.</li>
+<li><strong>SQLite</strong> ist für den Pilot ok, aber <code>data.db-wal</code> (~4 MB) zeigt aktive Last; für Mehr-Vereins-Betrieb ist die geplante <strong>PostgreSQL-Migration</strong> nötig.</li>
+<li><strong>Keine automatisierten Tests</strong> (nur Screenshots) → Regressionsrisiko bei 233 Endpunkten.</li>
+<li><strong>Demo-Passwörter</strong> stehen im Klartext in der Doku → vor Produktiv zwingend rotieren.</li>
+</ul>
+<hr/>
+<h2>3. Visuelles Konzept</h2>
+<ul>
+<li><strong>Design-Sprache:</strong> iOS-/„Apple-style", aufgeräumt: abgerundete Karten (<code>rounded-2xl</code>), Blur-Header (<code>backdrop-blur-xl</code>), schwebende Sidebar mit Verlauf (<code>#002F65 → #00193a</code>), Akzentfarbe <strong>Vereinsgelb <code>#FFDE00</code></strong>.</li>
+<li><strong>Layout:</strong> feste Desktop-Sidebar (268 px) mit Sektionen <em>Übersicht / Verein / Sport / Verwaltung</em>; mobil <strong>Sheet-Menü + iOS-Tab-Bar</strong> unten; sticky Header mit Seitentitel &amp; Theme-Toggle.</li>
+<li><strong>Dark/Light Mode</strong> vorhanden (<code>lib/theme</code>).</li>
+<li><strong>Konsistenz:</strong> durch shadcn/ui sehr einheitlich (Buttons, Cards, Inputs, Toasts, Tooltips).</li>
+<li><strong>Verbesserungspotenzial:</strong></li>
+<li>Sidebar wird mit aktuell ~30 Einträgen lang → <strong>Favoriten/„Zuletzt genutzt"</strong> oder kollabierbare Sektionen.</li>
+<li>Einheitliche <strong>Empty-States &amp; Skeletons</strong> (heute teils nur „Lädt…"-Text).</li>
+<li><strong>Globale Suche</strong> (Command-Palette, ⌘K) über Mitglieder/Spiele/Dokumente.</li>
+<li>Rollen-spezifische <strong>Dashboard-Widgets</strong> (Spieler sieht Spielplan, Kassenwart sieht offene Beiträge).</li>
+</ul>
+<hr/>
+<h2>4. Modul-Status: fertig / ausbaufähig / nur Idee</h2>
+<p>Legende: ✅ <strong>Fertig &amp; nutzbar</strong> · 🟦 <strong>Funktioniert, ausbaufähig</strong> · 🟡 <strong>Platzhalter/Stub</strong> · 🧩 <strong>Nur Datenmodell (Tabelle ohne UI)</strong> · 📋 <strong>Nur Plan/Idee</strong></p>
+<h3>4.1 ✅ Fertig &amp; nutzbar (echter Funktionsumfang, große Seiten)</h3>
+<table>
+<thead><tr><th>Modul</th><th>Datei</th><th>~Zeilen</th></tr></thead>
+<tbody>
+<tr><td>Login (3 Wege)</td><td><code>Login.tsx</code></td><td>412</td></tr>
+<tr><td>Spiele (inkl. FLH-Import)</td><td><code>Matches.tsx</code></td><td>587</td></tr>
+<tr><td>Beiträge</td><td><code>Fees.tsx</code></td><td>529</td></tr>
+<tr><td>Check-in / Karten-Scan (QR)</td><td><code>CheckIn.tsx</code></td><td>493</td></tr>
+<tr><td>Trainingsplan</td><td><code>TrainingSchedules.tsx</code></td><td>413</td></tr>
+<tr><td>Statistiken / Berichte</td><td><code>Statistics.tsx</code></td><td>396</td></tr>
+<tr><td>Anwesenheit</td><td><code>Attendance.tsx</code></td><td>391</td></tr>
+<tr><td>Kalender (ICS)</td><td><code>Calendar.tsx</code></td><td>361</td></tr>
+<tr><td>Dokumente</td><td><code>Documents.tsx</code></td><td>328</td></tr>
+<tr><td>Mitglieder-Import (Excel)</td><td><code>ImportMembers.tsx</code></td><td>326</td></tr>
+<tr><td>E-Mail-Einstellungen</td><td><code>EmailSettings.tsx</code></td><td>312</td></tr>
+<tr><td>Spielerstatistiken</td><td><code>PlayerStatistics.tsx</code></td><td>309</td></tr>
+<tr><td>Finanzen</td><td><code>Finance.tsx</code></td><td>300</td></tr>
+</tbody></table>
+<h3>4.2 🟦 Funktioniert, ausbaufähig (solide, aber Luft nach oben)</h3>
+<table>
+<thead><tr><th>Modul</th><th>Datei</th><th>~Zeilen</th><th>Ausbau-Idee</th></tr></thead>
+<tbody>
+<tr><td>Anmeldungen (intern)</td><td><code>Registrations.tsx</code></td><td>292</td><td>Workflow/Statuswechsel, E-Mail-Trigger</td></tr>
+<tr><td>Mitglied-Detail</td><td><code>MemberDetail.tsx</code></td><td>289</td><td>Lizenz/INAPS/CSMS-Tab, Historie</td></tr>
+<tr><td>Nominierungen</td><td><code>Nominations.tsx</code></td><td>280</td><td>Drag&amp;Drop-Aufstellung, Verfügbarkeits-Sync</td></tr>
+<tr><td>Ankündigungen</td><td><code>Announcements.tsx</code></td><td>250</td><td>Zielgruppen, Push/Matrix-Ausspielung</td></tr>
+<tr><td>Chat</td><td><code>Chat.tsx</code></td><td>247</td><td>echte Matrix-Anbindung statt interner Tabelle</td></tr>
+<tr><td>Mitglieder</td><td><code>Members.tsx</code></td><td>228</td><td>Gruppen-/Mail-Listen-Generierung</td></tr>
+<tr><td>Öffentl. Anmeldung</td><td><code>Registration.tsx</code></td><td>201</td><td>Bezahlung, Bestätigungs-Flow</td></tr>
+<tr><td>Profil</td><td><code>Profile.tsx</code></td><td>201</td><td>2FA, Benachrichtigungs-Einstellungen</td></tr>
+<tr><td>Dashboard</td><td><code>Dashboard.tsx</code></td><td>181</td><td>rollenbasierte Widgets, KPIs</td></tr>
+<tr><td>Website-Hub</td><td><code>Website.tsx</code></td><td>145</td><td>Live-Daten-Widgets statt nur iframe</td></tr>
+<tr><td>Willkommensmappe</td><td><code>WelcomeMappe.tsx</code></td><td>148</td><td>direkte PDF-Erzeugung, Versand an Neu-Mitglied</td></tr>
+<tr><td>Teams / Meetings</td><td><code>Teams.tsx</code> / <code>Meetings.tsx</code></td><td>134 / 138</td><td>Staffeln, Videokonferenz-Links</td></tr>
+</tbody></table>
+<h3>4.3 🟡 Platzhalter-Stubs (generisches CRUD-Template, je 89 Zeilen)</h3>
+<p>Identische Vorlage (Liste + Anlegen + Löschen, Felder <em>Name/Beschreibung</em>) — Funktion „angedeutet", aber <strong>fachlich noch leer</strong>:</p>
+<p><code>Budget</code> · <code>Duties</code> (Dienste) · <code>Facilities</code> (Hallen) · <code>Gallery</code> · <code>GdprTools</code> · <code>Newsletter</code> · <code>Shop</code> · <code>Sponsors</code> · <code>Waitlist</code></p>
+<blockquote>Diese sind die wahrscheinlichsten Kandidaten für „noch nicht ausgebaut". Dank ErrorBoundary führen sie nicht mehr zum weißen Bildschirm.</blockquote>
+<h3>4.4 🧩 Nur Datenmodell vorhanden (Tabelle existiert, UI fehlt)</h3>
+<p>Aus <code>schema.ts</code> — bereits modelliert, aber <strong>ohne eigene Oberfläche</strong>:</p>
+<p><code>referees</code>, <code>referee_assignments</code> (Schiedsrichter) · <code>inventory_items</code>, <code>inventory_loans</code> (Material) · <code>injuries</code>, <code>rehab_sessions</code> (Verletzung/Reha) · <code>polls</code>, <code>poll_options</code>, <code>poll_votes</code> (Umfragen) · <code>carpools</code>, <code>carpool_passengers</code> (Fahrgemeinschaften) · <code>opponents</code>, <code>opponent_history</code>, <code>match_reports</code> (Scouting) · <code>duty_rosters</code>, <code>duty_swaps</code> (Dienstplan-Tausch) · <code>fan_content</code>, <code>live_ticker</code> · <code>external_calendars</code>, <code>calendar_sync_logs</code> · <code>archive_seasons</code>, <code>archive_teams</code>, <code>archive_members</code>, <code>archive_matches</code>, <code>archive_events</code>, <code>archive_exports</code> (Saison-Archiv) · <code>sepa_mandates</code>, <code>sepa_transactions</code> · <code>family_links</code>, <code>document_expiries</code>, <code>document_signatures</code>, <code>user_notifications</code>.</p>
+<blockquote><strong>Empfehlung:</strong> Diese Module sind „halbfertig zum Nulltarif" — UI darauf zu setzen ist schnell und liefert großen Mehrwert.</blockquote>
+<h3>4.5 📋 Nur Plan/Idee (kein Code)</h3>
+<p>Aus <code>PROJEKTPLAN.md</code>: Matrix/Element-Server, n8n-Workflows, Ollama-KI/RAG, Odysseus-Browser-Automation, PPTX-Generator, öffentliche Website-API, PWA/Push, Uptime-Kuma-Monitoring, Mautrix-Bridges (WhatsApp/Signal), Nextcloud, PostgreSQL-Migration.</p>
+<hr/>
+<h2>5. Komplexitätsbewertung</h2>
+<table>
+<thead><tr><th>Dimension</th><th>Bewertung</th><th>Begründung</th></tr></thead>
+<tbody>
+<tr><td><strong>Funktionsumfang</strong></td><td>Hoch</td><td>35 Seiten, 80 Tabellen, 233 Endpunkte</td></tr>
+<tr><td><strong>Code-Qualität (Struktur)</strong></td><td>Mittel–Hoch</td><td>gute Schichtung, aber Monolith-Dateien</td></tr>
+<tr><td><strong>Wartbarkeit</strong></td><td>Mittel</td><td><code>routes.ts</code>/<code>storage.ts</code> zu groß; keine Tests</td></tr>
+<tr><td><strong>Skalierbarkeit</strong></td><td>Mittel</td><td>SQLite-Limit; PostgreSQL geplant</td></tr>
+<tr><td><strong>Sicherheit</strong></td><td>Mittel–Hoch</td><td>Middleware vorhanden; Demo-PW &amp; Secrets-Handling offen</td></tr>
+<tr><td><strong>Reifegrad UI</strong></td><td>Gemischt</td><td>Top-Seiten vs. 9 leere Stubs</td></tr>
+<tr><td><strong>Doku</strong></td><td>Sehr hoch</td><td>PROJEKTPLAN + Features-Doku ungewöhnlich gut</td></tr>
+</tbody></table>
+<hr/>
+<h2>6. Meine Anregungen (priorisiert)</h2>
+<h3>6.1 Sofort / geringer Aufwand</h3>
+<ol>
+<li><strong>Stubs „ehrlich" kennzeichnen:</strong> Platzhalter-Seiten mit Badge „In Entwicklung" + kurzer Beschreibung, was kommt (statt scheinbar funktionierendem CRUD).</li>
+<li><strong>Globale ⌘K-Suche</strong> über Mitglieder/Spiele/Dokumente.</li>
+<li><strong>Rollen-Dashboard:</strong> Widgets je Rolle (offene Beiträge, nächstes Spiel, fällige Lizenzen/INAPS).</li>
+<li><strong>Einheitliche Empty-States &amp; Skeleton-Loader.</strong></li>
+<li><strong>Health-Endpoint</strong> <code>GET /api/health</code> (DB-Ping, Version, Uptime) als Basis fürs Monitoring.</li>
+</ol>
+<h3>6.2 Mittlerer Aufwand (großer Hebel, da Tabellen schon da)</h3>
+<ol>
+<li><strong>Saison-Archiv-UI</strong> auf <code>archive_*</code> (einfrieren, abrufen, ZIP/PDF/Excel-Export).</li>
+<li><strong>Schiedsrichter-Modul</strong> auf <code>referees</code>/<code>referee_assignments</code>.</li>
+<li><strong>Verletzungs-/Reha-Tracker</strong> (<code>injuries</code>/<code>rehab_sessions</code>) inkl. CSMS-Schadensfall-Workflow.</li>
+<li><strong>Umfragen/Abstimmungen</strong> (<code>polls</code>) — z. B. Termin-/Trikot-Voting.</li>
+<li><strong>Fahrgemeinschaften</strong> (<code>carpools</code>) für Auswärtsspiele.</li>
+<li><strong>Benachrichtigungs-Zentrum</strong> auf <code>user_notifications</code> (In-App + E-Mail + später Push/Matrix).</li>
+</ol>
+<h3>6.3 Strategisch</h3>
+<ol>
+<li><strong>Öffentliche REST-API</strong> (read-only) + Widgets für mersch75.lu (Tabelle, nächste Spiele, Torschützen) — verbindet App &amp; Website automatisch.</li>
+<li><strong>PWA</strong> (installierbar, offline Spielplan, Push).</li>
+<li><strong>Modularisierung</strong> von <code>routes.ts</code>/<code>storage.ts</code> nach Domänen (Router pro Bereich).</li>
+<li><strong>Automatisierte Tests</strong> (Vitest + Playwright) für die kritischen Flows.</li>
+<li><strong>Secrets-Management</strong> (.env + verschlüsselte Felder), Demo-PW raus.</li>
+</ol>
+<hr/>
+<h2>7. KI-, Automatisierungs- &amp; Monitoring-Konzept</h2>
+<blockquote>Leitlinie aus dem Projekt: <strong>Open Source first, selbst-gehostet, kostenlos, datenschutzkonform (RGPD).</strong> KI-Daten sollen den Hetzner-Server möglichst <strong>nicht verlassen</strong>.</blockquote>
+<h3>7.1 Bausteine &amp; ehrliche Einordnung der genannten Tools</h3>
+<table>
+<thead><tr><th>Genannt</th><th>Was es wirklich ist</th><th>Rolle in Vereins-OS</th></tr></thead>
+<tbody>
+<tr><td><strong>Ollama</strong></td><td>Lokale LLM-Laufzeit (llama3, mistral, phi3, qwen, nomic-embed)</td><td><strong>Kern der lokalen KI</strong> — Chat, RAG, Textgenerierung, Embeddings</td></tr>
+<tr><td><strong>Hermes</strong></td><td>(a) im Plan: eigener Orchestrierungs-/Monitoring-Layer; (b) <strong>Nous-Hermes</strong>-Modelle (LLM-Familie, läuft auf Ollama)</td><td>(a) Monitoring-Router, (b) konkretes Modell <code>hermes3</code> als Assistent-Modell</td></tr>
+<tr><td><strong>Matrix</strong></td><td>Offenes, föderiertes, E2E-verschlüsseltes Chat-Protokoll (Server: Synapse)</td><td><strong>Selbst-gehostete Kommunikations-Zentrale</strong>, Bot-Ausspielung</td></tr>
+<tr><td><strong>Element</strong></td><td>Offizieller <strong>Matrix-Client</strong> (Web/Mobile)</td><td>Chat-Frontend für Mitglieder</td></tr>
+<tr><td><strong>„Elementor"</strong></td><td>⚠️ Eigentlich ein <strong>WordPress-Page-Builder</strong> — passt nicht zu einer React-App</td><td>Vermutlich <strong>Element</strong> gemeint; Elementor nur relevant, falls die Website je auf WordPress liefe</td></tr>
+<tr><td><strong>„openclaw"</strong></td><td>⚠️ <strong>Kein bekanntes KI-Tool</strong> (OpenClaw = Spiel-Engine-Reimplementierung)</td><td><strong>Klärungsbedarf.</strong> Wahrscheinlich gemeint ist eines von: <strong>Open WebUI</strong> (Chat-UI für Ollama), <strong>Open Interpreter</strong> (LLM führt Code/Automation aus), <strong>AnythingLLM/LibreChat</strong> (RAG-Chat), <strong>LocalAI</strong> (OpenAI-kompatible lokale API), <strong>Flowise</strong> (LLM-Flow-Builder). Siehe 7.5</td></tr>
+</tbody></table>
+<h3>7.2 Anwendungsfälle (KI)</h3>
+<ul>
+<li><strong>Regelwerk-/Versicherungs-Assistent (RAG):</strong> Fragen in DE/FR/LU über FLH-Reglemente, Vereinsstatuten, CSMS/AXA — Antwort <strong>mit Quellenangabe</strong>.</li>
+<li><strong>Spielbericht-Generator:</strong> aus Statistik automatisch einen Bericht formulieren (Entwurf, Mensch gibt frei).</li>
+<li><strong>E-Mail-/Newsletter-Entwürfe</strong> auf Knopfdruck, mehrsprachig.</li>
+<li><strong>Natürlichsprachige Datenabfrage:</strong> „Wie viele Tore hat Spieler X diese Saison?" → KI übersetzt in DB-Query (read-only, abgesichert).</li>
+<li><strong>Finanz-Anomalie-Erkennung:</strong> ungewöhnliche Buchungen/offene Beiträge melden (Monitoring-KI).</li>
+<li><strong>Onboarding-Bot:</strong> beantwortet Fragen neuer Mitglieder auf Basis der Willkommensmappe.</li>
+</ul>
+<h3>7.3 Automatisierung (n8n + Cron + Browser-Automation)</h3>
+<ul>
+<li><strong>n8n</strong> (self-hosted) als visueller Workflow-Motor: FLH-Ergebnis → DB → Matrix/E-Mail; Neumitglied → Willkommensmail → Beitragsrechnung; Saisonende → Archiv → Bericht.</li>
+<li><strong>Playwright</strong> („Odysseus"): SBO-Berichte/Live-Daten automatisch abholen, Tabellen-Screenshots für Social Media.</li>
+<li><strong>Cron-Jobs:</strong> Backups, Geburtstags-/INAPS-Erinnerungen, Wochenbericht.</li>
+</ul>
+<h3>7.4 Monitoring (der „Hermes-Layer")</h3>
+<ul>
+<li><strong>Uptime Kuma</strong> (Docker): Erreichbarkeit, Zertifikate, Heartbeats.</li>
+<li><strong>App-seitig:</strong> <code>GET /api/health</code> + Audit-Log-Auswertung; Alarme via E-Mail <strong>und</strong> Matrix-Raum <code>#monitoring</code>.</li>
+<li><strong>Optionale KI-Schicht:</strong> tägliche KI-Zusammenfassung der Logs („Was war heute auffällig?").</li>
+</ul>
+<h3>7.5 Vorgeschlagene KI-Architektur <strong>mit Update-Möglichkeit</strong> (wichtig!)</h3>
+<p>Damit Modelle/Anbieter <strong>ohne Code-Änderung</strong> wechsel- und aktualisierbar sind, ein <strong>Adapter-Muster + Admin-UI</strong>:</p>
+<p><strong>Datenmodell (neu):</strong></p>
+<pre><code>ai_providers
+├── id
+├── type           (ollama | openai | anthropic | localai | custom)
+├── label
+├── base_url       (z.B. http://localhost:11434)
+├── api_key_enc    (verschlüsselt; leer bei lokal)
+├── model          (z.B. llama3.1, hermes3, mistral)
+├── embed_model    (z.B. nomic-embed-text)
+├── enabled        (bool)
+└── is_default     (bool)
+
+ai_jobs            (Audit: Prompt, Modell, Tokens, Dauer, Nutzer, Kosten)
+ai_documents       (RAG-Quellen: Datei, Chunks, Embeddings)</code></pre>
+<p><strong>Server-Abstraktion:</strong> ein <code>aiService</code> mit <strong>OpenAI-kompatibler Schnittstelle</strong> — Ollama, LocalAI, OpenAI und Anthropic sprechen (fast) dasselbe Format, dadurch ist der Anbieter austauschbar.</p>
+<p><strong>Admin-Seite „KI-Einstellungen":</strong></p>
+<ul>
+<li>Anbieter/Modell wählen &amp; testen, Standard setzen.</li>
+<li><strong>Modelle live verwalten:</strong> <code>GET /api/ai/models</code> (listet installierte Ollama-Modelle), <code>POST /api/ai/pull</code> (lädt/aktualisiert ein Modell), Fortschrittsanzeige.</li>
+<li>API-Keys <strong>verschlüsselt</strong> speichern (nie im Klartext/Frontend).</li>
+<li><strong>Auto-Update:</strong> Cron/n8n zieht regelmäßig <code>ollama pull &lt;model&gt;</code> für gepinnte Modelle; Versions-Pinning verhindert Überraschungen.</li>
+</ul>
+<p><strong>RAG-Pipeline:</strong></p>
+<pre><code>PDFs/Statuten → Chunking → Embeddings (nomic-embed-text @ Ollama)
+   → Vektor-Store (sqlite-vec ODER Chroma)
+   → Retrieval → Prompt + Quellen → LLM (Ollama/Hermes) → Antwort mit Zitaten</code></pre>
+<p><strong>Sicherheit:</strong> KI nur lesend auf Vereinsdaten; jede KI-Aktion in <code>ai_jobs</code> protokolliert; PII-Minimierung in Prompts; lokale Modelle bevorzugt (kein Datenabfluss).</p>
+<h3>7.6 Empfohlene erste KI-Schritte (Reihenfolge)</h3>
+<ol>
+<li>Ollama auf Hetzner + <code>GET /api/health</code> + <code>ai_providers</code>-Tabelle.</li>
+<li>Admin-„KI-Einstellungen" (Anbieter/Modell wählen, <code>pull</code>, testen).</li>
+<li>RAG-Assistent über FLH-PDFs (größter, sichtbarster Nutzen).</li>
+<li>Spielbericht- &amp; E-Mail-Generator.</li>
+<li>n8n + erste Automationen; Uptime Kuma + Matrix-Alarme.</li>
+</ol>
+<hr/>
+<h2>8. Risiken &amp; nächste sinnvolle Schritte</h2>
+<p><strong>Risiken:</strong> Monolith-Dateien (Wartung), SQLite-Grenzen, fehlende Tests, Demo-Secrets, Reife-Gefälle der UI.</p>
+<p><strong>Empfohlene nächste 5 Schritte:</strong></p>
+<ol>
+<li>Stubs kennzeichnen + 2–3 davon auf vorhandene Tabellen real ausbauen (z. B. Sponsoren, Galerie, Saison-Archiv).</li>
+<li><code>GET /api/health</code> + Uptime-Kuma-Monitoring.</li>
+<li>Öffentliche Read-API + 1 Website-Widget (Ligatabelle) als sichtbarer Quick-Win.</li>
+<li>KI-Fundament (Ollama + <code>ai_providers</code> + Admin-UI mit Update/Pull).</li>
+<li>Secrets bereinigen, erste Vitest/Playwright-Tests für kritische Flows.</li>
+</ol>
+<hr/>
+<p><em>Hinweis: Dieser Bericht basiert auf statischer Code-Analyse vom 29.06.2026. Die mit ⚠️ markierten Tool-Namen („Elementor", „openclaw") sollten kurz bestätigt werden, damit die KI-Integration den richtigen Baustein nutzt.</em></p>
+</div></body>
+</html>
