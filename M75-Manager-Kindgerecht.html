@@ -34,99 +34,124 @@
 </head>
 <body><div class="wrap">
 <h1>Das Vereins-OS — einfach erklärt (für alle, auch für Kinder)</h1>
-<blockquote>Diese Erklärung benutzt Bilder und Vergleiche, damit jeder versteht, was das große Computer-System des MERSCH75 ist und kann.  <strong>Zwei Farben helfen dir:</strong> 🟢 <strong>schon gebaut</strong> = funktioniert heute schon · 🔵 <strong>noch geplant</strong> = die Idee steht, gebaut wird es später.</blockquote>
+<blockquote>Diese Erklärung benutzt Bilder und Vergleiche, damit <strong>jeder</strong> versteht, was das große Computer-System des MERSCH75 ist, was es kann — und <strong>wie es eigentlich funktioniert</strong>.  <strong>Vier Farben zeigen dir den Baufortschritt:</strong> 🟢 <strong>fertig</strong> = funktioniert heute schon · 🟡 <strong>halb fertig</strong> = man kann es schon benutzen, es fehlt noch etwas · 🧩 <strong>Schublade ohne Knopf</strong> = der Platz dafür ist da, die Bedienung fehlt noch · 🔵 <strong>geplant</strong> = die Idee steht, gebaut wird später.</blockquote>
 <hr/>
-<h2>1. Das digitale Hauptquartier und das Grundstück 🔵 (geplant) / 🟢 (Bauplan da)</h2>
-<p>Stell dir vor, der Verein baut ein riesiges, unsichtbares <strong>Hauptquartier im Internet</strong>. Damit es stehen kann, mietet man ein <strong>Grundstück im Internet</strong> bei Firmen wie <strong>Hetzner</strong> oder <strong>Hostinger</strong> 🔵. Darauf bauen wir unser System wie ein <strong>Lego-Haus</strong> 🟢 zusammen.</p>
-<p>Das Wichtigste: Der <strong>Bauplan ist so ordentlich</strong>, dass jederzeit ein anderes Vereinsmitglied, das sich ein bisschen mit Computern auskennt, den Schlüssel nehmen und das Haus weiterpflegen kann. Niemand muss Angst haben, dass alles zusammenbricht, wenn der erste Baumeister im Urlaub ist.</p>
+<h2>0. Wie funktioniert so ein Computer-System überhaupt?</h2>
+<p>Bevor wir durch die Zimmer gehen, erklären wir das <strong>Grundprinzip</strong> — ganz einfach.</p>
+<p><strong>Stell dir eine riesige Bibliothek mit einem sehr fleißigen Bibliothekar vor:</strong></p>
+<ul>
+<li>📚 <strong>Das Archiv (die Datenbank):</strong> ganz hinten stehen Tausende beschriftete Schubladen. In jeder liegt eine Sorte Zettel: eine für Mitglieder, eine für Spiele, eine für das Geld. Nichts geht verloren, alles hat seinen festen Platz.</li>
+<li>🧑‍� <strong>Der Bibliothekar (der Server / das „Backend"):</strong> Er ist der Einzige, der ins Archiv darf. Du rufst ihm zu, was du brauchst — er sucht den Zettel, schreibt etwas auf oder rechnet etwas aus und bringt dir das Ergebnis.</li>
+<li>🖥️ <strong>Der Tresen mit Knöpfen (dein Bildschirm / das „Frontend"):</strong> Das ist die schöne Oberfläche auf Handy oder Computer. Hier drückst du Knöpfe und siehst Listen. Du musst nie selbst ins Archiv — du sagst es einfach dem Bibliothekar.</li>
+</ul>
+<p><strong>So läuft jede einzelne Aktion ab (immer dasselbe Muster):</strong></p>
+<ol>
+<li>Du <strong>drückst einen Knopf</strong> auf dem Bildschirm (z. B. „Anwesenheit speichern").</li>
+<li>Dein Gerät schickt eine <strong>kleine Nachricht</strong> durchs Internet zum Bibliothekar: „Bitte das und das tun."</li>
+<li>Der Bibliothekar <strong>prüft deine Zugangskarte</strong> (darfst du das überhaupt?), <strong>erledigt die Aufgabe</strong> und <strong>legt den Zettel ins richtige Archiv-Fach</strong>.</li>
+<li>Er schickt dir <strong>die Antwort zurück</strong>, und dein Bildschirm zeigt sie an — oft in weniger als einer Sekunde.</li>
+</ol>
+<blockquote><strong>Merksatz für Kinder:</strong> Du klickst → die Nachricht reist durchs Internet → der Bibliothekar sucht/speichert im Archiv → die Antwort kommt zurück auf deinen Bildschirm. <strong>Immer dieses Hin und Zurück.</strong></blockquote>
+<h2>1. Das digitale Hauptquartier und das Grundstück � <em>(Haus gebaut)</em> / � <em>(Grundstück noch zu mieten)</em></h2>
+<p>Stell dir vor, der Verein baut ein riesiges, unsichtbares <strong>Hauptquartier im Internet</strong>. Damit es stehen kann, mietet man ein <strong>Grundstück im Internet</strong> bei Firmen wie <strong>Hetzner</strong> oder <strong>Hostinger</strong> 🔵. Das „Grundstück" ist in Wahrheit ein <strong>fremder Computer in einem großen Rechenzentrum</strong>, der Tag und Nacht läuft. Darauf bauen wir unser System wie ein <strong>Lego-Haus</strong> 🟢 zusammen.</p>
+<p><strong>So funktioniert's:</strong> Damit das Haus auf jedem Grundstück gleich aufgebaut werden kann, stecken wir es in genormte <strong>Umzugskartons</strong> (das nennen Fachleute „Container" / <em>Docker</em>). Egal ob bei Hetzner oder woanders — man stellt die Kartons hin, öffnet sie, und das ganze Haus steht sofort wieder genauso da. Dadurch ist der Verein <strong>nicht von einer einzigen Firma abhängig</strong>.</p>
+<p>Das Wichtigste: Der <strong>Bauplan ist so ordentlich aufgeschrieben</strong>, dass jederzeit ein anderes Vereinsmitglied, das sich ein bisschen mit Computern auskennt, den Schlüssel nehmen und das Haus weiterpflegen kann. Niemand muss Angst haben, dass alles zusammenbricht, wenn der erste Baumeister mal im Urlaub ist.</p>
 <hr/>
 <h2>2. Die elektronischen Helfer</h2>
+<p>Rund um das Haus sollen kleine <strong>Roboter-Helfer</strong> arbeiten, die niemals müde werden:</p>
 <ul>
-<li><strong>Hermes – der Hausmeister</strong> 🔵 <em>(noch geplant)</em>: Er läuft pausenlos ums Haus und schaut, ob alle Lichter brennen. Wenn etwas klemmt, ruft er sofort um Hilfe.</li>
-<li><strong>Odysseus – der Briefträger</strong> 🔵 <em>(noch geplant)</em>: Er rennt zu anderen Computern (zum Handballverband) und schreibt die neuesten Ergebnisse ab. <em>(Heute holt das schon ein einfacher Helfer im Haus, aber noch nicht der flinke Briefträger Odysseus.)</em> 🟢</li>
-<li><strong>n8n – die Sortiermaschine</strong> 🔵 <em>(noch geplant)</em>: Kommt ein neues Mitglied, druckt sie automatisch die Wëllkomm-Mapp und schickt sie los.</li>
-<li><strong>Uptime Kuma – der Nachtwächter</strong> 🔵 <em>(noch geplant)</em>: Prüft alle paar Minuten, ob alles läuft, und schlägt bei Stromausfall Alarm.</li>
-<li><strong>Ollama – das Computergehirn</strong> 🔵 <em>(noch geplant)</em>: Ein schlaues Gehirn, das die dicken Regel-Bücher gelesen hat und Fragen sofort beantwortet.</li>
+<li><strong>Hermes – der Hausmeister</strong> 🔵 <em>(geplant)</em>: Er läuft pausenlos ums Haus und schaut, ob alle Lichter brennen und die Türen funktionieren. <em>So funktioniert's:</em> Er „klopft" alle paar Minuten an jede Tür. Antwortet eine nicht, <strong>schickt er sofort eine Warn-Nachricht</strong> ans Komitee (z. B. aufs Handy).</li>
+<li><strong>Odysseus – der Briefträger</strong> 🔵 <em>(geplant)</em>: Er rennt zu anderen Computern (zum <strong>Handballverband</strong>) und schreibt die neuesten Ergebnisse ab. <em>So funktioniert's:</em> Er ruft die Webseite des Verbands auf, <strong>liest die Tabelle wie ein Mensch</strong> und trägt die Zahlen automatisch in unser Archiv ein. <em>(Heute macht das schon ein einfacher Helfer im Haus — aber noch nicht der flinke, selbstständige Odysseus.)</em> 🟢</li>
+<li><strong>n8n – die Sortiermaschine</strong> 🔵 <em>(geplant)</em>: Eine Maschine, die Aufgaben wie an einem <strong>Fließband</strong> aneinanderhängt. <em>So funktioniert's:</em> Kommt ein neues Mitglied, läuft das Band los: Mappe drucken → E-Mail schreiben → Rechnung vorbereiten — alles von allein, ohne dass jemand klickt.</li>
+<li><strong>Uptime Kuma – der Nachtwächter</strong> 🔵 <em>(geplant)</em>: Prüft Tag und Nacht, ob alles läuft, und <strong>schlägt sofort Alarm</strong>, wenn etwas ausfällt.</li>
+<li><strong>Ollama – das Computergehirn</strong> 🔵 <em>(geplant)</em>: Ein schlaues Gehirn <strong>im eigenen Haus</strong> (nicht im Internet), das die dicken Regel-Bücher gelesen hat und Fragen sofort beantwortet.</li>
 </ul>
-<blockquote>Die fünf Helfer sind eine <strong>tolle Idee für die Zukunft</strong>. Heute funktioniert das Haus auch ohne sie schon sehr gut.</blockquote>
+<blockquote>Diese Helfer sind eine <strong>tolle Idee für die Zukunft</strong>. Heute funktioniert das Haus auch ohne sie schon sehr gut.</blockquote>
 <hr/>
 <h2>3. Das Schaufenster und die Zimmer</h2>
-<p>Das Hauptquartier hat ein <strong>Schaufenster zur Straße</strong>: die <strong>öffentliche Webseite</strong> (mersch75.lu) 🟢. <em>Heute</em> schreibt man Neuigkeiten noch von Hand ins Schaufenster. <em>Später</em> 🔵 soll sich das Schaufenster ganz von alleine aktualisieren, wenn drinnen ein neues Ergebnis an die Tafel geschrieben wird.</p>
+<p>Das Hauptquartier hat ein <strong>Schaufenster zur Straße</strong>: die <strong>öffentliche Webseite</strong> (mersch75.lu) 🟢. <em>Heute</em> schreibt man Neuigkeiten noch von Hand ins Schaufenster. <em>Später</em> 🔵 soll sich das Schaufenster ganz von alleine aktualisieren.</p>
+<p><strong>So soll das funktionieren:</strong> Das Schaufenster fragt den Bibliothekar regelmäßig „Gibt es etwas Neues?". Schreibt drinnen jemand ein neues Ergebnis an die Tafel, holt das Schaufenster es sich und zeigt es draußen an — <strong>niemand muss es zweimal eintippen</strong>.</p>
 <ul>
-<li><strong>Das Finanz-Büro</strong> 🟢: ein großer digitaler Tresor. Der Computer zählt, wer seinen Beitrag bezahlt hat und wem noch eine Rechnung geschickt wird.</li>
-<li><strong>Das Event-Zimmer</strong> 🟢: Hier werden Feiern und Versammlungen geplant; jeder bekommt eine Einladung und klickt, ob er kommt.</li>
-<li><strong>Der Bestell-Schalter</strong> 🟡 <em>(halb fertig)</em>: Spieler können Trikots oder Bälle wünschen; der volle Ablauf wird noch ausgebaut.</li>
-<li><strong>Die Getränke- und Ticket-Kasse</strong> 🔵 <em>(noch nur Idee)</em>: Soll später mitzählen, wie viele Tickets verkauft und wie viele Flaschen getrunken wurden. <em>Dieses Zimmer ist noch nicht gebaut.</em></li>
+<li><strong>Das Finanz-Büro</strong> 🟢: ein großer digitaler Tresor. <em>So funktioniert's:</em> Der Computer hat für jedes Mitglied einen Zettel „Beitrag bezahlt: ja/nein". Er zählt automatisch zusammen, <strong>wer noch offen ist</strong>, und kann auf Knopfdruck Erinnerungen erstellen.</li>
+<li><strong>Das Event-Zimmer</strong> 🟢: Hier werden Feiern und Versammlungen geplant. <em>So funktioniert's:</em> Man legt ein Event an, alle bekommen eine Einladung und klicken <strong>„komme" oder „komme nicht"</strong> — der Computer führt die Liste automatisch.</li>
+<li><strong>Der Bestell-Schalter</strong> 🟡 <em>(halb fertig)</em>: Spieler können Trikots oder Bälle wünschen; der volle Ablauf (bis zur Lieferung) wird noch ausgebaut.</li>
+<li><strong>Die Getränke- und Ticket-Kasse</strong> 🔵 <em>(nur Idee)</em>: Soll später mitzählen, wie viele Tickets verkauft und wie viele Flaschen getrunken wurden. <em>Dieses Zimmer ist noch gar nicht gebaut.</em></li>
 </ul>
 <hr/>
 <h2>4. Die Zugangskarten (Rollen) 🟢</h2>
-<p>Weil das Haus so groß ist, darf nicht jeder in jedes Zimmer. Jedes Mitglied bekommt eine eigene <strong>digitale Zugangskarte</strong>:</p>
+<p>Weil das Haus so groß ist, darf nicht jeder in jedes Zimmer. Jedes Mitglied bekommt eine eigene <strong>digitale Zugangskarte</strong> (Fachleute sagen <em>Rollen</em> dazu):</p>
 <ul>
 <li>Der <strong>Kassenwart</strong> darf ins Finanz-Büro.</li>
-<li>Der <strong>Trainer</strong> darf zu den Trainingsplänen.</li>
+<li>Der <strong>Trainer</strong> darf zu den Trainingsplänen und zur Anwesenheitsliste.</li>
+<li>Der <strong>Vorstand</strong> darf fast überall hin und das Haus verwalten.</li>
 <li>Ein <strong>normales Mitglied</strong> darf nur in sein eigenes Zimmer (Profil, Rechnungen, Chat).</li>
 </ul>
+<p><strong>So funktioniert's:</strong> Wenn du etwas anklickst, schaut der Bibliothekar zuerst auf deine Karte: „Darf diese Person das?" Steht auf der Karte „nein", bleibt die Tür zu — so sieht niemand Dinge, die ihn nichts angehen. Das schützt die <strong>Daten der anderen</strong>.</p>
 <hr/>
 <h2>5. Das Partner- und Sponsoren-Büro 🟡 <em>(erst angefangen)</em></h2>
 <p>Firmen geben dem Verein Geld oder Ausrüstung; als Dankeschön kommt ihr Name aufs Trikot.</p>
 <ul>
-<li><strong>Der Vertragsschrank</strong> 🔵: Der Computer soll sich für jede Firma genau merken, was abgemacht wurde, und prüfen, ob das Geld da ist. <em>Das Zimmer ist erst leer eingerichtet, die Möbel kommen noch.</em></li>
+<li><strong>Der Vertragsschrank</strong> 🔵: Der Computer soll sich für jede Firma genau merken, was abgemacht wurde, und prüfen, ob das Geld schon da ist. <em>So soll es funktionieren:</em> Für jeden Sponsor wird notiert, <strong>was er gibt</strong> (Geld, Trikots …) und <strong>was er bekommt</strong> (Logo, Freikarten …). Der Computer hakt dann ab, ob beide Seiten ihr Versprechen gehalten haben. <em>Heute ist das Zimmer erst leer eingerichtet, die Möbel kommen noch.</em></li>
 </ul>
 <hr/>
 <h2>6. Die Helfer-Zentrale (Bénévoles) 🟡/🔵</h2>
-<p>Ein Verein lebt von freiwilligen Helfern.</p>
+<p>Ein Verein lebt von freiwilligen Helfern (auf Französisch <em>Bénévoles</em>).</p>
 <ul>
-<li><strong>Der Einsatzplan</strong> 🟡: Helfer werden in Teams eingeteilt (Würstchenstand, Anzeigetafel …).</li>
-<li><strong>Die Helfer-Uhr</strong> 🔵 <em>(geplant)</em>: Soll später für jeden zählen, wie viele Stunden er im Jahr geholfen hat, damit man sich bedanken kann.</li>
+<li><strong>Der Einsatzplan</strong> 🟡: Helfer werden in Teams eingeteilt (Würstchenstand, Anzeigetafel, Auf- und Abbau …). <em>So funktioniert's:</em> Für jedes Spiel legt man fest, <strong>welcher Posten besetzt sein muss</strong>, und ordnet die Helfer zu.</li>
+<li><strong>Die Helfer-Uhr</strong> 🔵 <em>(geplant)</em>: Soll später für jeden mitzählen, <strong>wie viele Stunden</strong> er im Jahr geholfen hat. <em>So soll es funktionieren:</em> Bei jedem Einsatz läuft eine digitale Stoppuhr; am Jahresende sieht man, wer am meisten geholfen hat, und kann sich richtig bedanken.</li>
 </ul>
 <hr/>
 <h2>7. Die erweiterte Schatzkammer und das Akten-Archiv 🔵 <em>(noch Idee)</em></h2>
+<p>Neben den normalen Beiträgen fließt beim Verein noch viel mehr Geld hinein und hinaus.</p>
 <ul>
-<li><strong>Die Trainer-Kasse</strong>: Soll ausrechnen, wie viel ein bezahlter Trainer bekommt.</li>
-<li><strong>Die Spenden-Eimer</strong>: getrennte Eimer für Geld vom Staat, von der Gemeinde, von Spendern und Mitgliedern.</li>
-<li><strong>Der Antrags-Ordner</strong>: speichert fertige Briefe und Links (z. B. Guichet.lu), um beim Staat Geld zu beantragen.</li>
+<li><strong>Die Trainer-Kasse</strong>: Soll ausrechnen, wie viel ein bezahlter Trainer am Monatsende bekommt, und die Auszahlung anstoßen.</li>
+<li><strong>Die Spenden-Eimer</strong>: Der Computer stellt <strong>getrennte Eimer</strong> auf — einen für Geld vom <strong>Staat</strong>, einen von der <strong>Gemeinde</strong>, einen für <strong>Spender</strong>, einen für <strong>Mitglieder</strong>. <em>So funktioniert's:</em> Jeder Euro wird gleich in den richtigen Eimer einsortiert, damit man immer weiß, <strong>woher das Geld kommt</strong>.</li>
+<li><strong>Der Antrags-Ordner</strong>: Wenn der Verein den Staat um Geld bitten will, muss man lange Briefe schreiben. Der Computer <strong>speichert alle fertigen Briefe</strong> und hat ein Telefonbuch mit Links (z. B. Guichet.lu), wo man die neuesten Formulare holt.</li>
 </ul>
 <blockquote>Diese Schatzkammer ist eine <strong>gute Idee für später</strong> — heute gibt es nur das normale Finanz-Büro (Kapitel 3).</blockquote>
 <hr/>
 <h2>8. Die Vereins-Polizei und der Arzt 🧩 <em>(Grundgerüst da)</em> / 🔵 <em>(Automatik geplant)</em></h2>
 <ul>
-<li><strong>Der Arzt-Stempel</strong>: Der Computer merkt sich, wann der Arztbesuch (INAPS) war. <em>Später</em> soll er einen Spieler automatisch sperren, wenn der Stempel abgelaufen ist.</li>
-<li><strong>Das Foto-Buch</strong>: Eine Liste, wer fotografiert werden darf und wer nicht (Datenschutz). Das Grundgerüst ist da, die automatische Filterung kommt noch.</li>
+<li><strong>Der Arzt-Stempel</strong>: Vor dem ersten Spiel muss ein Arzt sagen, dass der Spieler gesund ist. <em>So soll es funktionieren:</em> Der Computer merkt sich das Ablauf-Datum und <strong>warnt rechtzeitig</strong> Spieler und Trainer. Ist der Stempel abgelaufen, <strong>sperrt er den Spieler automatisch</strong> fürs nächste Spiel.</li>
+<li><strong>Das Foto-Buch</strong>: Nicht jedes Kind möchte, dass Fotos von ihm im Internet stehen. <em>So funktioniert's:</em> Der Computer führt eine Liste „darf fotografiert werden: ja/nein" und soll später <strong>vor dem Veröffentlichen warnen</strong> oder Fotos automatisch aussortieren. Das Grundgerüst ist da, die Automatik kommt noch.</li>
 </ul>
 <hr/>
 <h2>9. Der Hallenplan und der Vereins-Bus 🟡/🧩</h2>
 <ul>
-<li><strong>Der Raum-Verteiler</strong> 🟡: ein großer Kalender, der aufpasst, dass nicht zwei Mannschaften gleichzeitig in die Halle wollen. <em>(Grundzimmer steht, Feinschliff folgt.)</em></li>
-<li><strong>Die Auto-Planung (Fahrgemeinschaften)</strong> 🧩: Der Computer hat schon „Schubladen" dafür, aber <strong>noch keine Knöpfe</strong> — die Bedien-Oberfläche fehlt.</li>
+<li><strong>Der Raum-Verteiler</strong> 🟡: ein großer Kalender für die Hallen. <em>So funktioniert's:</em> Will jemand eine Hallenzeit buchen, schaut der Computer nach, ob sie frei ist, und <strong>verhindert Doppelbuchungen</strong>. Bei einer kurzfristigen Sperrung sollen alle betroffenen Teams automatisch informiert werden. <em>(Grundzimmer steht, Feinschliff folgt.)</em></li>
+<li><strong>Die Auto-Planung (Fahrgemeinschaften)</strong> 🧩: Für Auswärtsspiele tragen Eltern ein, <strong>wie viele freie Plätze</strong> sie im Auto haben; der Computer verteilt die Kinder gerecht. <em>Heute hat der Computer schon die „Schubladen" dafür, aber noch keine Knöpfe — die Bedien-Oberfläche fehlt.</em></li>
 </ul>
 <hr/>
 <h2>10. Das geheime Funknetz und die Lagerhalle 🔵 <em>(alles geplant)</em></h2>
 <ul>
-<li><strong>Matrix – das Funknetz</strong>: ein eigenes, unsichtbares Kommunikationsnetz; keiner von außen liest mit.</li>
-<li><strong>Element – das Funkgerät</strong>: die App, um in dieses Funknetz zu schreiben.</li>
-<li><strong>Mautrix – der Übersetzer</strong>: leitet Nachrichten zu WhatsApp/Signal weiter.</li>
-<li><strong>Nextcloud – die Lagerhalle</strong>: eine riesige Festplatte für Fotos und große Dokumente.</li>
+<li><strong>Matrix – das Funknetz</strong>: ein <strong>eigenes</strong> Kommunikationsnetz, das nur dem Verein gehört. <em>So funktioniert's:</em> Die Nachrichten werden <strong>verschlüsselt</strong> (wie in einer Geheimsprache), sodass niemand von außen mitlesen kann.</li>
+<li><strong>Element – das Funkgerät</strong>: die App auf dem Handy, mit der man in dieses Funknetz schreibt.</li>
+<li><strong>Mautrix – der Übersetzer</strong>: eine <strong>Brücke</strong>, die Nachrichten zwischen dem Funknetz und <strong>WhatsApp/Signal</strong> hin- und herübersetzt. <em>(Wichtig: <strong>Matrix</strong> = das Funknetz, <strong>Mautrix</strong> = die Brücke dorthin — zwei verschiedene Dinge!)</em></li>
+<li><strong>Nextcloud – die Lagerhalle</strong>: eine riesige Festplatte für Fotos und große Dokumente, <strong>bei der die Daten dem Verein gehören</strong> (nicht einer fremden Firma).</li>
 </ul>
 <blockquote>Heute hat das Haus schon einen <strong>einfachen internen Chat</strong> 🟡; das große Funknetz ist die Zukunfts-Idee.</blockquote>
 <hr/>
 <h2>11. Der feuersichere Safe (Datensicherung) 🔵 <em>(noch geplant)</em></h2>
-<p>Das Hauptquartier könnte durch einen Fehler kaputtgehen. Darum soll der Computer <strong>jede Nacht eine Kopie</strong> von allen wichtigen Papieren machen und in einen sicheren <strong>Tresor beim Verein zu Hause</strong> (das QNAP-Gerät) schicken. Stürzt das Haus ab, baut man alles aus der Kopie sofort wieder auf. <em>Dieser Safe wird noch eingebaut.</em></p>
+<p>Das Hauptquartier im Internet könnte durch einen Fehler kaputtgehen. Darum soll der Computer <strong>jede Nacht eine Kopie</strong> von allen wichtigen Papieren machen.</p>
+<p><strong>So soll das funktionieren:</strong> Mitten in der Nacht, wenn keiner arbeitet, packt der Computer alle Zettel in ein <strong>abgeschlossenes Paket</strong> (verschlüsselt) und schickt es übers Internet in einen <strong>Tresor beim Verein zu Hause</strong> — z. B. einen <strong>alten iMac mit großer Festplatte</strong> oder ein QNAP-Gerät. Geht im Rechenzentrum etwas kaputt, nimmt man die Kopie aus dem Tresor und <strong>baut alles in kurzer Zeit wieder auf</strong>. <em>Dieser Safe wird noch eingebaut.</em></p>
 <hr/>
 <h2>12. Wie groß ist das Projekt? 🟢</h2>
 <p>Das System ist riesig — wie Programme großer Firmen:</p>
 <ul>
-<li><strong>Über 16.700 Code-Zeilen</strong> sagen dem Computer genau, was er tun soll.</li>
-<li><strong>80 Schubladen</strong> (Datenbank-Tabellen) halten Mitglieder, Finanzen, Spiele … getrennt.</li>
-<li><strong>233 Bedienfelder</strong> (Schalter), die Aktionen auslösen.</li>
+<li><strong>Über 16.700 Code-Zeilen</strong>: Das sind die Anweisungen, die dem Computer ganz genau sagen, was er tun soll. (Ein dickes Buch hat ungefähr so viele Zeilen.)</li>
+<li><strong>80 Schubladen</strong> (Datenbank-Tabellen): so viele verschiedene Sorten von Zetteln gibt es im Archiv.</li>
+<li><strong>233 Bedienfelder</strong> (Schalter): so viele verschiedene Aktionen kann man auslösen.</li>
 </ul>
+<blockquote>Zum Vergleich: Das ist die Größenordnung eines <strong>kleinen Programms, das man sonst teuer kaufen würde</strong> — hier gehört es dem Verein selbst.</blockquote>
 <hr/>
 <h2>13. Wie ist das Haus aufgebaut? 🟢</h2>
-<p>Drei Stockwerke:</p>
+<p>Erinnerst du dich an die Bibliothek aus Kapitel 0? Das Haus hat genau <strong>drei Stockwerke</strong>, die zusammenarbeiten:</p>
 <ul>
 <li><strong>Das Archiv (Datenbank)</strong>: der Tresor, in dem jedes Mitglied, jedes Spiel und jeder Euro ein eigenes Fach hat.</li>
-<li><strong>Der Motor (Backend)</strong>: die Maschine im Hintergrund, die Daten sucht, vorbereitet und an den Bildschirm schickt.</li>
+<li><strong>Der Motor (Backend)</strong>: der fleißige Bibliothekar im Hintergrund, der Daten sucht, vorbereitet und verschickt.</li>
 <li><strong>Das Kontrollzentrum (Frontend)</strong>: die schönen Bildschirme und Knöpfe, die du siehst und bedienst.</li>
 </ul>
+<p><strong>So funktioniert's:</strong> Die drei reden immer in derselben Reihenfolge miteinander — <strong>Kontrollzentrum fragt → Motor sucht im Archiv → Antwort zurück</strong>. Genau das Hin und Zurück aus Kapitel 0.</p>
 <hr/>
 <h2>14. Wie sieht es aus? 🟢</h2>
 <ul>
@@ -139,13 +164,14 @@
 <ul>
 <li>🟢 <strong>Fertige Zimmer</strong>: Login, Spiele, Beiträge-Kasse, Trainingspläne, Check-in, Statistiken, Anwesenheit, Kalender, Dokumente.</li>
 <li>🟡 <strong>Halbe Baustellen</strong>: Chat, Profile, Anmeldungen, Website-Hub, Shop, Sponsoren, Galerie.</li>
-<li>🔵 <strong>Leere Räume / Schubladen ohne Knöpfe</strong>: Schiedsrichter, Verletzungen, Fahrgemeinschaften, Saison-Archiv — die Schublade ist da, der Knopf fehlt noch.</li>
+<li>🧩 <strong>Schubladen ohne Knöpfe</strong>: Schiedsrichter, Verletzungen, Fahrgemeinschaften, Saison-Archiv — die Schublade ist da, der Knopf zum Bedienen fehlt noch.</li>
+<li>🔵 <strong>Nur als Idee geplant</strong>: Getränke-/Ticket-Kasse, Gehälter, Subventionen, KI, Funknetz, nächtlicher Safe.</li>
 </ul>
 <hr/>
 <h2>16. Künstliche Intelligenz und Automatik 🔵 <em>(geplant)</em></h2>
 <ul>
-<li><strong>Das Computergehirn (Ollama)</strong>: liest dicke Handball-Regeln und antwortet sofort <strong>mit Quellenangabe</strong>; kann sogar Spielberichte schreiben.</li>
-<li><strong>Das Fließband (n8n)</strong>: Kettenreaktionen ohne Klicks — neues Mitglied → Mappe drucken → E-Mail → Rechnung, alles automatisch.</li>
+<li><strong>Das Computergehirn (Ollama)</strong>: ein schlaues Gehirn, das <strong>im eigenen Haus</strong> läuft (die Fragen wandern nicht zu einer fremden Firma im Internet). <em>So funktioniert's:</em> Es hat die dicken Handball-Regeln gelesen; stellt jemand eine Frage, sucht es die passende Stelle und antwortet <strong>mit Quellenangabe</strong> („das steht in Regel X"). Es kann sogar aus den eingegebenen Toren und Strafen <strong>einen Spielbericht schreiben</strong>.</li>
+<li><strong>Das Fließband (n8n)</strong>: Kettenreaktionen <strong>ohne Klicks</strong>. <em>So funktioniert's:</em> Ein Auslöser (z. B. „neues Mitglied") startet eine feste Reihenfolge — Mappe drucken → E-Mail schicken → Rechnung vorbereiten — und alles passiert von allein im Hintergrund.</li>
 </ul>
 <hr/>
 <h2>17. Was wird als Nächstes gebaut?</h2>
