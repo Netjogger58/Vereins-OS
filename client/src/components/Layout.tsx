@@ -37,6 +37,7 @@ import {
   ShieldCheck,
   Globe,
   QrCode,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoLockup, Logo } from "./Logo";
@@ -86,6 +87,7 @@ const NAV: NavItem[] = [
   { href: "/newsletter", label: "Newsletter", icon: Send, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
   { href: "/gdpr", label: "DSGVO", icon: ShieldCheck, section: "Verwaltung" },
   { href: "/website", label: "Website", icon: Globe, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
+  { href: "/welcome-mappe", label: "Willkommensmappe", icon: BookOpen, section: "Verein" },
 ];
 
 const MOBILE_NAV: NavItem[] = [

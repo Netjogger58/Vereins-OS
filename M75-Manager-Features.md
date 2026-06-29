@@ -10,8 +10,9 @@
 - **Mitglieder-Import 2025/26:** Excel-Import inkl. Karten-IDs; neue Felder `cardId`, `clubFunction`, `licenseNumber`, `rawData`.
 - **Website-Hub:** Verwaltung von mersch75.lu im Manager (Seitenliste, Live-Vorschau, GitHub-Editor).
 - **Check-In:** QR-Scan der Mitgliederkarten mit Status (gültig/duplikat/gesperrt/abgelaufen).
+- **Willkommensmappe:** Mehrsprachige Wëllkomm-Mapp (LU/DE/FR/EN/PT) für neue Mitglieder als eigene Seite (Vorschau, Öffnen, Drucken/PDF, GitHub-Editor).
 
-> Details siehe Abschnitte 1, 7, 14 und 15.
+> Details siehe Abschnitte 1, 7, 14, 15 und 16.
 
 ---
 
@@ -69,6 +70,7 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
 
 **Außendarstellung**
 - ✅ Website-Hub (mersch75.lu verwalten) · *neu*
+- ✅ Willkommensmappe (mehrsprachige Wëllkomm-Mapp) · *neu*
 - 🟡 Galerie
 - 🟡 Sponsoren
 - 🟡 Shop
@@ -348,6 +350,20 @@ Einlass-/Anwesenheits-Check per **QR-Code-Scan** der Mitgliederkarten (`client/s
 
 ---
 
+## 16. Willkommensmappe (Neu — Juni 2026)
+
+Mehrsprachige **Wëllkomm-Mapp** für neue Mitglieder, direkt im Manager (`client/src/pages/WelcomeMappe.tsx`, Route `/welcome-mappe`, Menü unter *Verein*).
+
+- **Live-Vorschau** des Dossiers per iframe (mit Neu-laden-Button).
+- **Sprachen:** Lëtzebuergesch · Deutsch · Français · English · Português (Umschaltung direkt im Dokument).
+- **Inhaltsübersicht** der 9 Kapitel (Präsidentenbrief, erste Schritte, Kontakte, Werte S.T.A.A.R.K., Rolle im Team, Digital & Online, Mitgliedschaft, Engagement, Highlights/FAQ).
+- Aktionen: **Mappe öffnen · Drucken/PDF** (Browser-Druck → Als PDF speichern) **· Bearbeiten** (GitHub-Editor) **· GitHub-Repo**.
+- Quelle: `wellkomm-mapp.html` im Repo `Netjogger58/mersch75test.github.io` (live unter `mersch75.lu/wellkomm-mapp.html`); ebenfalls im Website-Hub gelistet.
+
+> Hinweis: Die Mappe wird aus dem getrennten Website-Repo eingebettet – Inhaltsänderungen erfolgen dort und sind nach dem GitHub-Pages-Deploy automatisch in der App sichtbar.
+
+---
+
 ## Technische Details
 
 ### Backend
@@ -423,7 +439,7 @@ Folgende Bereiche sind in der Datenbank bereits angelegt, haben aber noch **kein
 - **Externe Kalender-Synchronisation** (SEPA-Mandate sind in Finanzen/Beiträgen bereits angelegt)
 
 ### ✅ Bereits erledigt (Auswahl)
-Magic-Link-Login · Random-No-/Admin-Login · FLH-Import · Spieler-/Ligastatistiken · Mitglieder-Import 2025/26 · Website-Hub · Check-In/Karten-Scan.
+Magic-Link-Login · Random-No-/Admin-Login · FLH-Import · Spieler-/Ligastatistiken · Mitglieder-Import 2025/26 · Website-Hub · Check-In/Karten-Scan · Willkommensmappe.
 
 ---
 
@@ -448,4 +464,4 @@ Es gibt **drei** Wege, sich anzumelden (siehe Abschnitt 1):
 
 ---
 
-*Dokumentation erstellt: Mai 2026 · Aktualisiert: Juni 2026 (Random-No-/Admin-Login, Website-Hub, Mitglieder-Import 2025/26, Check-In)*
+*Dokumentation erstellt: Mai 2026 · Aktualisiert: Juni 2026 (Random-No-/Admin-Login, Website-Hub, Mitglieder-Import 2025/26, Check-In, Willkommensmappe)*

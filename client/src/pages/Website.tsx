@@ -29,6 +29,7 @@ const PAGES: { label: string; file: string }[] = [
   { label: "Kontakt", file: "contact.html" },
   { label: "Links", file: "links.html" },
   { label: "Community", file: "community.html" },
+  { label: "Willkommensmappe", file: "wellkomm-mapp.html" },
   { label: "Generator (Tool)", file: "generator.html" },
   { label: "Impressum", file: "impressum.html" },
   { label: "Datenschutz", file: "dataprotection.html" },
