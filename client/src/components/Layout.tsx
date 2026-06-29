@@ -40,6 +40,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { LogoLockup, Logo } from "./Logo";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "react-i18next";
@@ -347,7 +348,9 @@ export function Layout({ children }: { children: ReactNode }) {
         {/* Page content */}
         <main className="flex-1 px-4 lg:px-6 pt-4 lg:pt-5 pb-28 lg:pb-8 scroll-momentum">
           <div className="max-w-6xl mx-auto">
-            {children}
+            <ErrorBoundary key={location}>
+              {children}
+            </ErrorBoundary>
           </div>
         </main>
       </div>
