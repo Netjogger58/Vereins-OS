@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<title>M75-Manager — AG-Kurzfassung</title>
+<style>
+  :root { --blue:#002F65; --blue2:#00193a; --yellow:#FFDE00; --ink:#1c2530; --muted:#5b6675; }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+  @page { size: A4 landscape; margin: 0; }
+  .slide {
+    width: 297mm; height: 209mm; padding: 18mm 20mm; position: relative;
+    page-break-after: always; overflow: hidden; background:#fff;
+  }
+  .slide::before { content:""; position:absolute; top:0; left:0; right:0; height:7mm; background:var(--yellow); }
+  .kicker { font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-weight:700; margin-top:6mm; }
+  h1 { color:var(--blue); font-size:34px; margin:6px 0 18px; }
+  ul { list-style:none; }
+  li { font-size:21px; color:var(--ink); margin:11px 0; padding-left:26px; position:relative; }
+  li::before { content:"•"; color:var(--yellow); position:absolute; left:0; font-size:26px; line-height:0.9; -webkit-text-stroke:0.5px #b89c00; }
+  li.sub { font-size:17px; color:var(--muted); margin-left:24px; }
+  li.sub::before { content:"–"; -webkit-text-stroke:0; color:var(--muted); }
+  /* Titelfolien */
+  .cover { background:linear-gradient(135deg,var(--blue),var(--blue2)); color:#fff; display:flex; flex-direction:column; justify-content:center; }
+  .cover::before { background:transparent; }
+  .cover .band { height:5px; width:100%; background:var(--yellow); margin:14px 0 22px; }
+  .cover h1 { color:#fff; font-size:48px; margin:0; }
+  .cover .sub { color:var(--yellow); font-size:24px; margin-top:6px; }
+  .cover .foot { color:#c9d4e6; font-size:15px; position:absolute; bottom:20mm; }
+  .end h1 { color:#fff; }
+</style>
+</head>
+<body>
+
+<section class="slide cover">
+  <h1>Vereins-OS / M75-Manager</h1>
+  <div class="band"></div>
+  <div class="sub">Das eigene digitale Betriebssystem des MERSCH75</div>
+  <div class="foot">Generalversammlung · Kurzfassung · 29.06.2026</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">MERSCH75 · Vereins-OS</div>
+  <h1>Was ist das Vereins-OS?</h1>
+  <ul>
+    <li>Ein vereinseigenes System für die gesamte Verwaltung – an einem Ort.</li>
+    <li class="sub">Mitglieder, Finanzen, Sport, Kommunikation, Organisation.</li>
+    <li>Selbst gehostet: alle Daten gehören dem Verein (RGPD-konform).</li>
+    <li class="sub">Unabhängig von teuren Fremdanbietern.</li>
+    <li>Schluss mit verteilten Excel-Listen – eine verlässliche Datenquelle.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="kicker">MERSCH75 · Vereins-OS</div>
+  <h1>Nutzen für den Verein</h1>
+  <ul>
+    <li>Digitale Souveränität – Daten bleiben beim Verein.</li>
+    <li>Zeitersparnis durch Automatisierung (Beiträge, Anwesenheit, Spielpläne).</li>
+    <li>Geringe Kosten – Open Source statt Lizenzgebühren pro Mitglied.</li>
+    <li>Übergabefähig – auch ein anderes Komiteemitglied kann es pflegen.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="kicker">MERSCH75 · Vereins-OS</div>
+  <h1>Wo stehen wir?</h1>
+  <ul>
+    <li>FERTIG &amp; im Einsatz:</li>
+    <li class="sub">Sport, Mitglieder, Beiträge, Check-in, Dokumente, Kalender, E-Mail.</li>
+    <li>IN ARBEIT:</li>
+    <li class="sub">Chat, Profile, Website-Anbindung, Sponsoren, Galerie.</li>
+    <li>GEPLANT:</li>
+    <li class="sub">KI-Hilfe, Monitoring, automatisches Backup, Messenger (Matrix).</li>
+    <li>Das teure Fundament steht – Erweiterungen folgen Schritt für Schritt.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="kicker">MERSCH75 · Vereins-OS</div>
+  <h1>Größenordnung &amp; Kosten</h1>
+  <ul>
+    <li>Großes System: ~16.700 Code-Zeilen, 80 Datenbereiche, 233 Funktionen.</li>
+    <li>Hosting ca. 60–250 € / Jahr · Software-Lizenzen 0 € (Open Source).</li>
+    <li class="sub">Vergleich: kommerzielle Vereins-Software oft mehrere hundert €/Jahr.</li>
+    <li>Hauptaufwand ist ehrenamtliche Zeit, nicht Geld.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="kicker">MERSCH75 · Vereins-OS</div>
+  <h1>Risiken – und wie wir sie beherrschen</h1>
+  <ul>
+    <li>Abhängigkeit von einer Person → 2. Person einarbeiten.</li>
+    <li>Sicherheit (Demo-Passwörter) → vor Echtbetrieb bereinigen.</li>
+    <li>Noch kein Auto-Backup → Backup-Konzept zuerst umsetzen.</li>
+    <li>Manche Module noch leer → klar als „in Entwicklung" kennzeichnen.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="kicker">MERSCH75 · Vereins-OS</div>
+  <h1>Antrag an die Versammlung</h1>
+  <ul>
+    <li>Grundsatz: Verein setzt auf das eigene Vereins-OS.</li>
+    <li>Budgetfreigabe für Server-Hosting (kleiner Jahresbetrag).</li>
+    <li>Start Pilotbetrieb: „Mitglieder &amp; Beiträge".</li>
+    <li>Zweite Person zur Einarbeitung benennen (Ausfallsicherheit).</li>
+  </ul>
+</section>
+
+<section class="slide cover end">
+  <h1>Ein eigenes System. Volle Datenhoheit.</h1>
+  <div class="band"></div>
+  <div class="sub">Zesumme Staark – MERSCH75</div>
+</section>
+
+</body>
+</html>

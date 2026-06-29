@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<title>M75-Manager — Vorstandsvorlage</title>
+<style>
+  :root { --blue:#002F65; --yellow:#FFDE00; --ink:#1c2530; --muted:#5b6675; --line:#e4e8ee; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink); line-height: 1.55; font-size: 12px; margin: 0; padding: 0;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 8px 0; }
+  h1 { font-size: 24px; color: var(--blue); border-bottom: 4px solid var(--yellow); padding-bottom: 8px; margin: 24px 0 12px; }
+  h2 { font-size: 18px; color: var(--blue); margin: 26px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h3 { font-size: 14px; color: var(--ink); margin: 18px 0 6px; }
+  p { margin: 8px 0; }
+  a { color: var(--blue); }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; background: #f2f4f7; padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+  pre { background: #0f1b2d; color: #e7eef7; padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 11px; line-height: 1.45; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  blockquote { margin: 10px 0; padding: 8px 14px; background: #fffbe6; border-left: 4px solid var(--yellow); color: #4a4a2e; border-radius: 0 6px 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--blue); color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #f7f9fc; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 18px 0; }
+  @page { size: A4; margin: 16mm 14mm; }
+  h1, h2, h3 { page-break-after: avoid; }
+  table, pre, blockquote { page-break-inside: avoid; }
+</style>
+</head>
+<body><div class="wrap">
+<h1>Vereins-OS / M75-Manager — Vorlage für den Vorstand</h1>
+<blockquote><strong>Vorlage an:</strong> Komitee / Vorstand MERSCH75 · <strong>Datum:</strong> 29. Juni 2026 · <strong>Verfasser:</strong> Cascade (KI-Assistenz), auf Basis Code-Analyse <strong>Betreff:</strong> Stand, Nutzen, Kosten, Risiken und Entscheidungsbedarf zum vereinseigenen Verwaltungssystem „Vereins-OS / M75-Manager"</blockquote>
+<hr/>
+<h2>1. Worum geht es? (in einem Satz)</h2>
+<p>Der MERSCH75 entwickelt ein <strong>eigenes, selbst-gehostetes Verwaltungssystem</strong>, das Mitglieder, Finanzen, Sport, Kommunikation und Vereinsorganisation an <strong>einer Stelle</strong> bündelt — unabhängig von teuren Fremdanbietern und im <strong>vollen Eigentum des Vereins</strong>.</p>
+<hr/>
+<h2>2. Warum für den Verein wichtig (Nutzen)</h2>
+<ul>
+<li><strong>Digitale Souveränität:</strong> Alle Vereinsdaten liegen beim Verein, nicht bei kommerziellen Drittanbietern. RGPD-konform.</li>
+<li><strong>Schluss mit Excel-Wildwuchs:</strong> eine einzige, verlässliche Datenquelle statt verteilter Listen.</li>
+<li><strong>Zeitersparnis:</strong> Beiträge, Anwesenheit, Spielpläne, Mitgliederpflege weitgehend automatisiert.</li>
+<li><strong>Kostenkontrolle:</strong> Open-Source-Bausteine, geringe laufende Serverkosten statt Lizenzgebühren pro Mitglied.</li>
+<li><strong>Zukunftssicher &amp; übergabefähig:</strong> dokumentiert und modular — auch ein anderes Komiteemitglied kann es übernehmen.</li>
+</ul>
+<hr/>
+<h2>3. Wo stehen wir? (ehrlicher Reifegrad)</h2>
+<p>Das System ist <strong>kein Prototyp mehr, sondern bereits eine große, nutzbare Anwendung</strong> (Größenordnung eines kleinen kommerziellen Produkts).</p>
+<table>
+<thead><tr><th>Bereich</th><th>Stand</th></tr></thead>
+<tbody>
+<tr><td><strong>Sportbetrieb</strong> (Spiele, Teams, Training, Statistik, Verbands-Import)</td><td>✅ läuft</td></tr>
+<tr><td><strong>Mitgliederverwaltung</strong> (inkl. Excel-Import, Mitgliederkarten/QR-Check-in)</td><td>✅ läuft</td></tr>
+<tr><td><strong>Finanzen Basis</strong> (Beiträge, offene Posten, Zahlungsaufforderungen)</td><td>✅ läuft</td></tr>
+<tr><td><strong>Dokumente, Kalender, E-Mail, Anwesenheit</strong></td><td>✅ läuft</td></tr>
+<tr><td>Chat, Profile, Anmeldungen, Website-Anbindung</td><td>🟦 funktioniert, Ausbau nötig</td></tr>
+<tr><td>Sponsoren, Galerie, Newsletter, Shop, Dienste, Hallen</td><td>🟡 angelegt, noch ohne Fachlogik</td></tr>
+<tr><td>Schiedsrichter, Verletzungen/Reha, Fahrgemeinschaften, Saison-Archiv, SEPA</td><td>🧩 Datengerüst da, Bedienoberfläche fehlt</td></tr>
+<tr><td>KI, Monitoring, automatischer Backup, Messenger (Matrix)</td><td>📋 geplant</td></tr>
+</tbody></table>
+<blockquote><strong>Kernbotschaft:</strong> Das teure Fundament (Datenmodell, Sportkern, Finanzen) <strong>steht</strong>. Viele Erweiterungen sind „halbfertig zum kleinen Preis", weil die Datenstruktur schon existiert.</blockquote>
+<hr/>
+<h2>4. Was kostet das? (Größenordnung, jährlich)</h2>
+<table>
+<thead><tr><th>Posten</th><th>Schätzung/Jahr</th><th>Anmerkung</th></tr></thead>
+<tbody>
+<tr><td>Server-Hosting (Hetzner/Hostinger)</td><td>~ <strong>60–250 €</strong></td><td>je nach Leistung; ein VPS reicht zum Start</td></tr>
+<tr><td>Domain (mersch75.lu)</td><td>~ <strong>20–40 €</strong></td><td>bereits vorhanden</td></tr>
+<tr><td>Software-Lizenzen</td><td><strong>0 €</strong></td><td>Open Source / Eigenentwicklung</td></tr>
+<tr><td>Backup-Speicher (lokales QNAP)</td><td>einmalig Hardware</td><td>falls Offsite-Backup gewünscht</td></tr>
+<tr><td>Entwicklung/Pflege</td><td><strong>ehrenamtlich</strong></td><td>Hauptaufwand ist Zeit, nicht Geld</td></tr>
+</tbody></table>
+<blockquote><strong>Im Vergleich:</strong> Kommerzielle Vereins-Software kostet oft mehrere hundert bis über tausend Euro/Jahr und hält die Daten beim Anbieter.</blockquote>
+<hr/>
+<h2>5. Risiken &amp; wie wir sie beherrschen</h2>
+<table>
+<thead><tr><th>Risiko</th><th>Bedeutung</th><th>Gegenmaßnahme</th></tr></thead>
+<tbody>
+<tr><td><strong>Abhängigkeit von einer Person</strong></td><td>Wissen nur bei einem Entwickler</td><td>Doku vorhanden; Ziel: 2. eingearbeitete Person im Komitee</td></tr>
+<tr><td><strong>Demo-Passwörter / Sicherheit</strong></td><td>vor Echtbetrieb kritisch</td><td>vor Produktivstart zwingend bereinigen</td></tr>
+<tr><td><strong>Kein automatisches Backup (noch)</strong></td><td>Datenverlust bei Ausfall</td><td>Backup-Konzept (nächtliche Kopie) priorisieren</td></tr>
+<tr><td><strong>Noch keine automatischen Tests</strong></td><td>Fehler bei Änderungen</td><td>schrittweise Tests für kritische Abläufe</td></tr>
+<tr><td><strong>Reife-Gefälle der Module</strong></td><td>manche Seiten noch leer</td><td>als „in Entwicklung" kennzeichnen, schrittweise ausbauen</td></tr>
+</tbody></table>
+<hr/>
+<h2>6. Empfehlung an den Vorstand (Entscheidungsbedarf)</h2>
+<ol>
+<li><strong>Grundsatzbeschluss:</strong> Verein setzt mittelfristig auf das eigene Vereins-OS als zentrales System.</li>
+<li><strong>Budget freigeben</strong> für Server-Hosting (kleiner jährlicher Betrag, s. §4).</li>
+<li><strong>Pilotbetrieb</strong> mit einem abgegrenzten Bereich starten (Vorschlag: <strong>Mitglieder + Beiträge</strong>), bevor alles umgestellt wird.</li>
+<li><strong>Verantwortlichkeit:</strong> eine zweite Person zur Einarbeitung benennen (Ausfallsicherheit).</li>
+<li><strong>Vor Echtstart:</strong> Sicherheit bereinigen (Demo-Passwörter) und Backup einrichten.</li>
+</ol>
+<hr/>
+<h2>7. Fahrplan (nächste 6–12 Monate, Vorschlag)</h2>
+<ul>
+<li><strong>Quartal 1:</strong> Sicherheit + Backup, Pilot „Mitglieder &amp; Beiträge" im Echtbetrieb.</li>
+<li><strong>Quartal 2:</strong> Website automatisch mit Live-Daten (Tabelle/Spiele) verbinden; Sponsoren- und Galerie-Modul ausbauen.</li>
+<li><strong>Quartal 3:</strong> Monitoring (Verfügbarkeit) + erste KI-Hilfe (Regel-/Formular-Assistent).</li>
+<li><strong>Quartal 4:</strong> Automatisierungen (Neumitglied → Willkommen → Rechnung), Saison-Archiv.</li>
+</ul>
+<hr/>
+<h2>8. Fazit</h2>
+<p>Der Verein besitzt bereits ein <strong>wertvolles, funktionierendes Fundament</strong> mit echtem Alltagsnutzen. Mit überschaubaren laufenden Kosten und ehrenamtlichem Einsatz lässt es sich Schritt für Schritt zu einem <strong>vollständigen Vereins-Betriebssystem</strong> ausbauen — bei voller Datenhoheit und Unabhängigkeit.</p>
+<p><strong>Bitte um Beschluss:</strong> Budgetfreigabe Hosting + Start des Pilotbetriebs „Mitglieder &amp; Beiträge".</p>
+<hr/>
+<p><em>Detail-Unterlagen auf Wunsch: <code>M75-Manager-Technik.md</code> (technisch), <code>M75-Manager-Kindgerecht.md</code> (einfach erklärt), <code>M75-Manager-Statusbericht.md</code> (vollständige Analyse).</em></p>
+</div></body>
+</html>
