@@ -177,6 +177,12 @@ SQLite (data.db, WAL-Modus)   ── 📋 PostgreSQL-Migration geplant</code></p
 <ul>
 <li>🟦 <code>Website.tsx</code> zeigt öffentliche Seiten per iframe-Vorschau + Edit-/Repo-Links; <code>website_pages</code>-Tabelle vorhanden.</li>
 <li>📋 <strong>Headless-Read-API</strong>, die die statische Website automatisch mit Live-Daten (Tabelle, nächste Spiele, Ankündigungen) speist, ist <strong>geplant</strong>, noch nicht gebaut. <strong>Hinweis:</strong> Website ist <strong>statisch (GitHub Pages)</strong>, nicht WordPress.</li>
+<li>📋 <strong>Spielwochen-Recap (News):</strong> geplante Funktion, die je <strong>Spielwoche</strong> alle Spiele der Mersch75-Mannschaften in <strong>ein paar Sätzen</strong> zusammenfasst und als News-Beitrag (<code>news.html</code>) veröffentlicht. Der Manager soll die Texte <strong>erfassen/verwalten</strong> und optional aus FLH-Resultaten <strong>vorbefüllen</strong> (KI-Entwurf via Ollama/Odysseus, Mensch finalisiert), mehrsprachig (LB/DE/FR/EN/PT). <strong>Gilt ab Saison 2026/2027</strong>, laufend.</li>
+</ul>
+<h3>7.12 Website-Live-Center — Saison-Archiv (✅ Juni 2026)</h3>
+<ul>
+<li>Saison <strong>2025/2026</strong> als eigene statische Archiv-Seite <strong><code>live-center-25-26.html</code></strong> gesichert (volle Funktion, alle Tabs/Spiele), verlinkt von <code>statistics-25-26.html</code>.</li>
+<li><strong><code>live-center.html</code></strong> auf reine Struktur zurückgesetzt: alle Daten-Arrays (<code>allGamesData</code>, <code>coupeData</code>, <code>m75Data</code>, <code>flhData</code>, <code>u11EliteTournamentData</code>, <code>rawFlhSchedule</code>, <code>corrections</code>) <strong>geleert</strong>; Render-/Tab-/Filter-Logik und der Live-FLH-Sync bleiben aktiv → neuer Kalender <strong>2026/2027</strong> füllt sich automatisch. Empfehlung: pro Saisonende analog archivieren (perspektivisch über das App-<strong>Archiv</strong>-Modul automatisieren).</li>
 </ul>
 <hr/>
 <h2>8. Geplante Meta-Schicht: Hermes &amp; Odysseus (📋 Konzept)</h2>
