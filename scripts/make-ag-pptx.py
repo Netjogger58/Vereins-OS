@@ -113,7 +113,19 @@ content_slide("Wo stehen wir?", [
     ("Chat, Profile, Website-Anbindung, Sponsoren, Galerie.", 1),
     ("GEPLANT:", 0),
     ("KI-Hilfe, Monitoring, automatisches Backup, Messenger (Matrix).", 1),
+    ("Spielwochen-Recap: wöchentlicher News-Text über alle Spiele (ab 2026/2027).", 1),
     ("Das teure Fundament steht – Erweiterungen folgen Schritt für Schritt.", 0),
+])
+
+# ---------- Folie 4b: Website & Spielwochen-News ----------
+content_slide("Neu: Website & Spielwochen-News", [
+    ("Erledigt: Sponsoren-/Partner-Seite ist live.", 0),
+    ("Saison 25/26 sauber archiviert; Spielplan startet leer in 2026/2027.", 1),
+    ("Der neue Kalender füllt sich automatisch aus den Verbandsdaten.", 1),
+    ("Geplant – Spielwochen-Recap auf der News-Seite:", 0),
+    ("Wöchentlich ein kurzer Text über alle Spiele unserer Mannschaften.", 1),
+    ("Mehrsprachig; KI macht den Entwurf aus den Ergebnissen, Mensch gibt frei.", 1),
+    ("Ab Saison 2026/2027, laufend.", 1),
 ])
 
 # ---------- Folie 5: Zahlen ----------
