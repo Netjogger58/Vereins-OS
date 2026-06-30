@@ -167,6 +167,11 @@ Anmeldungen (intern) · Mitglied-Detail · Nominierungen · Ankündigungen · Ch
 ### 7.11 Website-Integration (🟦 Hub / 📋 API)
 - 🟦 `Website.tsx` zeigt öffentliche Seiten per iframe-Vorschau + Edit-/Repo-Links; `website_pages`-Tabelle vorhanden.
 - 📋 **Headless-Read-API**, die die statische Website automatisch mit Live-Daten (Tabelle, nächste Spiele, Ankündigungen) speist, ist **geplant**, noch nicht gebaut. **Hinweis:** Website ist **statisch (GitHub Pages)**, nicht WordPress.
+- 📋 **Spielwochen-Recap (News):** geplante Funktion, die je **Spielwoche** alle Spiele der Mersch75-Mannschaften in **ein paar Sätzen** zusammenfasst und als News-Beitrag (`news.html`) veröffentlicht. Der Manager soll die Texte **erfassen/verwalten** und optional aus FLH-Resultaten **vorbefüllen** (KI-Entwurf via Ollama/Odysseus, Mensch finalisiert), mehrsprachig (LB/DE/FR/EN/PT). **Gilt ab Saison 2026/2027**, laufend.
+
+### 7.12 Website-Live-Center — Saison-Archiv (✅ Juni 2026)
+- Saison **2025/2026** als eigene statische Archiv-Seite **`live-center-25-26.html`** gesichert (volle Funktion, alle Tabs/Spiele), verlinkt von `statistics-25-26.html`.
+- **`live-center.html`** auf reine Struktur zurückgesetzt: alle Daten-Arrays (`allGamesData`, `coupeData`, `m75Data`, `flhData`, `u11EliteTournamentData`, `rawFlhSchedule`, `corrections`) **geleert**; Render-/Tab-/Filter-Logik und der Live-FLH-Sync bleiben aktiv → neuer Kalender **2026/2027** füllt sich automatisch. Empfehlung: pro Saisonende analog archivieren (perspektivisch über das App-**Archiv**-Modul automatisieren).
 
 ---
 

@@ -79,9 +79,11 @@ Das System ist **kein Prototyp mehr, sondern bereits eine große, nutzbare Anwen
 ## 7. Fahrplan (nächste 6–12 Monate, Vorschlag)
 
 - **Quartal 1:** Sicherheit + Backup, Pilot „Mitglieder & Beiträge" im Echtbetrieb.
-- **Quartal 2:** Website automatisch mit Live-Daten (Tabelle/Spiele) verbinden; Sponsoren- und Galerie-Modul ausbauen.
-- **Quartal 3:** Monitoring (Verfügbarkeit) + erste KI-Hilfe (Regel-/Formular-Assistent).
+- **Quartal 2:** Website automatisch mit Live-Daten (Tabelle/Spiele) verbinden; Sponsoren- und Galerie-Modul ausbauen; **Spielwochen-Recap auf der News-Seite** (kurzer Wochentext über alle Mannschafts-Spiele, ab Saison 2026/2027).
+- **Quartal 3:** Monitoring (Verfügbarkeit) + erste KI-Hilfe (Regel-/Formular-Assistent, inkl. automatischer Entwurf für den Spielwochen-Recap).
 - **Quartal 4:** Automatisierungen (Neumitglied → Willkommen → Rechnung), Saison-Archiv.
+
+> **Bereits umgesetzt (Juni 2026):** Sponsoren-/Partner-Seite live; Saison **25/26** des Website-Spielplans als Archiv gesichert (`live-center-25-26.html`) und der Live-Spielplan für **2026/2027** zurückgesetzt.
 
 ---
 

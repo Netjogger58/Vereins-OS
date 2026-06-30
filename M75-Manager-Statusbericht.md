@@ -146,6 +146,9 @@ Aus `schema.ts` — bereits modelliert, aber **ohne eigene Oberfläche**:
 
 ### 4.5 📋 Nur Plan/Idee (kein Code)
 Aus `PROJEKTPLAN.md`: Matrix/Element-Server, n8n-Workflows, Ollama-KI/RAG, Odysseus-Browser-Automation, PPTX-Generator, öffentliche Website-API, PWA/Push, Uptime-Kuma-Monitoring, Mautrix-Bridges (WhatsApp/Signal), Nextcloud, PostgreSQL-Migration.
+- **Spielwochen-Recap (News):** wöchentlicher Kurztext über alle Mannschafts-Spiele auf der Website-News-Seite; vom Manager erfasst/verwaltet, optional KI-vorbefüllt. **Geplant ab Saison 2026/2027.**
+
+> **Erledigt (Juni 2026, Website-Repo):** Saison-Spielplan **25/26** als Archiv-Seite `live-center-25-26.html` gesichert (verlinkt aus `statistics-25-26.html`); `live-center.html` auf Struktur für **2026/2027** geleert (FLH-Sync füllt automatisch). Sinnvoll, dies künftig über das App-Archiv-Modul zu automatisieren.
 
 ---
 

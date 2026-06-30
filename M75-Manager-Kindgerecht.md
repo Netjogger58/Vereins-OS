@@ -60,6 +60,8 @@ Das Hauptquartier hat ein **Schaufenster zur Straße**: die **öffentliche Webse
 - **Das Event-Zimmer** 🟢: Hier werden Feiern und Versammlungen geplant. *So funktioniert's:* Man legt ein Event an, alle bekommen eine Einladung und klicken **„komme" oder „komme nicht"** — der Computer führt die Liste automatisch.
 - **Der Bestell-Schalter** 🟡 *(halb fertig)*: Spieler können Trikots oder Bälle wünschen; der volle Ablauf (bis zur Lieferung) wird noch ausgebaut.
 - **Die Getränke- und Ticket-Kasse** 🔵 *(nur Idee)*: Soll später mitzählen, wie viele Tickets verkauft und wie viele Flaschen getrunken wurden. *Dieses Zimmer ist noch gar nicht gebaut.*
+- **Die Spielwochen-Geschichte** 🔵 *(geplant, ab Saison 2026/2027)*: Jede Woche schreibt jemand **ein paar Sätze über alle Spiele unserer Mannschaften** ins Schaufenster (auf die News-Seite) — wer gewonnen hat, was schön war, wer als Nächstes spielt. *So soll es funktionieren:* Der Computer macht aus den Ergebnissen schon einen **ersten Entwurf**, und ein Mensch macht ihn fertig — in mehreren Sprachen.
+- **Das Saison-Album** 🟢 *(neu gebaut)*: Wenn eine Saison zu Ende ist, kommen **alle Spiele in ein eigenes Album** (eine Archiv-Seite), und das Schaufenster startet für die neue Saison wieder leer. *So bleibt nichts verloren* — die alte Saison kann man jederzeit nachschlagen.
 
 ---
 
@@ -189,10 +191,11 @@ Erinnerst du dich an die Bibliothek aus Kapitel 0? Das Haus hat genau **drei Sto
 ## 17. Was wird als Nächstes gebaut?
 
 1. Die **leeren Räume** füllen (zuerst Sponsoren, Galerie, Saison-Archiv).
-2. Dem **Hausmeister Hermes** beibringen, das Haus zu überwachen.
-3. Das **KI-Gehirn** einbauen und ein Menü, um es zu steuern und zu aktualisieren.
-4. Die **Test-Passwörter** entfernen, bevor echte Menschen das System nutzen.
-5. Den **feuersicheren Safe** (nächtliche Kopie) einbauen.
+2. Die **Spielwochen-Geschichte** bauen: jede Woche ein kurzer Text über alle Spiele unserer Mannschaften (ab Saison 2026/2027).
+3. Dem **Hausmeister Hermes** beibringen, das Haus zu überwachen.
+4. Das **KI-Gehirn** einbauen und ein Menü, um es zu steuern und zu aktualisieren.
+5. Die **Test-Passwörter** entfernen, bevor echte Menschen das System nutzen.
+6. Den **feuersicheren Safe** (nächtliche Kopie) einbauen.
 
 ---
 

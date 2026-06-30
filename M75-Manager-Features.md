@@ -323,6 +323,11 @@ Einmal-Import der offiziellen Mitgliederliste (Excel) inkl. Karten-IDs in `data.
 - Handball4all.de Integration
 - Automatische Updates
 
+### 13.2 Website-Archiv Saison 25/26 (erledigt — Juni 2026)
+- Saison **2025/2026** des Website-Live-Centers als eigene Archiv-Seite gesichert: **live-center-25-26.html** (alle Spiele/Tabs voll funktionsfähig erhalten).
+- Verlinkt von **statistics-25-26.html** (Button "Spillplang 25/26 (Archiv)").
+- **live-center.html** auf reine Struktur zurückgesetzt (Daten-Arrays geleert) → bereit für **Saison 2026/2027**; der Live-FLH-Sync füllt den neuen Kalender automatisch.
+
 ---
 
 ## 14. Website-Verwaltung (Hub) (Neu — Juni 2026)
@@ -361,6 +366,18 @@ Mehrsprachige **Wëllkomm-Mapp** für neue Mitglieder, direkt im Manager (`clien
 - Quelle: `wellkomm-mapp.html` im Repo `Netjogger58/mersch75test.github.io` (live unter `mersch75.lu/wellkomm-mapp.html`); ebenfalls im Website-Hub gelistet.
 
 > Hinweis: Die Mappe wird aus dem getrennten Website-Repo eingebettet – Inhaltsänderungen erfolgen dort und sind nach dem GitHub-Pages-Deploy automatisch in der App sichtbar.
+
+---
+
+## 17. Spielwochen-Recap / News-Texte (geplant — ab Saison 2026/2027)
+
+Wöchentliche **Text-Zusammenfassung der Spielwoche** für alle Mannschaften von Mersch75 — ein paar Sätze, die alle Spiele unserer Teams dokumentieren (Resultate, Höhepunkte, nächste Gegner).
+
+- **Ort (Website):** als Beitrag auf der **News-Seite** (news.html, Repo mersch75test.github.io).
+- **App-Unterstützung:** Der Manager soll diese Recaps **erfassen/verwalten** (Eingabemaske je Spielwoche) und optional **automatisch vorbefüllen** (aus FLH-Resultaten + nächsten Spielen); Redaktion/Freigabe durch das Komitee.
+- **Mehrsprachig** (LB/DE/FR/EN/PT) analog zur restlichen Website.
+- **Gilt ab Saison 2026/2027** und läuft dann **jede Spielwoche**.
+- Mögliche KI-Stütze: Entwurfstext aus Ergebnis-Daten generieren (Ollama/Odysseus-Konzept), Mensch finalisiert.
 
 ---
 
@@ -425,6 +442,7 @@ GET    /api/standings?competition=League&season=2025/26
 - **Live-Center** (Live-Ergebnisse via handball4all.de).
 - **SMS-Gateway (Mixvoip)** für Magic-Link per SMS — wartet auf Zugangsdaten.
 - **Mobile App / PWA**.
+- **Spielwochen-Recap (News)** — wöchentliche Text-Zusammenfassung aller Mannschafts-Spiele auf news.html; App erfasst/verwaltet die Texte (ab Saison 2026/2027). Siehe §17.
 
 ### � Geplant — Datenmodell vorbereitet, Oberfläche folgt
 Folgende Bereiche sind in der Datenbank bereits angelegt, haben aber noch **keine eigene Oberfläche**:
@@ -439,7 +457,7 @@ Folgende Bereiche sind in der Datenbank bereits angelegt, haben aber noch **kein
 - **Externe Kalender-Synchronisation** (SEPA-Mandate sind in Finanzen/Beiträgen bereits angelegt)
 
 ### ✅ Bereits erledigt (Auswahl)
-Magic-Link-Login · Random-No-/Admin-Login · FLH-Import · Spieler-/Ligastatistiken · Mitglieder-Import 2025/26 · Website-Hub · Check-In/Karten-Scan · Willkommensmappe.
+Magic-Link-Login · Random-No-/Admin-Login · FLH-Import · Spieler-/Ligastatistiken · Mitglieder-Import 2025/26 · Website-Hub · Check-In/Karten-Scan · Willkommensmappe · **Saison-Archiv 25/26** (Website-Live-Center archiviert, neue Saison vorbereitet).
 
 ---
 
