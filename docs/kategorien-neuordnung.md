@@ -94,7 +94,22 @@ Mehrere Funktionen pro Person möglich. Neue Codes (Vorgabe User):
 | `Arbitre` | 21 | 41 |
 | `Joueur/Joueuse` | = Spielkategorie 11–20 | = Spielkategorie 31–40 |
 | `Coach` / `Entraîneur` | 53 (Coach) · 54 (Coach backup) | 53 / 54 |
+| `Teamchef(fin)` | 55 | 55 |
 | `Bénévole` u.a. | 50er-Block (siehe §3b) | 50er-Block (siehe §3b) |
+
+**Trainerschein:** Bei `coach` (und ggf. `coach_backup`) wird die **Trainer-Qualifikation**
+im Feld `member_functions.qualification` gespeichert (z.B. `LUXQF3`, `LUXQF2Bis`) — analog
+kann dort bei `arbitre` das Schiri-Level stehen.
+
+Aktueller Stand der Trainerscheine (Stand 02.07.2026, zu vervollständigen):
+
+| Trainer | Trainerschein |
+|---|---|
+| Max | LUXQF4 |
+| Anne Holm | LUXQF3 |
+| Louis VdW | LUXQF2Bis |
+| Adrien | LUXQF4 |
+| Virginio | LUXQF2 |
 
 **Damit entfallen die alten Kombi-Codes vollständig:** Wer mehrere Funktionen hat, bekommt
 die Spielkategorie **plus** die Funktions-Flags — keine zusammengesetzten Zahlen
@@ -102,7 +117,8 @@ die Spielkategorie **plus** die Funktions-Flags — keine zusammengesetzten Zahl
 
 - **Spieler + Arbitre** → Spielkategorie + `arbitre`
 - **Spieler + Comité** → Spielkategorie + `comite`
-- **Spieler/Trainer** → Spielkategorie + `coach` (Spieler, der auch trainiert)
+- **Spieler/Trainer** → Spielkategorie + `coach` (+ `qualification` = Trainerschein)
+- **Teamchef(fin)** → `teamchef` (eigene Funktion, `55`)
 
 > Hinweis: `Arbitre` (21/41) liegt im Kategorie-Zahlenbereich, `Comité`/`Officiel` (1–4)
 > darunter — so vorgegeben; funktioniert, ist nur numerisch etwas gemischt.
@@ -118,8 +134,9 @@ aufgelöst:
 - `50` Bénévole (allgemein)
 - `51` Bénévole Famille (Getränke, Grill …)
 - `52` Bénévole avec Licence (z.B. Chrono)
-- `53` Entraîneur / Coach
+- `53` Entraîneur / Coach — Trainerschein in `qualification`
 - `54` Coach backup
+- `55` Teamchef(fin)
 
 **60–69 · Mitgliedsart / Sondertyp**
 - `60` Donateur
