@@ -93,11 +93,16 @@ Mehrere Funktionen pro Person möglich. Neue Codes (Vorgabe User):
 | `Officiel` | 2 | 4 |
 | `Arbitre` | 21 | 41 |
 | `Joueur/Joueuse` | = Spielkategorie 11–20 | = Spielkategorie 31–40 |
+| `Coach` / `Entraîneur` | 53 (Coach) · 54 (Coach backup) | 53 / 54 |
 | `Bénévole` u.a. | 50er-Block (siehe §3b) | 50er-Block (siehe §3b) |
 
-**Damit entfallen die alten Kombi-Codes vollständig:** Ein Spieler, der auch Arbitre/Comité
-ist, bekommt die Spielkategorie **plus** die Funktions-Flags — keine zusammengesetzten
-Zahlen (`102/109/1019`, `151/152`) mehr.
+**Damit entfallen die alten Kombi-Codes vollständig:** Wer mehrere Funktionen hat, bekommt
+die Spielkategorie **plus** die Funktions-Flags — keine zusammengesetzten Zahlen
+(`102/109/1019`, `151/152`) mehr. Beispiele:
+
+- **Spieler + Arbitre** → Spielkategorie + `arbitre`
+- **Spieler + Comité** → Spielkategorie + `comite`
+- **Spieler/Trainer** → Spielkategorie + `coach` (Spieler, der auch trainiert)
 
 > Hinweis: `Arbitre` (21/41) liegt im Kategorie-Zahlenbereich, `Comité`/`Officiel` (1–4)
 > darunter — so vorgegeben; funktioniert, ist nur numerisch etwas gemischt.
