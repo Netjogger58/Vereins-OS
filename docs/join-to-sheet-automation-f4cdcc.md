@@ -370,7 +370,9 @@ D'Umeldung (`join.html`) erlaabt **méi wéi eng Funktioun pro Persoun** (z.B. S
   - **Damen:** Dames=`12`, U17=`14`, U15=`16`, U13=`15`, U11=`17`, U9=`18`, Vétérans=`19`, U7=`21`
 - **Officiel** → H=`1` / D=`11`
 - **Arbitter** → `10`
-- **Spiller + Arbitter** → Arbitter-Code `10` **virun** de Spiller-Code (ouni Trennzeechen), z.B. Seniors=`102`, U13=`106`, Vétéran=`109`
+- **Spiller + Arbitter** → Arbitter-Code `10` **virun** de Spiller-Code (ouni Trennzeechen):
+  - **Hären:** Seniors-H=`102`, U13-H=`106`, Vétéran-H=`109`
+  - **Damen:** U17-D=`1014`, U13-D=`1015`, Vétérans-Dames=`1019`
 - **Reng Bénévole / Comité** → `50`
 - **Contact Famille** (Familljesektioun) → ouni Lizenz=`214` / mat Lizenz=`215`
 - `0` = Kategorie nach ze komplettéieren (Secrétaire)
@@ -381,6 +383,8 @@ D'Umeldung (`join.html`) erlaabt **méi wéi eng Funktioun pro Persoun** (z.B. S
 - **Famill (2+)** → €250 (prioritär)
 - **Officiel / Arbitter** (ëmmer mat Lizenz) oder **Bénévole mat Lizenz** → **€50** — **och wann d'Persoun gläichzäiteg Spiller ass**
 - Soss **Spiller** no Alter: Seniors/Vétérans = €200 · U17/U21 = €100 · méi jonk = €100
+
+> De Cotisatioun-Virschlag ass **just eng Uweisung** (kann ugepasst ginn) an de Betrag ka **op enger AG geännert ginn**, mat Wierkung fir déi kommend Saison. Den Titel + Hiweis sinn an alle 5 Sproochen iwwersat (`tarif` / `tarifHint` an `MERSCH75_UI_TEXTS`, gesat vun `updateLang`).
 
 ### Sheet-Marker (Off / SR)
 - `roles` (Array) gëtt am Apps Script benotzt: enthält et `Officiel(le)` → Spalt **AK** = `x`; enthält et `Arbitre` → Spalt **AM** = `x` (och bei engem Spiller-Arbitter).
