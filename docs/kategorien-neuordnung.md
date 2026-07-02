@@ -55,13 +55,12 @@ Codes (2–21) werden ersetzt. Bereiche 22–30 und 42–49 bleiben als Reserve.
 | 21 | Arbitre H | 41 | Arbitre F |
 | 0 | kein Spieler / zu klären | | |
 
-⚠️ **Konflikt 1 — Code 40 doppelt:** `40` ist gleichzeitig **Vétérans Dames** *und*
-„H/F bloqué(es) interne" vergeben. **Vorschlag:** `40` = Vétérans Dames behalten; „intern
-gesperrt" ist ein **Status** (geschlechtsunabhängig) → in den 80er-Block verschieben
-(Code `87`, siehe §3b). Bitte bestätigen.
+✅ **Konflikt 1 — gelöst (User bestätigt 02.07.2026):** `40` = **Vétérans Dames**. „Intern
+gesperrt" ist ein **Status** (global, geschlechtsunabhängig) und liegt im 80er-Block als
+Code **`87`** (siehe §3b) — nicht mehr im Kategorie-Bereich.
 
-⚠️ **Konflikt 2 — Frauen-Start:** Der Einleitungssatz sagt „Frauen mit 21", die Liste zeigt
-aber **31–41**. Ich gehe von **31** aus (laut Liste). Bitte bestätigen.
+✅ **Konflikt 2 — gelöst (User bestätigt 02.07.2026):** Frauen beginnen bei **31** (Liste
+31–41 ist maßgeblich).
 
 **Quelle der Alterskategorien:** maßgeblich ist die FLH-Seite
 <https://www.flh.lu/f-l-h/categories-dage> (wird demnächst angepasst). Die Jahrgänge NICHT
