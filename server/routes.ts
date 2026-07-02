@@ -2398,5 +2398,29 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     }
   });
 
+  // POST /api/archive/rollover - Saison abschließen & neue Saison starten
+  app.post("/api/archive/rollover", requireAuth(), async (req, res) => {
+    const authed = req as AuthedRequest;
+    if (!["präsident", "admin", "secretaire"].includes(authed.user!.role)) {
+      return res.status(403).json({ message: "Keine Berechtigung" });
+    }
+    const { newSeasonName, newSeasonStart, newSeasonEnd, finishedSeasonName, resetLiveData } = req.body || {};
+    if (!newSeasonName || !newSeasonStart || !newSeasonEnd) {
+      return res.status(400).json({ message: "newSeasonName, newSeasonStart und newSeasonEnd sind erforderlich" });
+    }
+    try {
+      const result = await storage.rolloverSeason({
+        newSeasonName,
+        newSeasonStart,
+        newSeasonEnd,
+        finishedSeasonName,
+        resetLiveData: resetLiveData !== false,
+      });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Saison-Rollover fehlgeschlagen", error: String(error) });
+    }
+  });
+
   return _httpServer;
 }

@@ -44,6 +44,7 @@ import GdprTools from "@/pages/GdprTools";
 import Website from "@/pages/Website";
 import WelcomeMappe from "@/pages/WelcomeMappe";
 import CheckIn from "@/pages/CheckIn";
+import Archive from "@/pages/Archive";
 import { Logo } from "@/components/Logo";
 
 function AppRouter() {
@@ -99,6 +100,7 @@ function AppRouter() {
         <Route path="/website" component={Website} />
         <Route path="/welcome-mappe" component={WelcomeMappe} />
         <Route path="/checkin" component={CheckIn} />
+        <Route path="/archive" component={Archive} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

@@ -38,6 +38,7 @@ import {
   Globe,
   QrCode,
   BookOpen,
+  Archive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -88,6 +89,7 @@ const NAV: NavItem[] = [
   { href: "/newsletter", label: "Newsletter", icon: Send, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
   { href: "/gdpr", label: "DSGVO", icon: ShieldCheck, section: "Verwaltung" },
   { href: "/website", label: "Website", icon: Globe, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
+  { href: "/archive", label: "Saison-Archiv", icon: Archive, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
   { href: "/welcome-mappe", label: "Willkommensmappe", icon: BookOpen, section: "Verein" },
 ];
 

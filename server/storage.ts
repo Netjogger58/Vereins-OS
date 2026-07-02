@@ -10,6 +10,12 @@ import {
   accounts,
   transactions,
   playerFlags,
+  memberFunctions,
+  type MemberFunction,
+  type InsertMemberFunction,
+  memberCategories,
+  type MemberCategory,
+  type InsertMemberCategory,
   type User,
   type InsertUser,
   type Team,
@@ -299,6 +305,23 @@ function init() {
       medico_next TEXT,
       join_date TEXT,
       raw_data TEXT
+    );
+    CREATE TABLE IF NOT EXISTS member_functions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      member_id INTEGER NOT NULL,
+      function TEXT NOT NULL,
+      code INTEGER,
+      qualification TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS member_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      member_id INTEGER NOT NULL,
+      cat_code INTEGER NOT NULL,
+      kind TEXT NOT NULL DEFAULT 'surclassement',
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS attendance (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -944,6 +967,20 @@ function runMigrations() {
   safeAddColumn("members", "medico_next", "TEXT");
   safeAddColumn("members", "join_date", "TEXT");
   safeAddColumn("members", "raw_data", "TEXT");
+  // Kategorien-Neuordnung (siehe docs/kategorien-neuordnung.md)
+  safeAddColumn("members", "cat_code", "INTEGER");
+  safeAddColumn("members", "licence_status", "TEXT");
+  safeAddColumn("members", "transfer_status", "TEXT");
+  safeAddColumn("members", "member_type", "TEXT DEFAULT 'spieler'");
+  safeAddColumn("members", "contact_info_type", "TEXT");
+  // Archiv-Snapshot (siehe docs/saison-archivierung.md §2)
+  safeAddColumn("archive_members", "cat_code", "INTEGER");
+  safeAddColumn("archive_members", "functions", "TEXT");
+  safeAddColumn("archive_members", "categories", "TEXT");
+  safeAddColumn("archive_members", "membership_status", "TEXT");
+  safeAddColumn("archive_members", "licence_status", "TEXT");
+  safeAddColumn("archive_members", "member_type", "TEXT");
+  safeAddColumn("archive_members", "snapshot_json", "TEXT");
   // Unique index for card_id (allows multiple NULLs)
   try {
     sqlite.exec(
@@ -3221,6 +3258,166 @@ export class DatabaseStorage implements IStorage {
         .where(eq(archiveExports.id, id))
         .run();
     }
+  }
+
+  // ─── Saison-Rollover (siehe docs/saison-archivierung.md §3) ───
+  // Archiviert die aktuelle (aktive) Saison in die archive_*-Tabellen und legt eine neue
+  // aktive Saison an. Stammdaten (members) bleiben; saisonabhängige Daten werden optional
+  // zurückgesetzt. Läuft transaktional (alles-oder-nichts).
+  async rolloverSeason(input: {
+    newSeasonName: string;
+    newSeasonStart: string;
+    newSeasonEnd: string;
+    finishedSeasonName?: string;
+    resetLiveData?: boolean;
+  }): Promise<{
+    archivedSeasonId: number;
+    newSeasonId: number;
+    counts: { teams: number; members: number; matches: number; events: number };
+  }> {
+    const now = new Date().toISOString();
+    const today = now.slice(0, 10);
+    return db.transaction((tx) => {
+      // 1. Abzuschließende (aktive) Saison bestimmen — sonst anlegen
+      let current = tx.select().from(archiveSeasons).where(eq(archiveSeasons.active, true)).get();
+      if (!current) {
+        current = tx.insert(archiveSeasons).values({
+          name: input.finishedSeasonName ?? "Aktuell",
+          startDate: input.newSeasonStart,
+          endDate: today,
+          active: true,
+        }).returning().get();
+      }
+      const seasonId = current.id;
+
+      // 2. Teams (+ Tabellenstand) archivieren
+      const teamRows = tx.select().from(teams).all();
+      const teamIdMap = new Map<number, number>();
+      let teamCount = 0;
+      for (const t of teamRows) {
+        const standing = tx.select().from(standings).where(eq(standings.teamId, t.id)).get();
+        const trainer = t.trainerId ? tx.select().from(users).where(eq(users.id, t.trainerId)).get() : undefined;
+        const at = tx.insert(archiveTeams).values({
+          seasonId,
+          name: t.name,
+          category: t.category,
+          trainerName: trainer?.name ?? null,
+          trainerQualifications: trainer?.qualifications ?? null,
+          finalRank: standing?.position ?? null,
+          matchesPlayed: standing?.played ?? null,
+          matchesWon: standing?.won ?? null,
+          matchesDrawn: standing?.drawn ?? null,
+          matchesLost: standing?.lost ?? null,
+          goalsFor: standing?.goalsFor ?? null,
+          goalsAgainst: standing?.goalsAgainst ?? null,
+          points: standing?.points ?? null,
+        }).returning().get();
+        teamIdMap.set(t.id, at.id);
+        teamCount++;
+      }
+      // Sammelteam für Mitglieder ohne Team (Supervisor, Comité, Donateur …)
+      const noTeam = tx.insert(archiveTeams).values({
+        seasonId,
+        name: "Ohne Team / Sonstige",
+        category: "sonstige",
+      }).returning().get();
+
+      // 3. Mitglieder als Snapshot archivieren (inkl. Funktionen + Kategorien)
+      const memberRows = tx.select().from(members).all();
+      let memberCount = 0;
+      for (const m of memberRows) {
+        const fns = tx.select().from(memberFunctions).where(eq(memberFunctions.memberId, m.id)).all();
+        const cats = tx.select().from(memberCategories).where(eq(memberCategories.memberId, m.id)).all();
+        const archiveTeamId = (m.teamId != null && teamIdMap.has(m.teamId)) ? teamIdMap.get(m.teamId)! : noTeam.id;
+        tx.insert(archiveMembers).values({
+          seasonId,
+          teamId: archiveTeamId,
+          name: m.name,
+          email: m.email ?? null,
+          phone: m.phone ?? null,
+          birthdate: m.birthdate ?? null,
+          licenseNumber: m.licenseNumber ?? null,
+          catCode: m.catCode ?? null,
+          functions: JSON.stringify(fns),
+          categories: JSON.stringify(cats),
+          membershipStatus: m.membershipStatus ?? null,
+          licenceStatus: m.licenceStatus ?? null,
+          memberType: m.memberType ?? null,
+          snapshotJson: JSON.stringify({ member: m, functions: fns, categories: cats }),
+        }).run();
+        memberCount++;
+      }
+
+      // 4. Spiele archivieren
+      const matchRows = tx.select().from(matches).all();
+      let matchCount = 0;
+      for (const mt of matchRows) {
+        const archiveTeamId = (mt.teamId != null && teamIdMap.has(mt.teamId)) ? teamIdMap.get(mt.teamId)! : noTeam.id;
+        let result: string | null = null;
+        if (mt.homeScore != null && mt.awayScore != null) {
+          if (mt.homeScore === mt.awayScore) result = "draw";
+          else {
+            const merschWon = mt.isHome ? mt.homeScore > mt.awayScore : mt.awayScore > mt.homeScore;
+            result = merschWon ? "win" : "loss";
+          }
+        }
+        tx.insert(archiveMatches).values({
+          seasonId,
+          teamId: archiveTeamId,
+          date: mt.matchDate,
+          opponent: mt.isHome ? mt.awayTeam : mt.homeTeam,
+          venue: mt.isHome ? "home" : "away",
+          location: mt.venue ?? null,
+          homeGoals: mt.homeScore ?? null,
+          awayGoals: mt.awayScore ?? null,
+          result,
+          notes: mt.notes ?? null,
+        }).run();
+        matchCount++;
+      }
+
+      // 5. Events archivieren
+      const eventRows = tx.select().from(events).all();
+      let eventCount = 0;
+      for (const ev of eventRows) {
+        const archiveTeamId = (ev.teamId != null && teamIdMap.has(ev.teamId)) ? teamIdMap.get(ev.teamId)! : null;
+        tx.insert(archiveEvents).values({
+          seasonId,
+          teamId: archiveTeamId,
+          title: ev.title,
+          type: ev.type,
+          date: ev.date,
+          location: ev.location ?? null,
+          description: ev.description ?? null,
+        }).run();
+        eventCount++;
+      }
+
+      // 6. Alte Saison abschließen, neue Saison aktiv setzen
+      tx.update(archiveSeasons).set({ active: false, archivedAt: now }).where(eq(archiveSeasons.id, seasonId)).run();
+      const newSeason = tx.insert(archiveSeasons).values({
+        name: input.newSeasonName,
+        startDate: input.newSeasonStart,
+        endDate: input.newSeasonEnd,
+        active: true,
+      }).returning().get();
+
+      // 7. Saisonabhängige Live-Daten zurücksetzen (Stammdaten + card_id bleiben!)
+      if (input.resetLiveData !== false) {
+        tx.delete(matches).run();
+        tx.delete(standings).run();
+        tx.delete(nominations).run();
+        tx.delete(attendance).run();
+        tx.delete(availability).run();
+        tx.delete(memberCategories).run(); // Surclassement muss neu vergeben werden
+      }
+
+      return {
+        archivedSeasonId: seasonId,
+        newSeasonId: newSeason.id,
+        counts: { teams: teamCount, members: memberCount, matches: matchCount, events: eventCount },
+      };
+    });
   }
 
   // Import/Export - Platzhalter, wird später implementiert
