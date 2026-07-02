@@ -188,7 +188,7 @@ export type PlayerFlag = typeof playerFlags.$inferSelect;
 export const memberFunctions = sqliteTable("member_functions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   memberId: integer("member_id").notNull().references(() => members.id),
-  function: text("function").notNull(), // joueur | arbitre | officiel | comite | coach | coach_backup | teamchef | benevole | benevole_licence | contact_famille | mere_accueil
+  function: text("function").notNull(), // joueur | arbitre | officiel | comite | coach | coach_backup | teamchef | teambegleeder | supervisor | benevole | benevole_licence | contact_famille | mere_accueil
   code: integer("code"), // zugehöriger Code: Comité H1/F3, Officiel H2/F4, Arbitre H21/F41, Bénévole/Coach/Teamchef 50er-Block
   qualification: text("qualification"), // z.B. Trainerschein (LUXQF3, LUXQF2Bis…) bei coach, Schiri-Level bei arbitre
   note: text("note"),
@@ -219,7 +219,7 @@ export const CATEGORY_KINDS = ["primaer", "surclassement", "sous_classement"] as
 // (an users.id gebunden). Für die Verletzungsstatistik wird diese bestehende Tabelle genutzt.
 
 // ─── Kategorie-/Funktions-Konstanten (siehe docs/kategorien-neuordnung.md) ───
-export const MEMBER_FUNCTIONS = ["joueur", "arbitre", "officiel", "comite", "coach", "coach_backup", "teamchef", "benevole", "benevole_licence", "contact_famille", "mere_accueil"] as const;
+export const MEMBER_FUNCTIONS = ["joueur", "arbitre", "officiel", "comite", "coach", "coach_backup", "teamchef", "teambegleeder", "supervisor", "benevole", "benevole_licence", "contact_famille", "mere_accueil"] as const;
 export type MemberFunctionType = typeof MEMBER_FUNCTIONS[number];
 
 export const LICENCE_STATUSES = ["aktiv", "keine", "behalten", "geloescht"] as const;
@@ -238,7 +238,7 @@ export const CAT_CODE_LABELS: Record<number, string> = {
 // Funktions-Code (H/F) → Funktion
 export const FUNCTION_CODES: Record<number, string> = {
   1: "comite", 3: "comite", 2: "officiel", 4: "officiel", 21: "arbitre", 41: "arbitre",
-  50: "benevole", 51: "benevole", 52: "benevole_licence", 53: "coach", 54: "coach_backup", 55: "teamchef",
+  50: "benevole", 51: "benevole", 52: "benevole_licence", 53: "coach", 54: "coach_backup", 55: "teamchef", 56: "teambegleeder", 57: "supervisor",
 };
 
 // Role helpers

@@ -95,6 +95,8 @@ Mehrere Funktionen pro Person möglich. Neue Codes (Vorgabe User):
 | `Joueur/Joueuse` | = Spielkategorie 11–20 | = Spielkategorie 31–40 |
 | `Coach` / `Entraîneur` | 53 (Coach) · 54 (Coach backup) | 53 / 54 |
 | `Teamchef(fin)` | 55 | 55 |
+| `Teambegleeder` | 56 | 56 |
+| `Supervisor` | 57 | 57 |
 | `Bénévole` u.a. | 50er-Block (siehe §3b) | 50er-Block (siehe §3b) |
 
 **Trainerschein:** Bei `coach` (und ggf. `coach_backup`) wird die **Trainer-Qualifikation**
@@ -110,6 +112,9 @@ Aktueller Stand der Trainerscheine (Stand 02.07.2026, zu vervollständigen):
 | Louis VdW | LUXQF2Bis |
 | Adrien | LUXQF4 |
 | Virginio | LUXQF2 |
+
+**Supervisors:** Adrien und Virginio haben **kein eigenes Team** und sind damit
+`supervisor` (Code `57`) — trotz vorhandenem Trainerschein.
 
 **Damit entfallen die alten Kombi-Codes vollständig:** Wer mehrere Funktionen hat, bekommt
 die Spielkategorie **plus** die Funktions-Flags — keine zusammengesetzten Zahlen
@@ -137,6 +142,8 @@ aufgelöst:
 - `53` Entraîneur / Coach — Trainerschein in `qualification`
 - `54` Coach backup
 - `55` Teamchef(fin)
+- `56` Teambegleeder
+- `57` Supervisor (Trainer/Betreuer ohne eigenes Team)
 
 **60–69 · Mitgliedsart / Sondertyp**
 - `60` Donateur
