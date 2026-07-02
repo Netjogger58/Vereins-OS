@@ -62,6 +62,12 @@ export const members = sqliteTable("members", {
   medicoNext: text("medico_next"), // Prochain Médico
   joinDate: text("join_date"), // date début membre
   rawData: text("raw_data"), // JSON aller Originalspalten aus der Excel
+  // ─── Neue strukturierte Felder (Kategorien-Neuordnung, siehe docs/kategorien-neuordnung.md) ───
+  catCode: integer("cat_code"), // Spielkategorie-Code: H 11-21, D 31-41 (siehe CAT_CODE_LABELS)
+  licenceStatus: text("licence_status"), // aktiv | keine | behalten | geloescht
+  transferStatus: text("transfer_status"), // pret_raus | pret_rein | transfer_rein | pret_gratis | transfer_raus
+  memberType: text("member_type").default("spieler"), // spieler | donateur | donateur_lizenz | ehrenmitglied | sponsor
+  contactInfoType: text("contact_info_type"), // contact_famille | mere_accueil (rein informativ, Nicht-Mitglied)
 });
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true });
 export type InsertMember = z.infer<typeof insertMemberSchema>;
@@ -176,6 +182,63 @@ export const playerFlags = sqliteTable("player_flags", {
 export const insertPlayerFlagSchema = createInsertSchema(playerFlags).omit({ id: true });
 export type InsertPlayerFlag = z.infer<typeof insertPlayerFlagSchema>;
 export type PlayerFlag = typeof playerFlags.$inferSelect;
+
+// ─── Member Functions (Mehrfach-Funktionen pro Mitglied) ─
+// Ersetzt die alten Kombi-Codes (102/109/151/152). Eine Person kann mehrere Zeilen haben.
+export const memberFunctions = sqliteTable("member_functions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  memberId: integer("member_id").notNull().references(() => members.id),
+  function: text("function").notNull(), // joueur | arbitre | officiel | comite | coach | coach_backup | benevole | benevole_licence | contact_famille | mere_accueil
+  code: integer("code"), // zugehöriger Code: Comité H1/F3, Officiel H2/F4, Arbitre H21/F41, Bénévole 50er-Block
+  note: text("note"),
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+export const insertMemberFunctionSchema = createInsertSchema(memberFunctions).omit({ id: true, createdAt: true });
+export type InsertMemberFunction = z.infer<typeof insertMemberFunctionSchema>;
+export type MemberFunction = typeof memberFunctions.$inferSelect;
+
+// ─── Member Categories (Spielberechtigung in mehreren Kategorien) ─
+// Ein Spieler spielt normal in seiner Alterskategorie (= members.catCode, Hauptkategorie),
+// darf aber HÖHER spielen (Surclassement, z.B. Sa U13 + So U15) und in seltenen Fällen
+// TIEFER (sous_classement). Hier stehen die ZUSÄTZLICHEN Spielberechtigungen.
+export const memberCategories = sqliteTable("member_categories", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  memberId: integer("member_id").notNull().references(() => members.id),
+  catCode: integer("cat_code").notNull(), // Kategorie-Code (11-21 / 31-41)
+  kind: text("kind").notNull().default("surclassement"), // surclassement (höher) | sous_classement (tiefer)
+  note: text("note"),
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+export const insertMemberCategorySchema = createInsertSchema(memberCategories).omit({ id: true, createdAt: true });
+export type InsertMemberCategory = z.infer<typeof insertMemberCategorySchema>;
+export type MemberCategory = typeof memberCategories.$inferSelect;
+export const CATEGORY_KINDS = ["primaer", "surclassement", "sous_classement"] as const;
+
+// Hinweis: Eine Tabelle `injuries` (+ `rehab_sessions`) existiert bereits weiter unten
+// (an users.id gebunden). Für die Verletzungsstatistik wird diese bestehende Tabelle genutzt.
+
+// ─── Kategorie-/Funktions-Konstanten (siehe docs/kategorien-neuordnung.md) ───
+export const MEMBER_FUNCTIONS = ["joueur", "arbitre", "officiel", "comite", "coach", "coach_backup", "benevole", "benevole_licence", "contact_famille", "mere_accueil"] as const;
+export type MemberFunctionType = typeof MEMBER_FUNCTIONS[number];
+
+export const LICENCE_STATUSES = ["aktiv", "keine", "behalten", "geloescht"] as const;
+export const MEMBERSHIP_STATUSES = ["aktiv", "inaktiv", "arret_temporaire", "pausiert_verletzung", "abbruch", "abbruch_jung", "ehemalig", "intern_gesperrt"] as const;
+export const TRANSFER_STATUSES = ["pret_raus", "pret_rein", "transfer_rein", "pret_gratis", "transfer_raus"] as const;
+export const MEMBER_TYPES = ["spieler", "donateur", "donateur_lizenz", "ehrenmitglied", "sponsor"] as const;
+
+// Spielkategorie-Code → Label (H 11-21 / D 31-41)
+export const CAT_CODE_LABELS: Record<number, string> = {
+  11: "Seniors H", 12: "U21 H", 13: "U17 H", 14: "U15 H", 15: "U13 H",
+  16: "U11 H", 17: "U9 H", 18: "U7 H", 19: "U4 H", 20: "Vétérans H", 21: "Arbitre H",
+  31: "Seniors/Dames", 32: "U21 F", 33: "U17 F", 34: "U15 F", 35: "U13 F",
+  36: "U11 F", 37: "U9 F", 38: "U7 F", 39: "U4 F", 40: "Vétérans D", 41: "Arbitre F",
+};
+
+// Funktions-Code (H/F) → Funktion
+export const FUNCTION_CODES: Record<number, string> = {
+  1: "comite", 3: "comite", 2: "officiel", 4: "officiel", 21: "arbitre", 41: "arbitre",
+  50: "benevole", 51: "benevole", 52: "benevole_licence", 53: "coach", 54: "coach_backup",
+};
 
 // Role helpers
 export const ROLES = ["präsident", "kassenwart", "trainer", "spieler", "elternteil", "admin", "secretaire"] as const;

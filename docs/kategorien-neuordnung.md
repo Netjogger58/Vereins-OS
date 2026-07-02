@@ -67,6 +67,20 @@ Code **`87`** (siehe §3b) — nicht mehr im Kategorie-Bereich.
 fest in der App verdrahten, sondern anhand der FLH-Vorgabe pflegen. Im alten Excel stehen
 die Jahrgänge/Spielberechtigung informativ in **Spalte E**.
 
+### Mehrfach-Spielberechtigung (Surclassement)
+
+**Wichtig:** Ein Spieler hat **nicht nur eine** Kategorie. Er spielt normal in seiner
+Alterskategorie, darf aber **höher spielen** (Surclassement — z.B. am selben Wochenende
+Samstags U13 **und** Sonntags U15) und in **seltenen Fällen eine Kategorie tiefer**.
+
+- `members.catCode` = **Hauptkategorie** (altersbasiert, genau eine).
+- Tabelle **`member_categories`** = **zusätzliche** Spielberechtigungen, je mit `kind`:
+  `surclassement` (höher) oder `sous_classement` (tiefer).
+- „Alle Kategorien, in denen der Spieler spielen darf" = `catCode` + Einträge in
+  `member_categories`.
+- In welcher Kategorie er ein **konkretes Spiel** bestreitet, ergibt sich weiterhin aus
+  `nominations` / `lineups` (pro Match).
+
 ---
 
 ## 3. Dimension 2 — Funktion(en) *(mehrfach möglich)*
