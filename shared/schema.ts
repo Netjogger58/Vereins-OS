@@ -1337,6 +1337,14 @@ export const archiveMembers = sqliteTable("archive_members", {
   yellowCards: integer("yellow_cards").default(0),
   redCards: integer("red_cards").default(0),
   matchesPlayed: integer("matches_played").default(0),
+  // ─── Snapshot des neuen Mitglieder-/Funktions-Modells (siehe docs/saison-archivierung.md §2) ───
+  catCode: integer("cat_code"), // Hauptkategorie-Code zum Archivzeitpunkt (Index/Filter)
+  functions: text("functions"), // JSON-Array der Funktionen inkl. code/qualification (Trainerschein)
+  categories: text("categories"), // JSON-Array zusätzlicher Spielberechtigungen (Surclassement)
+  membershipStatus: text("membership_status"), // Status zum Archivzeitpunkt
+  licenceStatus: text("licence_status"), // Lizenzstatus zum Archivzeitpunkt
+  memberType: text("member_type"), // Mitgliedsart zum Archivzeitpunkt
+  snapshotJson: text("snapshot_json"), // kompletter Mitglieds-Datensatz als JSON (future-proof)
   createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
 });
 
