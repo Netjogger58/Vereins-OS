@@ -3747,7 +3747,7 @@ export async function seedIfEmpty() {
 
   // Announcements
   const announcementsData = [
-    { title: "Willkommen zur Saison 2024/25!", content: "Wir starten mit großer Motivation in die neue Saison. Viel Erfolg allen Teams!", pinned: true, targetRole: "all" },
+    { title: "Willkommen zur Saison 2025/26!", content: "Wir starten mit großer Motivation in die neue Saison. Viel Erfolg allen Teams!", pinned: true, targetRole: "all" },
     { title: "Neue Trainingszeiten", content: "Ab nächster Woche: Seniors trainieren Dienstag und Donnerstag ab 19:30 Uhr in der Halle Krounebierg.", pinned: true, targetRole: "all" },
     { title: "Heimspiel gegen HB Esch", content: "Kommenden Samstag empfangen wir HB Esch in der Halle Krounebierg. Anpfiff: 18:00 Uhr. Support erwünscht!", pinned: false, targetRole: "all" },
     { title: "Sommerfest 2025", content: "Save the date: Unser traditionelles Sommerfest findet am 21. Juni im Vereinsheim statt.", pinned: false, targetRole: "all" },
