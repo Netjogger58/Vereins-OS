@@ -312,6 +312,7 @@ function init() {
       function TEXT NOT NULL,
       code INTEGER,
       qualification TEXT,
+      team_id INTEGER,
       note TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -973,6 +974,11 @@ function runMigrations() {
   safeAddColumn("members", "transfer_status", "TEXT");
   safeAddColumn("members", "member_type", "TEXT DEFAULT 'spieler'");
   safeAddColumn("members", "contact_info_type", "TEXT");
+  safeAddColumn("members", "family_code", "TEXT");
+  safeAddColumn("members", "first_name", "TEXT");
+  safeAddColumn("members", "last_name", "TEXT");
+  safeAddColumn("members", "birth_name", "TEXT");
+  safeAddColumn("member_functions", "team_id", "INTEGER");
   // Archiv-Snapshot (siehe docs/saison-archivierung.md §2)
   safeAddColumn("archive_members", "cat_code", "INTEGER");
   safeAddColumn("archive_members", "functions", "TEXT");

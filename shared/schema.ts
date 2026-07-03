@@ -40,7 +40,10 @@ export type Team = typeof teams.$inferSelect;
 // ─── Members ─────────────────────────────────────────────
 export const members = sqliteTable("members", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
+  name: text("name").notNull(), // Anzeigename = first_name + " " + last_name (nur Anzeige)
+  firstName: text("first_name"), // Vorname wörtlich (Excel Spalte B) — NICHT interpretiert
+  lastName: text("last_name"), // offizieller Nachname wörtlich (Excel Spalte A / FLH-Lizenz)
+  birthName: text("birth_name"), // Geburtsname (optional, nur manuell wo relevant)
   email: text("email"),
   phone: text("phone"),
   birthdate: text("birthdate"),
@@ -68,6 +71,7 @@ export const members = sqliteTable("members", {
   transferStatus: text("transfer_status"), // pret_raus | pret_rein | transfer_rein | pret_gratis | transfer_raus
   memberType: text("member_type").default("spieler"), // spieler | donateur | donateur_lizenz | ehrenmitglied | sponsor
   contactInfoType: text("contact_info_type"), // contact_famille | mere_accueil (rein informativ, Nicht-Mitglied)
+  familyCode: text("family_code"), // = code courrier (F999 = Familie+Nr, S = einzeln, D = Donateur); gruppiert Familien
 });
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true });
 export type InsertMember = z.infer<typeof insertMemberSchema>;
@@ -191,6 +195,7 @@ export const memberFunctions = sqliteTable("member_functions", {
   function: text("function").notNull(), // joueur | arbitre | officiel | comite | coach | coach_backup | teamchef | teambegleeder | supervisor | benevole | benevole_licence | contact_famille | mere_accueil
   code: integer("code"), // zugehöriger Code: Comité H1/F3, Officiel H2/F4, Arbitre H21/F41, Bénévole/Coach/Teamchef 50er-Block
   qualification: text("qualification"), // z.B. Trainerschein (LUXQF3, LUXQF2Bis…) bei coach, Schiri-Level bei arbitre
+  teamId: integer("team_id"), // optional: Team dieser Funktion (z.B. Coach von U7/U13/U9-15F) — mehrere Einträge möglich
   note: text("note"),
   createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
 });
