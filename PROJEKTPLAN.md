@@ -1,7 +1,18 @@
 # VEREINS-OS — PROJEKTPLAN
-> **Zuletzt aktualisiert:** 22. Juni 2026  
+> **Zuletzt aktualisiert:** 6. Juli 2026  
 > **Status:** In aktiver Entwicklung — Pilot: Handball Mersch 75  
 > **Vision:** Eine lebendige, weitgehend automatisierte Vereinsplattform — minimal manuelle Arbeit, maximal open source & kostenlos
+
+---
+
+## LETZTE ÄNDERUNGEN (Juli 2026) ✅
+
+- **Sekretariat-Mitgliederverwaltung** (`Secretariat.tsx`): Roster mit Filtern/Stats/CSV. Aktive Mitglieder = „Membres 2026-2027"-Liste → **590 aktiv**, Rest **414 im Archiv** (kein „Gesamt 1004" mehr).
+- **Médico-Convocation**: mehrsprachiger Brief/PDF + E-Mail mit **Bestätigen/Absagen**, öffentliche Antwort-Seite, Sekretariats-Benachrichtigung (`medicoConvocation.ts`, Routen `/medico/confirm/:token`, `/api/secretary/medico/*`).
+- **Médico-Resultat** pro Mitglied (`apte`/`apte_temporaire`/`inapte`/`absent`) mit Vorrang bei der Status-Ableitung; Resultat-Filter + Inline-Setter.
+- **Schema**: `members.medico_result(+date)`, `medico_convocations.status/declined_at` (idempotente Migrationen).
+- **Skripte**: `import_extra_sheets.ts`, `reclassify-active-2026.cjs` (Liste = Wahrheit für aktiv/Archiv).
+- Details siehe `M75-Manager-Features.md` → „Änderungen Juli 2026".
 
 ---
 
