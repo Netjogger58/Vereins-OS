@@ -45,6 +45,7 @@ import Website from "@/pages/Website";
 import WelcomeMappe from "@/pages/WelcomeMappe";
 import CheckIn from "@/pages/CheckIn";
 import Archive from "@/pages/Archive";
+import Secretariat from "@/pages/Secretariat";
 import { Logo } from "@/components/Logo";
 
 function AppRouter() {
@@ -67,6 +68,7 @@ function AppRouter() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/announcements" component={Announcements} />
+        <Route path="/secretariat" component={Secretariat} />
         <Route path="/members/:id" component={MemberDetail} />
         <Route path="/members" component={Members} />
         <Route path="/teams/:id" component={Teams} />

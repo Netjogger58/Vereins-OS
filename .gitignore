@@ -10,6 +10,7 @@ data.db-journal
 # DB-Backups (enthalen Member-Perséinlechkeetsdaten — ni committen)
 data.backup-*.db
 *.backup.db
+data.db.bak-*
 
 .env
 .env.*

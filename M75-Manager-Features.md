@@ -1,6 +1,38 @@
 # M75 Manager - Funktionsübersicht
 
-## Stand: Juni 2026
+## Stand: Juli 2026
+
+---
+
+## Änderungen Juli 2026 — Sekretariat & Médico ✅
+
+> Umgesetzt am 5.–6. Juli 2026. **Status: funktioniert** — Typecheck grün, E-Mail + Antwort-Seiten per Screenshot verifiziert, DB-Zahlen bestätigt.
+
+### Sekretariat: Mitgliederverwaltung (`client/src/pages/Secretariat.tsx`)
+- **Roster-Gesamtansicht** aller Mitglieder mit Excel-Rohdaten, neuer Codierung, Trainings-/Match-Präsenz und Funktionen.
+- **Filter:** Status (aktiv / Archiv / mit-ohne Präsenz), Typ (Spieler/Donateur/Sponsor/Kontakt), „mit Funktion", Suche über alle Felder.
+- **Aktive Mitglieder = „Membres 2026-2027"-Liste** — genau **590 aktiv**, alles andere (**414**) im **Archiv**. Kein irreführendes „Gesamt 1004" mehr.
+- **Stats-Karten:** „Aktive Memberen (gesamt)", „Dovun mit Funktion", „Im Archiv (net méi do)".
+- **Archiv-Ansicht** (Button „Archiv (net méi do)") zeigt alle nicht-aktiven (ehemalig + frühere Abbrüche + inaktiv).
+- **CSV-Export**, Spalten-Umschaltung (Excel-Rohspalten), Sortierung, Codes-Panel (alt↔neu).
+
+### Médico-Modul (Convocation + Ergebnisse)
+- **Convocation-Brief/PDF** pro Spieler, mehrsprachig **LB/FR/DE/EN/PT/IT** (`client/src/lib/convocation.ts`, `shared/convocationText.ts`) — Sprache automatisch aus „Langue/Nationalité".
+- **E-Mail-Einladung mit zwei Buttons:** grün „Rendez-vous confirméieren" und rot „Ech kann dësen Termin net" (Absage → neuer Termin nötig).
+- **Öffentliche Antwort-Seite** (ohne Login) für Bestätigung *und* Absage, mehrsprachig; Sekretariat wird bei beiden Fällen per E-Mail benachrichtigt.
+- **Server** `server/medicoConvocation.ts`: Tabelle `medico_convocations` (Token, `status`, `confirmed_at`, `declined_at`), E-Mail-HTML-Builder, Antwort-Seiten-Builder.
+- **Routen:** `GET /medico/confirm/:token?a=confirm|decline`, `GET /api/secretary/medico/convocations` (Statusliste), `POST /api/secretary/medico/result`.
+- **Médico-Status** abgeleitet (Gültig / dieses Jahr fällig / überfällig / inapte / pseudo) + **Resultat-Feld** pro Mitglied: `apte`, `apte_temporaire`, `inapte`, `absent`. Das gesetzte Resultat hat **Vorrang** bei der Status-Ableitung (z. B. `apte` → gültig).
+- **UI:** Resultat-Filter (mit Zählern) + Inline-Setter (Dropdown) je Zeile; „Muss gehen"-Filter berücksichtigt die Resultate.
+
+### Import & Daten
+- `scripts/import_extra_sheets.ts` — Donateurs/Bénévoles/Sponsors, Annulés/Ehemalige, Médico 2026.
+- `scripts/reclassify-active-2026.cjs` — setzt aktive Mitglieder anhand der „Membres 2026-2027"-Liste (Wahrheit), Rest → Archiv (Donateure/Sponsoren bleiben über `member_type` sichtbar). Dry-Run + `--apply`.
+- `scripts/fix_medico_annules.cjs`, `scripts/fill_cat_codes.ts`.
+
+### Schema (`shared/schema.ts`)
+- `members.medicoResult`, `members.medicoResultDate`.
+- `medico_convocations.status`, `medico_convocations.declined_at` (idempotente ALTER-Migrationen).
 
 ---
 

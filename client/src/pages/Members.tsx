@@ -26,6 +26,22 @@ const MEMBER_TYPE_LABELS: Record<string, string> = {
   honoraire: "Ehrenmitglied", ehrenmitglied: "Ehrenmitglied", sponsor: "Sponsor",
   donateur: "Donateur", donateur_licence: "Donateur (Lizenz)", donateur_lizenz: "Donateur (Lizenz)", contact: "Kontakt",
 };
+// Nachname komplett groß, Vorname nur erster Buchstabe je Wort groß.
+const formatLastName = (s: string) => s.toUpperCase();
+const formatFirstName = (s: string) =>
+  s.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+function MemberName({ m }: { m: Member }) {
+  const first = (m as any).firstName as string | null | undefined;
+  const last = (m as any).lastName as string | null | undefined;
+  if (!last) return <>{m.name}</>;
+  return (
+    <span className="font-normal">
+      {first ? `${formatFirstName(first)} ` : ""}
+      <span className="font-bold">{formatLastName(last)}</span>
+    </span>
+  );
+}
+
 function memberCategoryLabel(m: Member, teamName?: string): string {
   if (teamName) return teamName;
   const cat = (m as any).catCode as number | null | undefined;
@@ -216,7 +232,7 @@ export default function Members() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">{m.name}</div>
+                  <div className="text-sm truncate"><MemberName m={m} /></div>
                   <div className="text-xs text-muted-foreground truncate">
                     {memberCategoryLabel(m, team?.name)}
                     {m.licenseNumber && <> · {m.licenseNumber}</>}

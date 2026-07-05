@@ -63,6 +63,10 @@ export const members = sqliteTable("members", {
   passNumber: text("pass_number"), // Pass Nummer / Lizenz
   matricule: text("matricule"), // nationale Matricule
   medicoNext: text("medico_next"), // Prochain Médico
+  medicoList: integer("medico_list"), // 1 = steht auf dem "Médico 2026"-Blatt (Sekretariat-Liste)
+  medicoComment: text("medico_comment"), // Kommentar Sekretariat aus "Médico 2026" (inapte, apte temporaire jusqu'au …)
+  medicoResult: text("medico_result"), // Médico-Ausgang: apte | apte_temporaire | inapte | absent (vom Sekretariat gesetzt)
+  medicoResultDate: text("medico_result_date"), // Datum, an dem das Resultat erfasst wurde (ISO)
   joinDate: text("join_date"), // date début membre
   rawData: text("raw_data"), // JSON aller Originalspalten aus der Excel
   // ─── Neue strukturierte Felder (Kategorien-Neuordnung, siehe docs/kategorien-neuordnung.md) ───

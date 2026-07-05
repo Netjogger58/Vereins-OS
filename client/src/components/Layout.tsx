@@ -67,6 +67,7 @@ const NAV: NavItem[] = [
   { href: "/chat", label: "Team-Chat", icon: MessageCircle, section: "Übersicht" },
   { href: "/teams", label: "Teams", icon: Shield, section: "Verein" },
   { href: "/members", label: "Mitglieder", icon: Users, section: "Verein" },
+  { href: "/secretariat", label: "Sekretariat", icon: ClipboardList, section: "Verein", roles: ["präsident", "admin", "secretaire", "kassenwart"] },
   { href: "/registrations", label: "Anmeldungen", icon: UserPlus, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
   { href: "/checkin", label: "Ausweis & Check-in", icon: QrCode, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
   { href: "/training-schedules", label: "Trainingsplan", icon: CalendarClock, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
