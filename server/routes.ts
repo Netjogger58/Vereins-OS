@@ -1,6 +1,8 @@
 import type { Express, Response } from "express";
+import express from "express";
 import type { Server } from "node:http";
 import { randomBytes } from "node:crypto";
+import { getArchiveDir } from "./sboArchive";
 import bcrypt from "bcryptjs";
 import { storage, seedIfEmpty, seedTestCards } from "./storage";
 import {
@@ -11,6 +13,10 @@ import {
   setSessionCookie,
   clearSessionCookie,
   publicUser,
+  loginKey,
+  checkLockout,
+  recordLoginFailure,
+  clearLoginFailures,
   type AuthedRequest,
 } from "./auth";
 import {
@@ -179,14 +185,21 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
 
   app.use(authMiddleware);
 
+  // ─── SBO-Archiv (eis PDF-Kopien) statesch ausliwweren ───
+  app.use("/sbo-archiv", express.static(getArchiveDir()));
+
   // ─── Auth ──────────────────────────────────────────────
   app.post("/api/auth/login", async (req: AuthedRequest, res: Response) => {
     const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ message: "E-Mail und Passwort erforderlich" });
+    const key = loginKey(req, email);
+    const lock = checkLockout(key);
+    if (lock.locked) return res.status(429).json({ message: "Zu viele Fehlversuche. Bitte später erneut versuchen.", retryAfter: lock.retryAfter });
     const user = await storage.getUserByEmail(email.toLowerCase());
-    if (!user || !user.active) return res.status(401).json({ message: "Ungültige Zugangsdaten" });
+    if (!user || !user.active) { recordLoginFailure(key); return res.status(401).json({ message: "Ungültige Zugangsdaten" }); }
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ message: "Ungültige Zugangsdaten" });
+    if (!ok) { recordLoginFailure(key); return res.status(401).json({ message: "Ungültige Zugangsdaten" }); }
+    clearLoginFailures(key);
     const token = createSession(user.id);
     setSessionCookie(res, token);
     // Return token in body so the frontend can use Bearer auth (works in iframe/cross-origin)
@@ -238,8 +251,12 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   app.post("/api/auth/card-login", async (req: AuthedRequest, res: Response) => {
     const cardId = String((req.body || {}).cardId || "").trim();
     if (!cardId) return res.status(400).json({ message: "Random-No erforderlich" });
+    const key = loginKey(req, `card:${cardId}`);
+    const lock = checkLockout(key);
+    if (lock.locked) return res.status(429).json({ message: "Zu viele Fehlversuche. Bitte später erneut versuchen.", retryAfter: lock.retryAfter });
     const member = await storage.getMemberByCardId(cardId);
-    if (!member) return res.status(401).json({ message: "Unbekannte Random-No" });
+    if (!member) { recordLoginFailure(key); return res.status(401).json({ message: "Unbekannte Random-No" }); }
+    clearLoginFailures(key);
 
     const role = roleForFunction(member.clubFunction);
     const email = `card.${(member.cardId || "").toLowerCase()}@m75.local`;
@@ -269,10 +286,15 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   // Admin-Login (Punkt im Logo) per Passwort
   app.post("/api/auth/admin-login", async (req: AuthedRequest, res: Response) => {
     const password = String((req.body || {}).password || "");
+    const key = loginKey(req, "admin-login");
+    const lock = checkLockout(key);
+    if (lock.locked) return res.status(429).json({ message: "Zu viele Fehlversuche. Bitte später erneut versuchen.", retryAfter: lock.retryAfter });
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "mersch75";
     if (!password || password !== ADMIN_PASSWORD) {
+      recordLoginFailure(key);
       return res.status(401).json({ message: "Falsches Passwort" });
     }
+    clearLoginFailures(key);
     const email = "admin@mersch75.lu";
     let user = await storage.getUserByEmail(email);
     if (!user) {
@@ -1226,6 +1248,32 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     const { batchImportFLH } = await import("./flhImport.js");
     const results = await batchImportFLH(urls, parseInt(teamId), season);
     
+    res.json(results);
+  });
+
+  // ─── SBO-Archiv (eege Kopie vun de Handball4All-Berichter) ─
+  app.post("/api/matches/:id/archive-sbo", requireAuth(), async (req, res) => {
+    const authed = req as AuthedRequest;
+    if (!["präsident", "admin", "trainer", "secretaire"].includes(authed.user!.role)) {
+      return res.status(403).json({ message: "Keine Berechtigung" });
+    }
+    const { archiveMatchSbo } = await import("./sboArchive.js");
+    const result = await archiveMatchSbo(parseInt(String(req.params.id)), { force: !!req.body?.force });
+    res.status(result.success ? 200 : 400).json(result);
+  });
+
+  app.post("/api/matches/archive-sbo-all", requireAuth(), async (req, res) => {
+    const authed = req as AuthedRequest;
+    if (!["präsident", "admin", "trainer"].includes(authed.user!.role)) {
+      return res.status(403).json({ message: "Keine Berechtigung" });
+    }
+    const { teamId, season, competition, force } = req.body || {};
+    const filter: { teamId?: number; season?: string; competition?: string } = {};
+    if (teamId) filter.teamId = parseInt(teamId);
+    if (season) filter.season = season;
+    if (competition) filter.competition = competition;
+    const { batchArchiveSbo } = await import("./sboArchive.js");
+    const results = await batchArchiveSbo(filter, { force: !!force });
     res.json(results);
   });
 

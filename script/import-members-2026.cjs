@@ -38,6 +38,22 @@ const SUR_COLS = {
 
 const norm = (s) => String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
 
+// ─── catCode -> team_id (Teams siehe DB) ───
+// 13 (U17 H) bleibt ohne Team (kein U17-Team).
+// U11 (16/36): INTERIM alle -> U11 Espoirs (Team 6). Der echte Elite-Kader 2026/27
+// wird im September vom User nachgetragen (dann Elite = Team 5).
+const CAT_TO_TEAM = {
+  11: 1, 12: 1, 20: 1,        // Seniors / U21 / Vétérans H -> Seniors 1
+  14: 3, 15: 4, 17: 7, 18: 8, // U15 / U13 / U9 / U7 (H/Mixte)
+  16: 6, 36: 6,               // U11 H/F -> Espoirs (Interim, bis Elite-Kader kommt)
+  19: 9,                      // U4 -> KidsSports
+  31: 2, 33: 2,               // Dames / U17 F -> Frauen
+  34: 3, 35: 4, 37: 7, 38: 8, // weiblech Jugend -> gemischt Alters-Team
+};
+function resolveTeam(catCode) {
+  return CAT_TO_TEAM[catCode] || null;
+}
+
 // Telefon bereinigen: reine Zahl mit Excel-Tausendertrennern (621,665,197) -> 621 665 197
 function cleanPhone(s) {
   s = String(s || "").trim();
@@ -116,7 +132,7 @@ const header = rows[0].map((h) => String(h || "").trim());
 const data = rows.slice(1).filter((r) => String(r[C.lastName] || "").trim() || String(r[C.firstName] || "").trim());
 
 // Bericht-Sammler
-const rep = { catCode: {}, status: {}, memberType: {}, contactType: {}, licence: {}, transfer: {}, functions: {}, noCat: [], noCard: 0, total: data.length };
+const rep = { catCode: {}, team: {}, status: {}, memberType: {}, contactType: {}, licence: {}, transfer: {}, functions: {}, noCat: [], noCard: 0, total: data.length };
 const inc = (o, k) => { o[k] = (o[k] || 0) + 1; };
 
 const records = [];
@@ -126,8 +142,10 @@ for (const r of data) {
   const nameLast = lastName ? lastName.charAt(0) + lastName.slice(1).toLowerCase() : "";
   const name = `${firstName} ${nameLast}`.trim();
 
-  const catText = String(r[C.catInterne] || "").trim() || String(r[C.catFlh] || "").trim();
+  // Spalte M (FLH-Listing) ist maßgeblich; K (interne Mersch75) als Fallback.
+  const catText = String(r[C.catFlh] || "").trim() || String(r[C.catInterne] || "").trim();
   const catCode = textToCatCode(catText);
+  const teamId = resolveTeam(catCode);
   const mapped = mapOldCatCode(r[C.catCode], catText);
   const gender = genderFromCat(catCode, catText);
 
@@ -152,6 +170,8 @@ for (const r of data) {
   // Bewusst DEAKTIVIERT beim Erstimport: die j/ju/jd/c-Logik ist zu fehleranfällig und
   // Surclassement wird pro Saison neu vergeben (FLH-Kategorien werden gerade neu definiert).
   // Die Rohwerte bleiben vollständig in raw_data erhalten.
+  // Surclassement wird NICHT automatisch gesetzt (Saison-Versatz Excel 26/27 vs. Statistik 25/26);
+  // wird pro Saison manuell / beim Rollover gepflegt.
   const cats = [];
 
   // raw_data = komplette Originalzeile (nichts geht verloren)
@@ -165,6 +185,7 @@ for (const r of data) {
     rep.noCat.push(`${name} [J=${jc} | ${catText}]`);
 
   inc(rep.catCode, catCode);
+  inc(rep.team, teamId == null ? "(kein Team)" : String(teamId));
   if (mapped.status) inc(rep.status, mapped.status);
   if (mapped.memberType) inc(rep.memberType, mapped.memberType);
   if (mapped.contactType) inc(rep.contactType, mapped.contactType);
@@ -188,6 +209,7 @@ for (const r of data) {
     internalCategory: String(r[C.catInterne] || "").trim() || null,
     flhCategory: String(r[C.catFlh] || "").trim() || null,
     catCode,
+    teamId,
     membershipStatus: mapped.status || "active",
     licenceStatus: mapped.licence || null,
     transferStatus: mapped.transfer || null,
@@ -211,6 +233,7 @@ console.log(`Sheet:  "${SHEET}"`);
 console.log(`Zeilen: ${rep.total} Mitglieder`);
 console.log(`Ohne Random-No (card_id): ${rep.noCard}`);
 printCounts("catCode (0 = Nicht-Spieler/unklar):", rep.catCode);
+printCounts("team_id (1=Sen1 2=Frauen 3=U15 4=U13 5=U11E 6=U11Esp 7=U9 8=U7 9=U4):", rep.team);
 printCounts("membership_status (nur abweichende):", rep.status);
 printCounts("member_type:", rep.memberType);
 printCounts("contact_info_type:", rep.contactType);
@@ -254,10 +277,10 @@ const tx = db.transaction(() => {
 
   const insMember = db.prepare(`INSERT INTO members
     (name, first_name, last_name, birth_name, email, phone, address, birthdate, nationality, license_number, matricule, medico_next, join_date,
-     internal_category, flh_category, cat_code, membership_status, licence_status, transfer_status, member_type,
+     internal_category, flh_category, cat_code, team_id, membership_status, licence_status, transfer_status, member_type,
      contact_info_type, family_code, card_id, raw_data)
     VALUES (@name,@firstName,@lastName,@birthName,@email,@phone,@address,@birthdate,@nationality,@licenseNumber,@matricule,@medicoNext,@joinDate,
-     @internalCategory,@flhCategory,@catCode,@membershipStatus,@licenceStatus,@transferStatus,@memberType,
+     @internalCategory,@flhCategory,@catCode,@teamId,@membershipStatus,@licenceStatus,@transferStatus,@memberType,
      @contactInfoType,@familyCode,@cardId,@rawData)`);
   const insFn = db.prepare(`INSERT INTO member_functions (member_id, function, code, qualification, team_id, note) VALUES (?,?,?,?,?,?)`);
   const insCat = db.prepare(`INSERT INTO member_categories (member_id, cat_code, kind, note) VALUES (?,?,?,?)`);

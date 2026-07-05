@@ -1,31 +1,87 @@
 import type { Request, Response, NextFunction } from "express";
 import { randomBytes } from "node:crypto";
 import type { User, Role } from "@shared/schema";
-import { storage } from "./storage";
+import { storage, sqlite } from "./storage";
 
 type Session = { userId: number; createdAt: number };
-const sessions = new Map<string, Session>();
-const SESSION_TTL = 1000 * 60 * 60 * 24 * 30; // 30 days
+
+// Absolute lifetime (max age regardless of activity) und Idle-Timeout (Inaktivität).
+const ABSOLUTE_TTL = 1000 * 60 * 60 * 24 * Number(process.env.SESSION_MAX_DAYS || 30);
+const IDLE_TTL = 1000 * 60 * 60 * Number(process.env.SESSION_IDLE_HOURS || 12);
+
+// Prepared statements (persistente Sessions in SQLite -> überleben Server-Neustart).
+const stmtInsert = sqlite.prepare("INSERT INTO sessions (token, user_id, created_at, last_seen) VALUES (?, ?, ?, ?)");
+const stmtGet = sqlite.prepare("SELECT user_id AS userId, created_at AS createdAt, last_seen AS lastSeen FROM sessions WHERE token = ?");
+const stmtTouch = sqlite.prepare("UPDATE sessions SET last_seen = ? WHERE token = ?");
+const stmtDelete = sqlite.prepare("DELETE FROM sessions WHERE token = ?");
+const stmtCleanup = sqlite.prepare("DELETE FROM sessions WHERE created_at < ? OR last_seen < ?");
 
 export function createSession(userId: number): string {
   const token = randomBytes(32).toString("hex");
-  sessions.set(token, { userId, createdAt: Date.now() });
+  const now = Date.now();
+  stmtInsert.run(token, userId, now, now);
   return token;
 }
 
 export function destroySession(token: string) {
-  sessions.delete(token);
+  stmtDelete.run(token);
 }
 
 export function getSession(token: string | undefined): Session | undefined {
   if (!token) return undefined;
-  const s = sessions.get(token);
-  if (!s) return undefined;
-  if (Date.now() - s.createdAt > SESSION_TTL) {
-    sessions.delete(token);
+  const row = stmtGet.get(token) as { userId: number; createdAt: number; lastSeen: number } | undefined;
+  if (!row) return undefined;
+  const now = Date.now();
+  // Absolut abgelaufen ODER zu lange inaktiv -> Session ungültig.
+  if (now - row.createdAt > ABSOLUTE_TTL || now - row.lastSeen > IDLE_TTL) {
+    stmtDelete.run(token);
     return undefined;
   }
-  return s;
+  // Idle-Timer nur höchstens 1x/Minute aktualisieren (spart Writes).
+  if (now - row.lastSeen > 60 * 1000) stmtTouch.run(now, token);
+  return { userId: row.userId, createdAt: row.createdAt };
+}
+
+// Abgelaufene Sessions periodisch entfernen.
+function cleanupSessions() {
+  const now = Date.now();
+  try { stmtCleanup.run(now - ABSOLUTE_TTL, now - IDLE_TTL); } catch { /* ignore */ }
+}
+cleanupSessions();
+setInterval(cleanupSessions, 60 * 60 * 1000).unref?.();
+
+// ─── Login-Lockout (Brute-Force-Schutz für Passwort UND 8-stelligen Code) ───
+type Attempt = { count: number; first: number; lockedUntil: number };
+const loginAttempts = new Map<string, Attempt>();
+const LOCK_MAX_ATTEMPTS = Number(process.env.LOGIN_MAX_ATTEMPTS || 8);
+const LOCK_WINDOW_MS = 1000 * 60 * Number(process.env.LOGIN_WINDOW_MIN || 15);
+const LOCK_DURATION_MS = 1000 * 60 * Number(process.env.LOGIN_LOCK_MIN || 15);
+
+export function loginKey(req: Request, identifier: string): string {
+  const fwd = req.headers["x-forwarded-for"];
+  const ip = (typeof fwd === "string" ? fwd.split(",")[0].trim() : req.socket.remoteAddress) || "unknown";
+  return `${ip}|${identifier.toLowerCase()}`;
+}
+
+export function checkLockout(key: string): { locked: boolean; retryAfter: number } {
+  const a = loginAttempts.get(key);
+  if (!a) return { locked: false, retryAfter: 0 };
+  const now = Date.now();
+  if (a.lockedUntil > now) return { locked: true, retryAfter: Math.ceil((a.lockedUntil - now) / 1000) };
+  return { locked: false, retryAfter: 0 };
+}
+
+export function recordLoginFailure(key: string) {
+  const now = Date.now();
+  let a = loginAttempts.get(key);
+  if (!a || now - a.first > LOCK_WINDOW_MS) a = { count: 0, first: now, lockedUntil: 0 };
+  a.count++;
+  if (a.count >= LOCK_MAX_ATTEMPTS) a.lockedUntil = now + LOCK_DURATION_MS;
+  loginAttempts.set(key, a);
+}
+
+export function clearLoginFailures(key: string) {
+  loginAttempts.delete(key);
 }
 
 export interface AuthedRequest extends Request {
@@ -72,7 +128,7 @@ export function requireAuth(roles?: Role[]) {
 export function setSessionCookie(res: Response, token: string) {
   res.setHeader(
     "Set-Cookie",
-    `m75_sid=${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${SESSION_TTL / 1000}`
+    `m75_sid=${token}; HttpOnly; Path=/; SameSite=None; Secure; Max-Age=${ABSOLUTE_TTL / 1000}`
   );
 }
 

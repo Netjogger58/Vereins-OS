@@ -18,7 +18,25 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { initials } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { CAT_CODE_LABELS } from "@shared/schema";
 import type { Member, Team } from "@shared/schema";
+
+// Anzeige-Label: echtes Team -> sonst FLH-Kategorie -> sonst Rolle/Typ -> "—"
+const MEMBER_TYPE_LABELS: Record<string, string> = {
+  honoraire: "Ehrenmitglied", ehrenmitglied: "Ehrenmitglied", sponsor: "Sponsor",
+  donateur: "Donateur", donateur_licence: "Donateur (Lizenz)", donateur_lizenz: "Donateur (Lizenz)", contact: "Kontakt",
+};
+function memberCategoryLabel(m: Member, teamName?: string): string {
+  if (teamName) return teamName;
+  const cat = (m as any).catCode as number | null | undefined;
+  if (cat && CAT_CODE_LABELS[cat]) return `${CAT_CODE_LABELS[cat]} (FLH)`;
+  const contact = (m as any).contactInfoType as string | null | undefined;
+  if (contact === "contact_famille") return "Kontakt (Familie)";
+  if (contact === "mere_accueil") return "Mère d'accueil";
+  const type = (m as any).memberType as string | null | undefined;
+  if (type && MEMBER_TYPE_LABELS[type]) return MEMBER_TYPE_LABELS[type];
+  return "—";
+}
 
 export default function Members() {
   const { user } = useAuth();
@@ -52,13 +70,20 @@ export default function Members() {
   });
 
   const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return members.filter(m => {
-      if (query && !m.name.toLowerCase().includes(query.toLowerCase())) return false;
       if (teamFilter !== "all" && m.teamId !== Number(teamFilter)) return false;
       if (statusFilter !== "all" && m.membershipStatus !== statusFilter) return false;
-      return true;
+      if (!q) return true;
+      const team = teams.find(t => t.id === m.teamId);
+      const hay = [
+        m.name, m.email, m.phone, m.licenseNumber,
+        (m as any).matricule, (m as any).familyCode,
+        memberCategoryLabel(m, team?.name),
+      ].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
     });
-  }, [members, query, teamFilter, statusFilter]);
+  }, [members, teams, query, teamFilter, statusFilter]);
 
   const canEdit = user && ["präsident", "admin", "trainer", "secretaire"].includes(user.role);
   const canImport = user && ["präsident", "admin", "secretaire"].includes(user.role);
@@ -141,7 +166,7 @@ export default function Members() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Suche nach Name..."
+              placeholder="Suche: Name, Email, Tel, Lizenz, Matricule, Kategorie, Familiencode…"
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="pl-9"
@@ -193,7 +218,7 @@ export default function Members() {
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm truncate">{m.name}</div>
                   <div className="text-xs text-muted-foreground truncate">
-                    {team?.name || "Kein Team"}
+                    {memberCategoryLabel(m, team?.name)}
                     {m.licenseNumber && <> · {m.licenseNumber}</>}
                   </div>
                 </div>

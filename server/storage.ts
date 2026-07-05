@@ -253,7 +253,7 @@ import Database from "better-sqlite3";
 import { eq, and, or, like, desc, asc, sql, isNull, gte, lte, type SQL } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
-const sqlite = new Database("data.db");
+export const sqlite = new Database("data.db");
 sqlite.pragma("journal_mode = WAL");
 
 export const db = drizzle(sqlite);
@@ -261,6 +261,12 @@ export const db = drizzle(sqlite);
 // Create tables (idempotent)
 function init() {
   sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      last_seen INTEGER NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
@@ -979,6 +985,9 @@ function runMigrations() {
   safeAddColumn("members", "last_name", "TEXT");
   safeAddColumn("members", "birth_name", "TEXT");
   safeAddColumn("member_functions", "team_id", "INTEGER");
+  // SBO-Archiv (lokal/Hetzner Kopie vum SBO-PDF)
+  safeAddColumn("matches", "sbo_archive_path", "TEXT");
+  safeAddColumn("matches", "sbo_archived_at", "TEXT");
   // Archiv-Snapshot (siehe docs/saison-archivierung.md §2)
   safeAddColumn("archive_members", "cat_code", "INTEGER");
   safeAddColumn("archive_members", "functions", "TEXT");

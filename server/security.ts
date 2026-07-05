@@ -168,6 +168,14 @@ export function rateLimitMiddleware(req: Request, res: Response, next: NextFunct
   next();
 }
 
+// Erzwinge HTTPS in Produktion (hinter Reverse-Proxy via x-forwarded-proto).
+export function enforceHttps(req: Request, res: Response, next: NextFunction) {
+  if (process.env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] === "http") {
+    return res.redirect(301, `https://${req.headers.host}${req.url}`);
+  }
+  next();
+}
+
 // Security headers middleware
 export function securityHeaders(req: Request, res: Response, next: NextFunction) {
   // Prevent clickjacking
@@ -330,6 +338,9 @@ export function setupSecurityRoutes(app: Express) {
 
 // Setup all security middleware
 export function setupSecurity(app: Express) {
+  // HTTPS erzwingen (Produktion)
+  app.use(enforceHttps);
+
   // Apply security headers
   app.use(securityHeaders);
   

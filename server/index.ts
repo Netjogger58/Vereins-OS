@@ -7,6 +7,8 @@ import { createServer } from "node:http";
 import { setupSecurity } from "./security";
 
 const app = express();
+// Hinter Reverse-Proxy (Deployment): echte Client-IP + x-forwarded-proto auswerten.
+app.set("trust proxy", 1);
 const httpServer = createServer(app);
 
 declare module "http" {

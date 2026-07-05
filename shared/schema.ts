@@ -488,7 +488,9 @@ export const matches = sqliteTable("matches", {
   awayTeam: text("away_team").notNull(),
   homeScore: integer("home_score"),
   awayScore: integer("away_score"),
-  sboUrl: text("sbo_url"), // handball4all.de Link
+  sboUrl: text("sbo_url"), // handball4all.de Link (Original / Fallback)
+  sboArchivePath: text("sbo_archive_path"), // Lokal/Hetzner archivéiert SBO-PDF (eis Kopie)
+  sboArchivedAt: text("sbo_archived_at"), // Wéini d'Kopie gemaach gouf (ISO)
   rtlUrl: text("rtl_url"), // RTL Livestream/Replay
   venue: text("venue"), // Spielort
   isHome: integer("is_home", { mode: "boolean" }).notNull().default(false), // Mersch75 Heimspiel?

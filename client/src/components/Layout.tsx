@@ -43,6 +43,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { LogoLockup, Logo } from "./Logo";
+import { GlobalSearch } from "./GlobalSearch";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/lib/theme";
@@ -323,6 +324,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
                 {/* Right actions */}
                 <div className="flex items-center gap-1.5">
+                  <GlobalSearch />
                   <Button
                     variant="ghost"
                     size="icon"

@@ -13,7 +13,24 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { initials, formatDate } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { CAT_CODE_LABELS } from "@shared/schema";
 import type { Member, Team, Attendance, PlayerFlag } from "@shared/schema";
+
+const MEMBER_TYPE_LABELS: Record<string, string> = {
+  honoraire: "Ehrenmitglied", ehrenmitglied: "Ehrenmitglied", sponsor: "Sponsor",
+  donateur: "Donateur", donateur_licence: "Donateur (Lizenz)", donateur_lizenz: "Donateur (Lizenz)", contact: "Kontakt",
+};
+function memberCategoryLabel(m: Member, teamName?: string): string | null {
+  if (teamName) return teamName;
+  const cat = (m as any).catCode as number | null | undefined;
+  if (cat && CAT_CODE_LABELS[cat]) return `${CAT_CODE_LABELS[cat]} (FLH)`;
+  const contact = (m as any).contactInfoType as string | null | undefined;
+  if (contact === "contact_famille") return "Kontakt (Familie)";
+  if (contact === "mere_accueil") return "Mère d'accueil";
+  const type = (m as any).memberType as string | null | undefined;
+  if (type && MEMBER_TYPE_LABELS[type]) return MEMBER_TYPE_LABELS[type];
+  return null;
+}
 
 async function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -100,6 +117,7 @@ export default function MemberDetail() {
     queryFn: async () => (await apiRequest("GET", `/api/members/${id}`)).json(),
   });
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
+  const { data: allMembers = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
   const { data: attendance = [] } = useQuery<Attendance[]>({
     queryKey: ["/api/attendance/member", id],
     queryFn: async () => (await apiRequest("GET", `/api/attendance/member/${id}`)).json(),
@@ -132,6 +150,11 @@ export default function MemberDetail() {
   );
 
   const team = teams.find(t => t.id === member.teamId);
+  // Familie: nur echte Haushaltscodes (F<Zahl>), nicht Sammelcodes wie "Seul"/"AJ-GL".
+  const famCode = (member as any).familyCode as string | null | undefined;
+  const family = famCode && /^F\d+$/i.test(famCode)
+    ? allMembers.filter(x => (x as any).familyCode === famCode && x.id !== member.id)
+    : [];
   const flags = allFlags.filter((f: any) => f.memberId === member.id);
   const presentCount = attendance.filter((a: any) => a.present).length;
   const totalSessions = attendance.length;
@@ -181,7 +204,7 @@ export default function MemberDetail() {
                 <Badge variant={member.membershipStatus === "active" ? "default" : "outline"} className="text-[10px]">
                   {member.membershipStatus === "active" ? "Aktiv" : (member.membershipStatus || "Unbekannt")}
                 </Badge>
-                {team && <Badge variant="secondary" className="text-[10px]">{team.name}</Badge>}
+                {(() => { const lbl = memberCategoryLabel(member, team?.name); return lbl ? <Badge variant="secondary" className="text-[10px]">{lbl}</Badge> : null; })()}
                 {child && <Badge className="bg-blue-500 text-white text-[10px]">Junior</Badge>}
               </div>
 
@@ -239,6 +262,35 @@ export default function MemberDetail() {
         <Button variant="outline" size="sm" className="w-full" onClick={() => updateMut.mutate({ guardianName: " " })}>
           <Users className="size-4 mr-2" /> Kontaktperson / Erziehungsberechtigte hinzufügen
         </Button>
+      )}
+
+      {/* Familie / verknüpfte Kontakte (gleicher family_code) */}
+      {family.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="size-4 text-blue-500" /> Familie &amp; Kontakte ({family.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0 divide-y divide-border">
+            {family.map(fm => (
+              <Link key={fm.id} href={`/members/${fm.id}`} className="flex items-center gap-3 p-3 hover-elevate">
+                <Avatar className="size-9">
+                  <AvatarImage src={fm.photoUrl || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{initials(fm.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm truncate">{fm.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{memberCategoryLabel(fm, teams.find(t => t.id === fm.teamId)?.name)}</div>
+                </div>
+                <div className="text-xs text-right text-muted-foreground shrink-0">
+                  {fm.phone && <div className="flex items-center gap-1 justify-end"><Phone className="size-3" />{fm.phone}</div>}
+                  {fm.email && <div className="flex items-center gap-1 justify-end truncate max-w-[190px]"><Mail className="size-3" />{fm.email}</div>}
+                </div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid md:grid-cols-2 gap-5">

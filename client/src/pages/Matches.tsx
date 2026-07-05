@@ -111,6 +111,19 @@ export default function Matches() {
     },
   });
 
+  const archiveSboMut = useMutation({
+    mutationFn: async (id: number) => {
+      return (await apiRequest("POST", `/api/matches/${id}/archive-sbo`, {})).json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/matches"] });
+      toast({ title: data?.success ? "SBO archivéiert" : "SBO-Archiv feelgeschloen", description: data?.message });
+    },
+    onError: (err: any) => {
+      toast({ title: "SBO-Archiv feelgeschloen", description: String(err?.message || err), variant: "destructive" });
+    },
+  });
+
   const calculateStandingsMut = useMutation({
     mutationFn: async ({ competition, season }: { competition: string; season: string }) => {
       return (await apiRequest("POST", "/api/standings/calculate", { competition, season })).json();
@@ -198,6 +211,8 @@ export default function Matches() {
               canManage={canManage} 
               onEdit={() => setEditingMatch(match)}
               onDelete={() => deleteMut.mutate(match.id)}
+              onArchiveSbo={() => archiveSboMut.mutate(match.id)}
+              archiving={archiveSboMut.isPending && archiveSboMut.variables === match.id}
             />
           ))}
           {upcoming.length === 0 && (
@@ -213,6 +228,8 @@ export default function Matches() {
               canManage={canManage} 
               onEdit={() => setEditingMatch(match)}
               onDelete={() => deleteMut.mutate(match.id)}
+              onArchiveSbo={() => archiveSboMut.mutate(match.id)}
+              archiving={archiveSboMut.isPending && archiveSboMut.variables === match.id}
               isLive
             />
           ))}
@@ -229,6 +246,8 @@ export default function Matches() {
               canManage={canManage} 
               onEdit={() => setEditingMatch(match)}
               onDelete={() => deleteMut.mutate(match.id)}
+              onArchiveSbo={() => archiveSboMut.mutate(match.id)}
+              archiving={archiveSboMut.isPending && archiveSboMut.variables === match.id}
             />
           ))}
           {finished.length === 0 && (
@@ -448,12 +467,16 @@ function MatchCard({
   canManage, 
   onEdit, 
   onDelete, 
+  onArchiveSbo,
+  archiving = false,
   isLive = false 
 }: { 
   match: Match; 
   canManage: boolean; 
   onEdit: () => void; 
   onDelete: () => void;
+  onArchiveSbo?: () => void;
+  archiving?: boolean;
   isLive?: boolean;
 }) {
   const statusColor = {
@@ -502,13 +525,25 @@ function MatchCard({
               </p>
             )}
 
-            {(match.sboUrl || match.rtlUrl) && (
-              <div className="flex items-center gap-2 mt-2">
+            {(match.sboUrl || match.sboArchivePath || match.rtlUrl) && (
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {match.sboArchivePath && (
+                  <a href={match.sboArchivePath} target="_blank" rel="noopener" className="text-xs flex items-center gap-1 text-green-700 hover:underline">
+                    <Download className="w-3 h-3" />
+                    SBO (Kopie)
+                  </a>
+                )}
                 {match.sboUrl && (
                   <a href={match.sboUrl} target="_blank" rel="noopener" className="text-xs flex items-center gap-1 text-blue-600 hover:underline">
                     <ExternalLink className="w-3 h-3" />
-                    SBO Report
+                    {match.sboArchivePath ? "SBO (FLH)" : "SBO Report"}
                   </a>
+                )}
+                {canManage && match.sboUrl && !match.sboArchivePath && onArchiveSbo && (
+                  <button type="button" onClick={onArchiveSbo} disabled={archiving} className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground disabled:opacity-50">
+                    <Download className="w-3 h-3" />
+                    {archiving ? "Archivéiert…" : "SBO archivéieren"}
+                  </button>
                 )}
                 {match.rtlUrl && (
                   <a href={match.rtlUrl} target="_blank" rel="noopener" className="text-xs flex items-center gap-1 text-orange-600 hover:underline">

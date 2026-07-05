@@ -632,3 +632,15 @@ Einzige manuelle Aufgabe: Ins Spiel fahren und Tore werfen! 🏐
 
 *Dieser Plan wird bei jeder Weiterentwicklung automatisch aktualisiert.*  
 *Prioritäten werden nach Verfügbarkeit & Bedarf angepasst — alle Punkte sind umsetzbar.*
+
+---
+
+## Nachtrag (01.07.2026): Join → Google-Sheet-Automatisierung (mersch75.lu)
+
+Als Zwischenlösung vor der vollen Vereins-OS-Mitgliederverwaltung werden neue Anmeldungen aus `join.html` (Website-Repo `mersch75test.github.io`) **automatisch in eine Google-Sheet-Mitgliederliste** geschrieben — über ein Google-Apps-Script-Web-App.
+
+- **Random-No** (Spalte C) wird zufällig erzeugt (Alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`) mit serverseitigem Kollisionscheck.
+- **Zwei-Spur:** Sekretär-Excel bleibt bestehen; Automatisierung → separater Google-Sheet-Master (zuerst Test-Master „Adrien", dann Sekretär-Master).
+- **Test-Modus:** Nachname mit `TEST` → Mails nur an `m75.deisad@gmail.com`, Sheet nur in Adrien-Test-Master.
+- **Migrationspfad:** Diese Sheet-Lösung ist der Vorläufer der geplanten Vereins-OS-Mitglieder-API; sobald Vereins-OS die Mitgliederverwaltung übernimmt, kann `join.html` direkt gegen die App-API posten.
+- **Vollständiger Plan + Apps-Script-Code:** `docs/join-to-sheet-automation-f4cdcc.md` (Kopie; Original unter `mersch75test.github.io/.windsurf/plans/` bzw. `~/.windsurf/plans/`).
