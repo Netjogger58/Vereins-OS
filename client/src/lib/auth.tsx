@@ -2,12 +2,22 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { apiRequest, queryClient, setAuthToken, getAuthToken } from "./queryClient";
 import type { PublicUser } from "@shared/schema";
 
+export interface TwoFaChallenge {
+  twoFactorRequired: true;
+  challenge: string;
+  maskedEmail: string;
+}
+
+const DEVICE_KEY = "m75_device";
+const getDeviceToken = () => localStorage.getItem(DEVICE_KEY) || undefined;
+
 interface AuthCtx {
   user: PublicUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  cardLogin: (cardId: string) => Promise<{ name: string; clubFunction?: string }>;
-  adminLogin: (password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<TwoFaChallenge | void>;
+  cardLogin: (cardId: string) => Promise<TwoFaChallenge | { name: string; clubFunction?: string }>;
+  adminLogin: (password: string) => Promise<TwoFaChallenge | void>;
+  verifyTwoFactor: (challenge: string, code: string, trustDevice: boolean) => Promise<{ memberName?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   setUser: (u: PublicUser | null) => void;
@@ -43,9 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const res = await apiRequest("POST", "/api/auth/login", { email, password });
+  const login = async (email: string, password: string): Promise<TwoFaChallenge | void> => {
+    const res = await apiRequest("POST", "/api/auth/login", { email, password, deviceToken: getDeviceToken() });
     const data = await res.json();
+    if (data.twoFactorRequired) return data as TwoFaChallenge;
     // Store token in memory for Bearer auth (cookie won't work in iframe)
     if (data._token) {
       setAuthToken(data._token);
@@ -55,21 +66,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userdata as PublicUser);
   };
 
-  const cardLogin = async (cardId: string) => {
-    const res = await apiRequest("POST", "/api/auth/card-login", { cardId });
+  const cardLogin = async (cardId: string): Promise<TwoFaChallenge | { name: string; clubFunction?: string }> => {
+    const res = await apiRequest("POST", "/api/auth/card-login", { cardId, deviceToken: getDeviceToken() });
     const data = await res.json();
+    if (data.twoFactorRequired) return data as TwoFaChallenge;
     if (data._token) setAuthToken(data._token);
     const { _token, memberName, clubFunction, ...userdata } = data;
     setUser(userdata as PublicUser);
     return { name: memberName as string, clubFunction: clubFunction as string | undefined };
   };
 
-  const adminLogin = async (password: string) => {
-    const res = await apiRequest("POST", "/api/auth/admin-login", { password });
+  const adminLogin = async (password: string): Promise<TwoFaChallenge | void> => {
+    const res = await apiRequest("POST", "/api/auth/admin-login", { password, deviceToken: getDeviceToken() });
     const data = await res.json();
+    if (data.twoFactorRequired) return data as TwoFaChallenge;
     if (data._token) setAuthToken(data._token);
     const { _token, ...userdata } = data;
     setUser(userdata as PublicUser);
+  };
+
+  const verifyTwoFactor = async (challenge: string, code: string, trustDevice: boolean) => {
+    const res = await apiRequest("POST", "/api/auth/2fa/verify", { challenge, code, trustDevice });
+    const data = await res.json();
+    if (data._token) setAuthToken(data._token);
+    if (data._deviceToken) localStorage.setItem(DEVICE_KEY, data._deviceToken);
+    const { _token, _deviceToken, memberName, clubFunction, ...userdata } = data;
+    setUser(userdata as PublicUser);
+    return { memberName: memberName as string | undefined };
   };
 
   const logout = async () => {
@@ -80,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ user, loading, login, cardLogin, adminLogin, logout, refresh, setUser }}>
+    <Ctx.Provider value={{ user, loading, login, cardLogin, adminLogin, verifyTwoFactor, logout, refresh, setUser }}>
       {children}
     </Ctx.Provider>
   );

@@ -24,7 +24,7 @@ const COUNTRY_CODES = [
 ];
 
 export default function Login() {
-  const { login, cardLogin, adminLogin } = useAuth();
+  const { login, cardLogin, adminLogin, verifyTwoFactor } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("card");
   
@@ -51,6 +51,35 @@ export default function Login() {
   const [adminPw, setAdminPw] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
 
+  // 2FA state
+  const [twoFa, setTwoFa] = useState<{ challenge: string; maskedEmail: string } | null>(null);
+  const [twoFaCode, setTwoFaCode] = useState("");
+  const [twoFaTrust, setTwoFaTrust] = useState(true);
+  const [twoFaLoading, setTwoFaLoading] = useState(false);
+
+  const handleMaybeTwoFa = (r: unknown): boolean => {
+    if (r && typeof r === "object" && (r as any).twoFactorRequired) {
+      setTwoFa({ challenge: (r as any).challenge, maskedEmail: (r as any).maskedEmail });
+      setTwoFaCode("");
+      setAdminOpen(false);
+      return true;
+    }
+    return false;
+  };
+
+  const onTwoFaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFa) return;
+    setTwoFaLoading(true);
+    try {
+      await verifyTwoFactor(twoFa.challenge, twoFaCode.trim(), twoFaTrust);
+    } catch (err: any) {
+      toast({ title: "Bestätigung fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Falscher Code", variant: "destructive" });
+    } finally {
+      setTwoFaLoading(false);
+    }
+  };
+
   const identifyCard = async (e: React.FormEvent) => {
     e.preventDefault();
     const id = cardId.trim();
@@ -75,7 +104,8 @@ export default function Login() {
   const confirmCardLogin = async () => {
     setCardLoading(true);
     try {
-      await cardLogin(cardId.trim());
+      const r = await cardLogin(cardId.trim());
+      handleMaybeTwoFa(r);
     } catch (err: any) {
       toast({ title: "Anmeldung fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Bitte erneut versuchen", variant: "destructive" });
     } finally {
@@ -87,7 +117,8 @@ export default function Login() {
     e.preventDefault();
     setAdminLoading(true);
     try {
-      await adminLogin(adminPw);
+      const r = await adminLogin(adminPw);
+      handleMaybeTwoFa(r);
     } catch (err: any) {
       toast({ title: "Admin-Login fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Falsches Passwort", variant: "destructive" });
     } finally {
@@ -99,7 +130,8 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
+      const r = await login(email, password);
+      handleMaybeTwoFa(r);
     } catch (err: any) {
       toast({ title: "Anmeldung fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Bitte erneut versuchen", variant: "destructive" });
     } finally {
@@ -351,6 +383,43 @@ export default function Login() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* 2FA Code-Eingabe Overlay */}
+        {twoFa && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-[340px] bg-card rounded-2xl shadow-2xl p-6 border border-white/[0.08]">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldCheck className="size-5 text-primary" />
+                <h3 className="text-[15px] font-semibold">Bestätigungscode</h3>
+              </div>
+              <p className="text-[12px] text-muted-foreground mb-4">
+                Ein 6-stelliger Code wurde gesendet an: <span className="font-medium">{twoFa.maskedEmail}</span>
+              </p>
+              <form onSubmit={onTwoFaSubmit} className="space-y-3.5">
+                <Input
+                  autoFocus
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={twoFaCode}
+                  onChange={e => setTwoFaCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  className="h-12 rounded-xl bg-muted/40 border-border/50 text-center text-[20px] tracking-[8px] font-mono"
+                  required
+                />
+                <label className="flex items-center gap-2 text-[12px] text-muted-foreground cursor-pointer">
+                  <input type="checkbox" checked={twoFaTrust} onChange={e => setTwoFaTrust(e.target.checked)} className="rounded" />
+                  Diesem Gerät 30 Tage vertrauen
+                </label>
+                <div className="flex gap-2">
+                  <Button type="button" variant="ghost" onClick={() => setTwoFa(null)} className="flex-1 h-10 rounded-xl text-[13px]">Abbrechen</Button>
+                  <Button type="submit" className="flex-1 h-10 rounded-xl text-[13px] font-semibold" disabled={twoFaLoading || twoFaCode.length !== 6}>
+                    {twoFaLoading ? "Prüfen …" : "Bestätigen"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Admin-Login Overlay (über den Logo-Punkt) */}
         {adminOpen && (

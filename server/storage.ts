@@ -267,6 +267,12 @@ function init() {
       created_at INTEGER NOT NULL,
       last_seen INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS trusted_devices (
+      token TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      last_used INTEGER NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
@@ -985,6 +991,8 @@ function runMigrations() {
   safeAddColumn("members", "last_name", "TEXT");
   safeAddColumn("members", "birth_name", "TEXT");
   safeAddColumn("member_functions", "team_id", "INTEGER");
+  // Kalender: wer den Termin angelegt hat (darf ihn löschen)
+  safeAddColumn("events", "created_by_id", "INTEGER");
   // SBO-Archiv (lokal/Hetzner Kopie vum SBO-PDF)
   safeAddColumn("matches", "sbo_archive_path", "TEXT");
   safeAddColumn("matches", "sbo_archived_at", "TEXT");

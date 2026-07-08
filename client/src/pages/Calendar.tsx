@@ -12,7 +12,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Video, Check, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Video, Check, X, Trash2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -63,6 +63,21 @@ export default function Calendar() {
       })).json(),
     onSuccess: () => toast({ title: "Verfügbarkeit gespeichert" }),
   });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: number) => (await apiRequest("DELETE", `/api/events/${id}`)).json(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      setSelectedEvent(null);
+      toast({ title: "Termin gelöscht" });
+    },
+    onError: (err: any) =>
+      toast({ title: "Löschen fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Bitte erneut versuchen", variant: "destructive" }),
+  });
+
+  // Admin/Präsident dürfen alles löschen; sonst nur der Ersteller des Termins.
+  const canDelete = (e: Event) =>
+    !!user && (["präsident", "admin"].includes(user.role) || e.createdById === user.id);
 
   const grid = useMemo(() => {
     const first = new Date(month);
@@ -351,6 +366,22 @@ export default function Calendar() {
                     </div>
                   )}
                 </div>
+                {canDelete(selectedEvent) && (
+                  <DialogFooter>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (window.confirm(`Termin „${selectedEvent.title}" wirklich löschen?`)) {
+                          deleteMut.mutate(selectedEvent.id);
+                        }
+                      }}
+                      disabled={deleteMut.isPending}
+                    >
+                      <Trash2 className="size-4 mr-1.5" />
+                      {deleteMut.isPending ? "Löschen…" : "Löschen"}
+                    </Button>
+                  </DialogFooter>
+                )}
               </>
             );
           })()}

@@ -19,6 +19,7 @@ import {
   clearLoginFailures,
   type AuthedRequest,
 } from "./auth";
+import { maybeStartTwoFactor, verifyTwoFactorCode, trustDevice } from "./twofactor";
 import {
   insertMemberSchema,
   insertTeamSchema,
@@ -209,6 +210,8 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) { recordLoginFailure(key); return res.status(401).json({ message: "Ungültige Zugangsdaten" }); }
     clearLoginFailures(key);
+    const twoFa = await maybeStartTwoFactor(req, user);
+    if (twoFa) return res.json(twoFa);
     const token = createSession(user.id);
     setSessionCookie(res, token);
     // Return token in body so the frontend can use Bearer auth (works in iframe/cross-origin)
@@ -287,6 +290,8 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
       if (!member.userId) await storage.updateMember(member.id, { userId: user.id });
     }
 
+    const twoFa = await maybeStartTwoFactor(req, user, member.email, { memberName: member.name, clubFunction: member.clubFunction });
+    if (twoFa) return res.json(twoFa);
     const token = createSession(user.id);
     setSessionCookie(res, token);
     res.json({ ...publicUser(user), _token: token, memberName: member.name, clubFunction: member.clubFunction });
@@ -316,9 +321,25 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
         active: true,
       });
     }
+    const twoFa = await maybeStartTwoFactor(req, user);
+    if (twoFa) return res.json(twoFa);
     const token = createSession(user.id);
     setSessionCookie(res, token);
     res.json({ ...publicUser(user), _token: token });
+  });
+
+  // 2FA-Code prüfen und Session erstellen
+  app.post("/api/auth/2fa/verify", async (req: AuthedRequest, res: Response) => {
+    const { challenge, code, trustDevice: trust } = req.body || {};
+    const result = verifyTwoFactorCode(String(challenge || ""), String(code || ""));
+    if (!result.ok) return res.status(401).json({ message: result.error });
+    const user = await storage.getUser(result.userId);
+    if (!user || !user.active) return res.status(401).json({ message: "Unbekannter Benutzer" });
+    const token = createSession(user.id);
+    setSessionCookie(res, token);
+    const payload: Record<string, unknown> = { ...publicUser(user), _token: token, ...(result.extra || {}) };
+    if (trust) payload._deviceToken = trustDevice(user.id);
+    res.json(payload);
   });
 
   app.patch("/api/auth/password", requireAuth(), async (req: AuthedRequest, res: Response) => {
@@ -631,16 +652,26 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     res.json(e);
   });
   app.post("/api/events", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
+    const authed = req as AuthedRequest;
     const parsed = insertEventSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
-    res.json(await storage.createEvent(parsed.data));
+    res.json(await storage.createEvent({ ...parsed.data, createdById: authed.user!.id }));
   });
   app.patch("/api/events/:id", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
     const e = await storage.updateEvent(Number(req.params.id), req.body);
     res.json(e);
   });
-  app.delete("/api/events/:id", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
-    await storage.deleteEvent(Number(req.params.id));
+  // Löschen: Admin/Präsident dürfen alles, sonst nur der Ersteller des Termins.
+  app.delete("/api/events/:id", requireAuth(), async (req, res) => {
+    const authed = req as AuthedRequest;
+    const ev = await storage.getEvent(Number(req.params.id));
+    if (!ev) return res.status(404).json({ message: "Nicht gefunden" });
+    const isAdmin = ["präsident", "admin"].includes(authed.user!.role);
+    const isCreator = ev.createdById != null && ev.createdById === authed.user!.id;
+    if (!isAdmin && !isCreator) {
+      return res.status(403).json({ message: "Keine Berechtigung: nur Admin/Präsident oder der Ersteller darf löschen." });
+    }
+    await storage.deleteEvent(ev.id);
     res.json({ ok: true });
   });
 

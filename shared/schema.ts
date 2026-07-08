@@ -121,6 +121,7 @@ export const events = sqliteTable("events", {
   location: text("location"),
   description: text("description"),
   jitsiRoom: text("jitsi_room"),
+  createdById: integer("created_by_id"), // User, der den Termin angelegt hat (darf ihn löschen)
 });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true });
 export type InsertEvent = z.infer<typeof insertEventSchema>;
