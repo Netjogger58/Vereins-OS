@@ -20,6 +20,7 @@ import { initials } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { CAT_CODE_LABELS } from "@shared/schema";
 import type { Member, Team } from "@shared/schema";
+import { isActiveClubMember } from "@shared/memberStatus";
 
 // Anzeige-Label: echtes Team -> sonst FLH-Kategorie -> sonst Rolle/Typ -> "—"
 const MEMBER_TYPE_LABELS: Record<string, string> = {
@@ -85,11 +86,20 @@ export default function Members() {
     },
   });
 
+  const activeCount = useMemo(() => members.filter(isActiveClubMember).length, [members]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return members.filter(m => {
+      const archived = !isActiveClubMember(m);
+      // Ex-Mitglieder (Ancien Membres) nur zeigen, wenn explizit ausgewählt; sonst ausblenden.
+      if (statusFilter === "ehemalig") {
+        if (!archived) return false;
+      } else {
+        if (archived) return false;
+        if (statusFilter !== "all" && m.membershipStatus !== statusFilter) return false;
+      }
       if (teamFilter !== "all" && m.teamId !== Number(teamFilter)) return false;
-      if (statusFilter !== "all" && m.membershipStatus !== statusFilter) return false;
       if (!q) return true;
       const team = teams.find(t => t.id === m.teamId);
       const hay = [
@@ -109,7 +119,7 @@ export default function Members() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold tracking-tight">Mitglieder</h1>
-          <p className="text-sm text-muted-foreground">{members.length} Mitglieder im Verein</p>
+          <p className="text-sm text-muted-foreground">{activeCount} Mitglieder im Verein</p>
         </div>
         <div className="flex gap-2">
           {canImport && (
@@ -197,12 +207,13 @@ export default function Members() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="md:w-[150px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="md:w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
+              <SelectItem value="all">Alle (aktiv)</SelectItem>
               <SelectItem value="active">Aktiv</SelectItem>
               <SelectItem value="inactive">Inaktiv</SelectItem>
               <SelectItem value="pending">Wartend</SelectItem>
+              <SelectItem value="ehemalig">Ancien Membres (Archiv)</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
