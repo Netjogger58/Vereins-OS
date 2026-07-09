@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { CAT_CODE_LABELS } from "@shared/schema";
+import { isActiveClubMember } from "@shared/memberStatus";
 import { Users, Download, Search, Activity, UserX, Shield, ChevronRight, ChevronLeft, ArrowUpDown, ArrowUp, ArrowDown, HeartPulse, Archive, HandCoins, Award, Table, Mail, Copy, FileText, Printer, X } from "lucide-react";
 import { openConvocation, type ConvLang } from "@/lib/convocation";
 
@@ -151,10 +152,10 @@ function csvEscape(v: any): string {
   return s;
 }
 
-// Aktiv = Mitgliedschafts-Status (nicht Präsenz). Leer/active/aktiv = aktives Mitglied.
-const ACTIVE_STATUS = new Set(["", "active", "aktiv"]);
+// Aktueller Vereinsmember? Gemeinsame Definition (Client + Server):
+// Kontakte, Ex-Mitglieder und gelöschte Lizenzen zählen NICHT (Archiv „Ancien Membres").
 function isActiveMember(m: RosterMember): boolean {
-  return ACTIVE_STATUS.has((m.membershipStatus || "").toLowerCase());
+  return isActiveClubMember(m);
 }
 
 // Extrahiert das Jahr (JJJJ) aus dem Médico-Feld, sonst null (z.B. bei "Apte").

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Shield, CalendarDays, Megaphone, MapPin, ChevronRight, Clock, Pin } from "lucide-react";
 import { formatDate, relativeTime } from "@/lib/utils";
 import type { Member, Team, Event, Announcement } from "@shared/schema";
+import { isActiveClubMember } from "@shared/memberStatus";
 
 const EVENT_STYLES: Record<string, { color: string; label: string }> = {
   training: { color: "bg-blue-500", label: "Training" },
@@ -48,7 +49,7 @@ export default function Dashboard() {
 
       {/* Stat cards - Apple widget grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Users} label="Mitglieder" value={members.length} accent="text-blue-500" bg="bg-blue-500/10" />
+        <StatCard icon={Users} label="Mitglieder" value={members.filter(isActiveClubMember).length} accent="text-blue-500" bg="bg-blue-500/10" />
         <StatCard icon={Shield} label="Teams" value={teams.length} accent="text-amber-500" bg="bg-amber-500/10" />
         <StatCard icon={CalendarDays} label="Diese Woche" value={thisWeek} accent="text-emerald-500" bg="bg-emerald-500/10" />
         <StatCard icon={Megaphone} label="News" value={announcements.length} accent="text-violet-500" bg="bg-violet-500/10" />

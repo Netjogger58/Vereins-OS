@@ -248,6 +248,7 @@ import {
   type SepaTransaction,
   type InsertSepaTransaction,
 } from "@shared/schema";
+import { isActiveClubMember } from "@shared/memberStatus";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { eq, and, or, like, desc, asc, sql, isNull, gte, lte, type SQL } from "drizzle-orm";
@@ -1883,8 +1884,11 @@ export class DatabaseStorage implements IStorage {
     
     const byCategory: Record<string, number> = {};
     const byTeam: Record<string, number> = {};
-    
-    allMembers.forEach(m => {
+
+    // Nur aktuelle Mitglieder zählen; Ex-Mitglieder/Kontakte bleiben im Archiv.
+    const activeMembers = allMembers.filter(isActiveClubMember);
+
+    activeMembers.forEach(m => {
       // By category from team
       if (m.teamId) {
         const cat = categoryMap.get(m.teamId) || "Unbekannt";
@@ -1896,7 +1900,8 @@ export class DatabaseStorage implements IStorage {
     });
 
     return {
-      total: allMembers.length,
+      total: activeMembers.length,
+      archived: allMembers.length - activeMembers.length,
       byCategory,
       byTeam,
     };
