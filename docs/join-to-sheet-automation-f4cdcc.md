@@ -379,10 +379,11 @@ D'Umeldung (`join.html`) erlaabt **méi wéi eng Funktioun pro Persoun** (z.B. S
 
 **Wichteg Regel:** En Arbitter kann een **réischt ab U13** sinn — d'"Och Arbitter"-Optioun ass fir U11/U9/U7 gespaart.
 
-### Cotisatioun (automatesche Virschlag)
-- **Famill (2+)** → €250 (prioritär)
-- **Officiel / Arbitter** (ëmmer mat Lizenz) oder **Bénévole mat Lizenz** → **€50** — **och wann d'Persoun gläichzäiteg Spiller ass**
-- Soss **Spiller** no Alter: Seniors/Vétérans = €200 · U17/U21 = €100 · méi jonk = €100
+### Cotisatioun (automatesche Virschlag) — Tariffer Saison 2026-2027
+- **Family Tarif** (2+) → Formule: Tarif le plus élevé (parmi les membres de la famille) + 50 € par membre (≤ 25 ans) / 80 € par membre adulte supplémentaire (prioritär)
+- **Officiels** (Officiel / Arbitter, ëmmer mat Lizenz) oder **Bénévole mat Lizenz** → **€50** — **och wann d'Persoun gläichzäiteg Spiller ass**
+- Soss no Alter: **> 25 Joer = Adulte Tarif €300** · **≤ 25 Joer = Youth Tarif €210**
+- **Kidssport & Loisirs** → €50 (manuell wielbar, net automatesch virgeschloen)
 
 > De Cotisatioun-Virschlag ass **just eng Uweisung** (kann ugepasst ginn) an de Betrag ka **op enger AG geännert ginn**, mat Wierkung fir déi kommend Saison. Den Titel + Hiweis sinn an alle 5 Sproochen iwwersat (`tarif` / `tarifHint` an `MERSCH75_UI_TEXTS`, gesat vun `updateLang`).
 
