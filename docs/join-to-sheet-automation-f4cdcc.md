@@ -381,11 +381,11 @@ D'Umeldung (`join.html`) erlaabt **méi wéi eng Funktioun pro Persoun** (z.B. S
 
 ### Cotisatioun (automatesche Virschlag) — Tariffer Saison 2026-2027
 - **Family Tarif** (2+) → **€384** (prioritär)
-- **Officiels** (Officiel / Arbitter, ëmmer mat Lizenz) oder **Bénévole mat Lizenz** → **€50** — **och wann d'Persoun gläichzäiteg Spiller ass**
+- **Officiels** (Officiel / Arbitter, mat **oder ouni** Lizenz) oder **Bénévole mat Lizenz** → **keng Cotisatioun**; **min. €50 fir ee Stëmmrecht op der AG** (cf. Statuten) — **och wann d'Persoun gläichzäiteg Spiller ass**
 - **Kidssport & Loisirs** → **€10 par unité ou Family Tarif** (automatesch fir Kategorie **U4**)
 - Soss no Alter: **> 25 Joer = Adulte Tarif €300** · **≤ 25 Joer = Youth Tarif €210**
 
-> **Alterskategorien (`flhCategoryRules`):** fir Saison 2026-2027 sinn d'Gebuertsjoren ëm +1 verréckelt vs. 2025-2026, an **U4** (Gebuertsjoer 2022+) ass als jéngste Kategorie dobäigesat (= Kidssport). Ginn ugepasst soubaal d'FLH déi offiziell Daten fir 2026-2027 verëffentlecht.
+> **Alterskategorien (`flhCategoryRules`), Saison 2026-2027 (Männer, vum Comité bestätegt):** U21=2006-2009, U17=2010-2011, U15=2012-2013, U13=2014-2015, U11=2016-2017, U9=2018-2019, **U7=2020-2022** (jéngste offiziell FLH-Kategorie), **U4=2023/2024** (Mersch75-intern, **keng** FLH-Kategorie, net méi jonk wéi 2024 → Kidssport). Damme-Grenzen aktuell parallel zu de Männer gesat — nach vun der FLH ze bestätegen.
 
 > De Cotisatioun-Virschlag ass **just eng Uweisung** (kann ugepasst ginn) an de Betrag ka **op enger AG geännert ginn**, mat Wierkung fir déi kommend Saison. Den Titel + Hiweis sinn an alle 5 Sproochen iwwersat (`tarif` / `tarifHint` an `MERSCH75_UI_TEXTS`, gesat vun `updateLang`).
 
