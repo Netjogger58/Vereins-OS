@@ -385,7 +385,7 @@ D'Umeldung (`join.html`) erlaabt **méi wéi eng Funktioun pro Persoun** (z.B. S
 - **Kidssport & Loisirs** → **€10 par unité ou Family Tarif** (automatesch fir Kategorie **U4**)
 - Soss no Alter: **> 25 Joer = Adulte Tarif €300** · **≤ 25 Joer = Youth Tarif €210**
 
-> **Alterskategorien (`flhCategoryRules`), Saison 2026-2027 (Männer, vum Comité bestätegt):** U21=2006-2009, U17=2010-2011, U15=2012-2013, U13=2014-2015, U11=2016-2017, U9=2018-2019, **U7=2020-2022** (jéngste offiziell FLH-Kategorie), **U4=2023/2024** (Mersch75-intern, **keng** FLH-Kategorie, net méi jonk wéi 2024 → Kidssport). Damme-Grenzen aktuell parallel zu de Männer gesat — nach vun der FLH ze bestätegen.
+> **Alterskategorien (`flhCategoryRules`), Saison 2026-2027 (Männer, vum Comité bestätegt):** U21=2006-2009, U17=2010-2011, U15=2012-2013, U13=2014-2015, U11=2016-2017, U9=2018-2019, **U7=2020-2022** (jéngste offiziell FLH-Kategorie), **U4=2023/2024** (Mersch75-intern, **keng** FLH-Kategorie, net méi jonk wéi 2024 → Kidssport). **Dammen (speziell):** Seniors = **1992-2009** (bestätegt, keen U21 bei den Dammen); Jugend-Grenzen U17-U4 parallel zu de Männer — nach ze bestätegen.
 
 > De Cotisatioun-Virschlag ass **just eng Uweisung** (kann ugepasst ginn) an de Betrag ka **op enger AG geännert ginn**, mat Wierkung fir déi kommend Saison. Den Titel + Hiweis sinn an alle 5 Sproochen iwwersat (`tarif` / `tarifHint` an `MERSCH75_UI_TEXTS`, gesat vun `updateLang`).
 
