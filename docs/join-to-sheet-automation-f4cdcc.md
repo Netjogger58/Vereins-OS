@@ -380,10 +380,12 @@ D'Umeldung (`join.html`) erlaabt **méi wéi eng Funktioun pro Persoun** (z.B. S
 **Wichteg Regel:** En Arbitter kann een **réischt ab U13** sinn — d'"Och Arbitter"-Optioun ass fir U11/U9/U7 gespaart.
 
 ### Cotisatioun (automatesche Virschlag) — Tariffer Saison 2026-2027
-- **Family Tarif** (2+) → Formule: Tarif le plus élevé (parmi les membres de la famille) + 50 € par membre (≤ 25 ans) / 80 € par membre adulte supplémentaire (prioritär)
+- **Family Tarif** (2+) → **€384** (prioritär)
 - **Officiels** (Officiel / Arbitter, ëmmer mat Lizenz) oder **Bénévole mat Lizenz** → **€50** — **och wann d'Persoun gläichzäiteg Spiller ass**
+- **Kidssport & Loisirs** → **€10 par unité ou Family Tarif** (automatesch fir Kategorie **U4**)
 - Soss no Alter: **> 25 Joer = Adulte Tarif €300** · **≤ 25 Joer = Youth Tarif €210**
-- **Kidssport & Loisirs** → €50 (manuell wielbar, net automatesch virgeschloen)
+
+> **Alterskategorien (`flhCategoryRules`):** fir Saison 2026-2027 sinn d'Gebuertsjoren ëm +1 verréckelt vs. 2025-2026, an **U4** (Gebuertsjoer 2022+) ass als jéngste Kategorie dobäigesat (= Kidssport). Ginn ugepasst soubaal d'FLH déi offiziell Daten fir 2026-2027 verëffentlecht.
 
 > De Cotisatioun-Virschlag ass **just eng Uweisung** (kann ugepasst ginn) an de Betrag ka **op enger AG geännert ginn**, mat Wierkung fir déi kommend Saison. Den Titel + Hiweis sinn an alle 5 Sproochen iwwersat (`tarif` / `tarifHint` an `MERSCH75_UI_TEXTS`, gesat vun `updateLang`).
 
