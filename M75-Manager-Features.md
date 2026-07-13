@@ -4,6 +4,39 @@
 
 ---
 
+## Änderungen 13.–14. Juli 2026 — Finanzen, Budget & Mitgliederzahlen ✅
+
+> Umgesetzt am 13.–14. Juli 2026. **Status: funktioniert** — Typecheck grün, Summen gegen die Vereinsberichte (Charges/Produits, Bilan) geprüft, DB-Zahlen bestätigt (**555 aktiv**).
+
+### Finanzen: echte Vereinsdaten importiert (`Finance.tsx`, `import-finances.cjs`)
+- **Demo-Konten/Buchungen entfernt**, **7 reale Bankkonten** mit Salden Stand 2025-26 angelegt.
+- **Einnahmen/Ausgaben** der Saisons **2024-25** und **2025-26** als zusammengefasste Buchungen importiert.
+- Neue Felder auf `transactions`: **`category`** und **`season`**; neue Tabelle **`budgets`** (Saison-Budget je Kategorie/Typ).
+- **`FINANCE_CATEGORIES`** (Einnahme/Ausgabe) als gemeinsame Kategorien-Liste.
+- **UI:** Kategorie-Auswahl im Buchungs-Dialog, **Saison-Filter** für Buchungen.
+
+### Budget & Prognosen 2026-27 (`Budget.tsx`, `/api/season-budgets`)
+- **Budget-Seite** zeigt geplante **Charges/Produits** je Kategorie aus der `budgets`-Tabelle inkl. Total und **geplantem Resultat**.
+- Storage-Methoden + API-Routen `GET/POST/DELETE /api/season-budgets`.
+
+### Finanz-Zugriff eingeschränkt (nur Präsident / Trésorier / Admin)
+- Seiten **`/finance`, `/budget`, `/fees`** nur für Rollen `präsident`, `admin`, `kassenwart` — sonst `NotFound` (`App.tsx`).
+- API abgesichert: `/api/accounts`, `/api/transactions`, `/api/budget`, `/api/season-budgets`, `/api/fee-rules`, `/api/member-fees`, `/api/members/:id/fees`.
+
+### Mitgliederliste 2026-27 aktualisiert (`update-members-130726.cjs`)
+- Import aus **`M75_membres_2026_2027_Codes_alt_neu_130726.xlsx`** (Sekretärsliste, Stand 13.07.).
+- **Neue CAT-Codes** (Spalten K/N) übernommen; nicht mehr gelistete Mitglieder → **`ehemalig`** (Archiv).
+- Ergebnis: **555 aktiv**, **457 im Archiv** („Ancien Membres"). Backup vor Anwendung.
+
+### „1012" verschwindet überall — nur aktive Mitglieder zählen
+- **Grundregel:** Ex-Mitglieder (Archiv) zählen **nie** zur Mitgliederzahl.
+- `shared/memberStatus.ts` → `isActiveClubMember` prüft jetzt `membershipStatus` **und** `membership_status` (robust).
+- **Sekretariat-Mitgliederliste** (`Secretariat.tsx`): Basiszahl ist `stats.active` → **„555 von 555"** statt „555 von 1012".
+- **PDF-Export** (`/api/export/members/pdf`) filtert auf aktive Mitglieder.
+- Dashboard, Mitglieder-Seite und Statistiken zählen bereits über `isActiveClubMember` → **555**.
+
+---
+
 ## Änderungen Juli 2026 — Sekretariat & Médico ✅
 
 > Umgesetzt am 5.–6. Juli 2026. **Status: funktioniert** — Typecheck grün, E-Mail + Antwort-Seiten per Screenshot verifiziert, DB-Zahlen bestätigt.

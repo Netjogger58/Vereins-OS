@@ -1,11 +1,22 @@
 # VEREINS-OS — PROJEKTPLAN
-> **Zuletzt aktualisiert:** 6. Juli 2026  
+> **Zuletzt aktualisiert:** 14. Juli 2026  
 > **Status:** In aktiver Entwicklung — Pilot: Handball Mersch 75  
 > **Vision:** Eine lebendige, weitgehend automatisierte Vereinsplattform — minimal manuelle Arbeit, maximal open source & kostenlos
 
 ---
 
-## LETZTE ÄNDERUNGEN (Juli 2026) ✅
+## LETZTE ÄNDERUNGEN (13.–14. Juli 2026) ✅
+
+- **Finanzen — echte Vereinsdaten**: Demo entfernt, **7 reale Konten** (Salden 2025-26), Buchungen 2024-25 & 2025-26 importiert. Neue Felder `transactions.category/season`, Tabelle `budgets`, `FINANCE_CATEGORIES`; Kategorie-Auswahl + Saison-Filter in `Finance.tsx`.
+- **Budget & Prognosen 2026-27** (`Budget.tsx`): Charges/Produits je Kategorie + geplantes Resultat; API `/api/season-budgets` (GET/POST/DELETE).
+- **Finanz-Zugriff** nur **Präsident/Trésorier/Admin**: Seiten `/finance`, `/budget`, `/fees` + zugehörige APIs rollenbeschränkt.
+- **Mitgliederliste 2026-27** aus `M75_membres_2026_2027_Codes_alt_neu_130726.xlsx` aktualisiert (neue CAT-Codes; Abmeldungen → Archiv): **555 aktiv**, **457 Archiv**.
+- **„1012" entfernt**: Ex-Mitglieder zählen nie mit. `isActiveClubMember` robust (camel+snake_case), Sekretariat zeigt „555 von 555", PDF-Export filtert aktiv.
+- Details siehe `M75-Manager-Features.md` → „Änderungen 13.–14. Juli 2026".
+
+---
+
+## FRÜHERE ÄNDERUNGEN (5.–6. Juli 2026) ✅
 
 - **Sekretariat-Mitgliederverwaltung** (`Secretariat.tsx`): Roster mit Filtern/Stats/CSV. Aktive Mitglieder = „Membres 2026-2027"-Liste → **590 aktiv**, Rest **414 im Archiv** (kein „Gesamt 1004" mehr).
 - **Médico-Convocation**: mehrsprachiger Brief/PDF + E-Mail mit **Bestätigen/Absagen**, öffentliche Antwort-Seite, Sekretariats-Benachrichtigung (`medicoConvocation.ts`, Routen `/medico/confirm/:token`, `/api/secretary/medico/*`).
