@@ -879,7 +879,7 @@ export default function Secretariat() {
 
       <div className="flex items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground">
-          {filtered.length} von {roster.length} Mitgliedern
+          {filtered.length} von {stats.active} Mitgliedern
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground hidden sm:inline mr-1">Tabelle scrollen</span>
