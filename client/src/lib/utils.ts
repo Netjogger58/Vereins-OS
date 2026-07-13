@@ -40,6 +40,24 @@ export function euro(n: number) {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 }
 
+// Vorname (nur Anfangsbuchstaben groß) + kompletter Nachname in GROSSBUCHSTABEN.
+// Wichtig für spanische/portugiesische Doppelnamen und verheiratete Frauen mit 2 Nachnamen.
+// Beispiel: "Fabiana BARBOSA RODRIGUES".
+export function formatFirstName(s: string): string {
+  // Ersten Buchstaben nach Wortanfang, Leerzeichen, Bindestrich oder Apostroph groß.
+  // "jean-luc" -> "Jean-Luc", "anne holm" -> "Anne Holm", "o'brien" -> "O'Brien".
+  return s.toLowerCase().replace(/(^|[\s\-'’])([a-zà-ÿ])/g, (_m, sep, ch) => sep + ch.toUpperCase());
+}
+export function formatMemberName(m: any): string {
+  const first = (m?.firstName ?? m?.first_name) as string | null | undefined;
+  const last = (m?.lastName ?? m?.last_name) as string | null | undefined;
+  if (last && String(last).trim()) {
+    const f = first && String(first).trim() ? formatFirstName(String(first).trim()) + " " : "";
+    return f + String(last).trim().toUpperCase();
+  }
+  return (m?.name ?? "") as string;
+}
+
 export function initials(name: string) {
   return name
     .split(" ")

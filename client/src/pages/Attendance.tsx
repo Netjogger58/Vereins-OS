@@ -11,12 +11,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Camera, Upload, Check, X, Sparkles, Info } from "lucide-react";
+import { Camera, Upload, Check, X, Sparkles, Info, Clock, Minus } from "lucide-react";
 import { apiRequest, queryClient, getAuthToken } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { initials, isoToday } from "@/lib/utils";
+import { initials, isoToday, formatMemberName } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, Member, Attendance } from "@shared/schema";
+import { isActiveClubMember } from "@shared/memberStatus";
+
+// ─── Anwesenheits-Status ────────────────────────────────
+type AttStatus = "present" | "absent" | "excused" | "unexcused";
+
+const STATUS_OPTS: { key: AttStatus; label: string; icon: typeof Check; active: string }[] = [
+  { key: "present",   label: "Anwesend",       icon: Check, active: "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600" },
+  { key: "excused",   label: "Entschuldigt",   icon: Clock, active: "bg-amber-500 hover:bg-amber-600 text-white border-amber-500" },
+  { key: "unexcused", label: "Unentschuldigt", icon: X,     active: "bg-destructive hover:bg-destructive/90 text-white border-destructive" },
+  { key: "absent",    label: "Abwesend",       icon: Minus, active: "bg-slate-500 hover:bg-slate-600 text-white border-slate-500" },
+];
+
+// Sortier-Priorität: Anwesende oben, unmarkierte in der Mitte, "kommt nicht" ganz unten
+const STATUS_ORDER: Record<string, number> = { present: 0, excused: 3, unexcused: 4, absent: 5 };
+const UNMARKED_ORDER = 1;
 
 // Load face-api.js dynamically
 let faceapi: any = null;
@@ -64,7 +79,7 @@ export default function AttendancePage() {
   }, [teams, user, teamId]);
 
   const selTeamId = teamId ? Number(teamId) : 0;
-  const teamMembers = members.filter(m => m.teamId === selTeamId);
+  const teamMembers = members.filter(m => m.teamId === selTeamId && isActiveClubMember(m));
 
   const { data: attendance = [] } = useQuery<Attendance[]>({
     queryKey: ["/api/attendance", { teamId: selTeamId, date }],
@@ -83,23 +98,71 @@ export default function AttendancePage() {
     },
   });
 
-  const saveBulk = useMutation({
-    mutationFn: async (items: any[]) =>
-      (await apiRequest("POST", "/api/attendance/bulk", { items })).json(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
-      toast({ title: "Anwesenheit gespeichert" });
+  // Zähler pro Mitglied über alle erfassten Einheiten (present/total), startet bei 0/0
+  const { data: summary = [] } = useQuery<{ memberId: number; present: number; total: number }[]>({
+    queryKey: ["/api/attendance/summary", { teamId: selTeamId }],
+    queryFn: async () => {
+      if (!selTeamId) return [];
+      const API_BASE = "__PORT_5000__".startsWith("__") ? "" : "__PORT_5000__";
+      const token = getAuthToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(API_BASE + `/api/attendance/summary?teamId=${selTeamId}`, { headers, credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
     },
   });
 
-  const presentByMember = (memberId: number) =>
-    attendance.find(a => a.memberId === memberId)?.present ?? false;
-
-  const togglePresent = (memberId: number, present: boolean) => {
-    saveBulk.mutate([{ memberId, teamId: selTeamId, date, present }]);
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/attendance/summary"] });
   };
 
-  const presentCount = attendance.filter(a => a.present).length;
+  const saveBulk = useMutation({
+    mutationFn: async (items: any[]) =>
+      (await apiRequest("POST", "/api/attendance/bulk", { items })).json(),
+    onSuccess: invalidateAll,
+    onError: (e: any) =>
+      toast({ title: "Speichern fehlgeschlagen", description: String(e?.message || e), variant: "destructive" }),
+  });
+
+  const clearMut = useMutation({
+    mutationFn: async (memberId: number) =>
+      apiRequest("DELETE", `/api/attendance?memberId=${memberId}&date=${date}`),
+    onSuccess: invalidateAll,
+    onError: (e: any) =>
+      toast({ title: "Löschen fehlgeschlagen", description: String(e?.message || e), variant: "destructive" }),
+  });
+
+  // Status ableiten (Altdaten ohne status aus present ableiten)
+  const statusByMember = (memberId: number): AttStatus | undefined => {
+    const rec = attendance.find(a => a.memberId === memberId);
+    if (!rec) return undefined;
+    return ((rec as any).status as AttStatus) ?? (rec.present ? "present" : "unexcused");
+  };
+
+  // Setzt Status – erneuter Klick auf denselben Status entfernt den Marker (neutral)
+  const setStatus = (memberId: number, status: AttStatus) => {
+    if (statusByMember(memberId) === status) {
+      clearMut.mutate(memberId);
+    } else {
+      saveBulk.mutate([{ memberId, teamId: selTeamId, date, present: status === "present", status }]);
+    }
+  };
+
+  const summaryByMember = (memberId: number) =>
+    summary.find(s => s.memberId === memberId) ?? { present: 0, total: 0 };
+
+  const presentCount = teamMembers.filter(m => statusByMember(m.id) === "present").length;
+
+  // Anwesende oben, unmarkierte in der Mitte, "kommt nicht" (absent/entsch./unentsch.) ganz unten.
+  // Innerhalb einer Gruppe alphabetisch. Wer als anwesend markiert wird, springt sofort nach oben.
+  const sortedMembers = [...teamMembers].sort((a, b) => {
+    const oa = STATUS_ORDER[statusByMember(a.id) ?? ""] ?? UNMARKED_ORDER;
+    const ob = STATUS_ORDER[statusByMember(b.id) ?? ""] ?? UNMARKED_ORDER;
+    if (oa !== ob) return oa - ob;
+    return formatMemberName(a).localeCompare(formatMemberName(b));
+  });
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -150,38 +213,45 @@ export default function AttendancePage() {
                   Keine Mitglieder in diesem Team
                 </p>
               )}
-              {teamMembers.map(m => {
-                const present = presentByMember(m.id);
+              {sortedMembers.map(m => {
+                const st = statusByMember(m.id);
+                const s = summaryByMember(m.id);
+                const parked = st === "absent" || st === "excused" || st === "unexcused";
                 return (
-                  <div key={m.id} className="flex items-center gap-3 p-3">
+                  <div key={m.id} className={`flex items-center gap-3 p-3 transition-colors ${parked ? "opacity-60" : ""}`}>
                     <Avatar className="size-9">
                       <AvatarImage src={m.photoUrl || undefined} />
                       <AvatarFallback className="text-xs font-bold bg-primary/10 text-primary">
                         {initials(m.name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{m.name}</div>
-                      <div className="text-[11px] text-muted-foreground">{m.licenseNumber}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{formatMemberName(m)}</div>
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                        <span className="tabular-nums font-semibold text-foreground/70" title="Anwesend / erfasste Einheiten">
+                          {s.present}/{s.total}
+                        </span>
+                        {m.licenseNumber && <span className="truncate">{m.licenseNumber}</span>}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={present ? "default" : "outline"}
-                        onClick={() => togglePresent(m.id, true)}
-                        className={present ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                        data-testid={`button-present-${m.id}`}
-                      >
-                        <Check className="size-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={!present && attendance.some(a => a.memberId === m.id) ? "default" : "outline"}
-                        onClick={() => togglePresent(m.id, false)}
-                        className={!present && attendance.some(a => a.memberId === m.id) ? "bg-destructive" : ""}
-                      >
-                        <X className="size-3.5" />
-                      </Button>
+                    <div className="flex items-center gap-1">
+                      {STATUS_OPTS.map(opt => {
+                        const Icon = opt.icon;
+                        const active = st === opt.key;
+                        return (
+                          <Button
+                            key={opt.key}
+                            size="icon"
+                            variant={active ? "default" : "outline"}
+                            onClick={() => setStatus(m.id, opt.key)}
+                            className={`size-8 ${active ? opt.active : "text-muted-foreground"}`}
+                            title={active ? `${opt.label} (nochmals klicken = entfernen)` : opt.label}
+                            data-testid={`button-${opt.key}-${m.id}`}
+                          >
+                            <Icon className="size-3.5" />
+                          </Button>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -194,12 +264,16 @@ export default function AttendancePage() {
           <GroupPhotoTab
             teamMembers={teamMembers}
             onResult={(matchedIds) => {
-              const items = teamMembers.map(m => ({
-                memberId: m.id,
-                teamId: selTeamId,
-                date,
-                present: matchedIds.includes(m.id),
-              }));
+              const items = teamMembers.map(m => {
+                const isPresent = matchedIds.includes(m.id);
+                return {
+                  memberId: m.id,
+                  teamId: selTeamId,
+                  date,
+                  present: isPresent,
+                  status: isPresent ? "present" : "absent",
+                };
+              });
               saveBulk.mutate(items);
             }}
           />
@@ -368,7 +442,7 @@ function GroupPhotoTab({
                 <div key={m.member.id} className="flex items-center gap-2 p-2 rounded-md border border-emerald-500/30 bg-emerald-500/10">
                   <Avatar className="size-8"><AvatarImage src={m.member.photoUrl || undefined} /><AvatarFallback>{initials(m.member.name)}</AvatarFallback></Avatar>
                   <div className="text-xs">
-                    <div className="font-semibold truncate">{m.member.name}</div>
+                    <div className="font-semibold truncate">{formatMemberName(m.member)}</div>
                     <div className="text-muted-foreground">{Math.round((1 - m.distance) * 100)}%</div>
                   </div>
                 </div>
@@ -377,7 +451,7 @@ function GroupPhotoTab({
                 <div key={m.id} className="flex items-center gap-2 p-2 rounded-md border border-border opacity-60">
                   <Avatar className="size-8"><AvatarImage src={m.photoUrl || undefined} /><AvatarFallback>{initials(m.name)}</AvatarFallback></Avatar>
                   <div className="text-xs">
-                    <div className="truncate">{m.name}</div>
+                    <div className="truncate">{formatMemberName(m)}</div>
                     <div className="text-muted-foreground">nicht erkannt</div>
                   </div>
                 </div>

@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { formatMemberName } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { 
@@ -192,7 +193,7 @@ export default function Documents() {
                       <Badge variant="outline">{category}</Badge>
                     </TableCell>
                     <TableCell>
-                      {member ? member.name : "-"}
+                      {member ? formatMemberName(member) : "-"}
                     </TableCell>
                     <TableCell>
                       <Badge className={visibility?.color || "bg-gray-500"}>
@@ -299,7 +300,7 @@ export default function Documents() {
                 </SelectTrigger>
                 <SelectContent>
                   {members.map(m => (
-                    <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
+                    <SelectItem key={m.id} value={String(m.id)}>{formatMemberName(m)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

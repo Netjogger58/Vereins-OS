@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,30 @@ export default function TrainingSchedules() {
 
   const canManage = user && ["präsident", "admin", "trainer"].includes(user.role);
   const canView = user && ["präsident", "admin", "trainer", "secretaire"].includes(user.role);
+  const isTrainer = user?.role === "trainer";
+
+  // Eigener Trainer-Code des Nutzers (bestimmt die abgedeckten Teams)
+  const { data: myCode } = useQuery<{ allTeams: boolean; teamIdsResolved: number[] } | null>({
+    queryKey: ["/api/trainer-codes/me"],
+    queryFn: async () => (await apiRequest("GET", "/api/trainer-codes/me")).json(),
+    enabled: !!isTrainer,
+  });
+
+  // Teams, die der Trainer laut Code betreuen darf (Fallback: eigenes user.teamId)
+  const trainerTeamIds: number[] =
+    myCode?.teamIdsResolved && myCode.teamIdsResolved.length > 0
+      ? myCode.teamIdsResolved
+      : user?.teamId
+        ? [Number(user.teamId)]
+        : [];
+
+  // Trainer mit genau einem Team: automatisch vorauswählen
+  useEffect(() => {
+    if (isTrainer && trainerTeamIds.length === 1) setSelectedTeam(String(trainerTeamIds[0]));
+  }, [isTrainer, trainerTeamIds.join(",")]);
+
+  // Team-Umfang fürs Generieren: Trainer = gewähltes erlaubtes Team (leer = alle erlaubten), sonst Filter
+  const generateTeamId = selectedTeam ? Number(selectedTeam) : undefined;
 
   const { data: schedules = [] } = useQuery<TrainingSchedule[]>({
     queryKey: ["/api/training-schedules", selectedTeam || undefined],
@@ -92,11 +116,12 @@ export default function TrainingSchedules() {
   });
 
   const generateMut = useMutation({
-    mutationFn: async ({ startDate, endDate }: { startDate: string; endDate: string }) => {
-      return (await apiRequest("POST", "/api/training-schedules/generate", { startDate, endDate })).json();
+    mutationFn: async ({ startDate, endDate, teamId }: { startDate: string; endDate: string; teamId?: number }) => {
+      return (await apiRequest("POST", "/api/training-schedules/generate", { startDate, endDate, teamId })).json();
     },
     onSuccess: (data) => {
       setGenerateDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       toast({ 
         title: "Events generiert", 
         description: `${data.generatedCount} Trainingstermine wurden erstellt` 
@@ -128,17 +153,24 @@ export default function TrainingSchedules() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Alle Teams" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Alle Teams</SelectItem>
-              {teams.map(team => (
-                <SelectItem key={team.id} value={String(team.id)}>{team.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {(() => {
+            // Trainer sehen nur ihre per Code freigegebenen Teams; ein einzelnes Team ist fix.
+            const visibleTeams = isTrainer ? teams.filter(t => trainerTeamIds.includes(t.id)) : teams;
+            const lockSingle = isTrainer && trainerTeamIds.length <= 1;
+            return (
+              <Select value={selectedTeam} onValueChange={setSelectedTeam} disabled={lockSingle}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={isTrainer ? "Alle meine Teams" : "Alle Teams"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">{isTrainer ? "Alle meine Teams" : "Alle Teams"}</SelectItem>
+                  {visibleTeams.map(team => (
+                    <SelectItem key={team.id} value={String(team.id)}>{team.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          })()}
           {canManage && (
             <>
               <Button variant="outline" onClick={() => setGenerateDialog(true)}>
@@ -376,6 +408,15 @@ export default function TrainingSchedules() {
             <p className="text-sm text-muted-foreground">
               Erstellt automatisch Trainingsevents im Kalender für den gewählten Zeitraum.
             </p>
+            <div className="text-sm rounded-md bg-primary/5 border border-primary/10 px-3 py-2">
+              Umfang:{" "}
+              <span className="font-semibold">
+                {generateTeamId
+                  ? (teams.find(t => t.id === generateTeamId)?.name || "Ausgewähltes Team")
+                  : "Alle Teams"}
+              </span>
+              {isTrainer && <span className="text-muted-foreground"> · nur dein Team</span>}
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Von</label>
@@ -400,7 +441,7 @@ export default function TrainingSchedules() {
               Abbrechen
             </Button>
             <Button
-              onClick={() => generateMut.mutate({ startDate: dateRange.start, endDate: dateRange.end })}
+              onClick={() => generateMut.mutate({ startDate: dateRange.start, endDate: dateRange.end, teamId: generateTeamId })}
               disabled={!dateRange.start || !dateRange.end || generateMut.isPending}
             >
               {generateMut.isPending ? "Generiere..." : "Generieren"}

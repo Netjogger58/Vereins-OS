@@ -53,22 +53,22 @@ const CODE_MAP_CATEGORIES: CodeMapEntry[] = [
   { old: "—", oldLabel: "U4 Hommes", neu: "19", neuLabel: "U4 H" },
   { old: "9", oldLabel: "Vétérans - Hommes", neu: "20", neuLabel: "Vétérans H" },
   { old: "10 / 102 / 109", oldLabel: "Arbitre (H)", neu: "21", neuLabel: "Arbitre H" },
-  { old: "12", oldLabel: "Dames (Seniors)", neu: "31", neuLabel: "Seniors/Dames" },
-  { old: "—", oldLabel: "U21 Dames", neu: "32", neuLabel: "U21 F" },
-  { old: "14", oldLabel: "U17 Dames", neu: "33", neuLabel: "U17 F" },
-  { old: "16", oldLabel: "U15 Dames", neu: "34", neuLabel: "U15 F" },
-  { old: "15", oldLabel: "U13 Dames", neu: "35", neuLabel: "U13 F" },
-  { old: "17", oldLabel: "U11 Dames", neu: "36", neuLabel: "U11 F" },
-  { old: "18", oldLabel: "U9 Dames", neu: "37", neuLabel: "U9 F" },
-  { old: "19", oldLabel: "U7 Dames", neu: "38", neuLabel: "U7 F" },
-  { old: "19", oldLabel: "Vétérans - Dames", neu: "40", neuLabel: "Vétérans D" },
-  { old: "112", oldLabel: "Dames arbitre / bloqué", neu: "41", neuLabel: "Arbitre F" },
+  { old: "12", oldLabel: "Femmes (Seniors)", neu: "31", neuLabel: "Seniors FE" },
+  { old: "—", oldLabel: "U21 Femmes", neu: "32", neuLabel: "U21FE" },
+  { old: "14", oldLabel: "U17 Femmes", neu: "33", neuLabel: "U17FE" },
+  { old: "16", oldLabel: "U15 Femmes", neu: "34", neuLabel: "U15F" },
+  { old: "15", oldLabel: "U13 Femmes", neu: "35", neuLabel: "U13F" },
+  { old: "17", oldLabel: "U11 Femmes", neu: "36", neuLabel: "U11F" },
+  { old: "18", oldLabel: "U9 Femmes", neu: "37", neuLabel: "U9F" },
+  { old: "19", oldLabel: "U7 Femmes", neu: "38", neuLabel: "U7F" },
+  { old: "19", oldLabel: "Vétérans - Femmes", neu: "40", neuLabel: "Vétérans FE" },
+  { old: "112", oldLabel: "Femmes arbitre / bloqué", neu: "41", neuLabel: "Arbitre FE" },
   { old: "20 / 21", oldLabel: "U4 / U7 Mixte", neu: "—", neuLabel: "keine Zuordnung (mixte)" },
 ];
 const CODE_MAP_FUNCTIONS: CodeMapEntry[] = [
   { old: "150", oldLabel: "comité", neu: "1 / 3", neuLabel: "Comité" },
   { old: "1", oldLabel: "Officiel H", neu: "2", neuLabel: "Officiel" },
-  { old: "11", oldLabel: "Officiel D", neu: "4", neuLabel: "Officiel" },
+  { old: "11", oldLabel: "Officiel FE", neu: "4", neuLabel: "Officiel" },
   { old: "10 / 102 / 109", oldLabel: "Arbitre", neu: "21 / 41", neuLabel: "Arbitre" },
   { old: "50", oldLabel: "Bénévole", neu: "50 / 51", neuLabel: "Bénévole" },
   { old: "214", oldLabel: "Bénévole Famille", neu: "51", neuLabel: "Bénévole" },
@@ -139,7 +139,12 @@ const cleanLabel = (k: string) => k.replace(/\s+/g, " ").trim();
 const formatLastName = (s: string) => s.toUpperCase();
 // Vorname: nur erster Buchstabe je Wort groß, Rest klein.
 const formatFirstName = (s: string) =>
-  s.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  s.toLowerCase().replace(/(^|[\s\-'’])([a-zà-ÿ])/g, (_m, sep, ch) => sep + ch.toUpperCase());
+// Vorname + kompletter Nachname in Großschrift (PT/ES-Doppelnamen, verheiratete Frauen).
+const formatMemberName = (m: any): string =>
+  m?.lastName
+    ? `${m.firstName ? formatFirstName(m.firstName) + " " : ""}${formatLastName(m.lastName)}`
+    : (m?.name ?? "");
 
 function categoryLabel(m: RosterMember): string {
   if (m.catCode && CAT_CODE_LABELS[m.catCode]) return CAT_CODE_LABELS[m.catCode];
@@ -439,6 +444,15 @@ export default function Secretariat() {
       if (m.email?.toLowerCase().includes(q)) return true;
       if (m.phone?.toLowerCase().includes(q)) return true;
       if (m.familyCode?.toLowerCase().includes(q)) return true;
+      // Funktionen + Qualifikationen + Notizen (z.B. "Chrono", "Officiel", "Arbitre") durchsuchbar
+      const fnDetails = m.functionDetails?.length
+        ? m.functionDetails
+        : m.functions.map((f) => ({ function: f, qualification: null, note: null }));
+      const fnHay = fnDetails
+        .map((fd) => `${FUNCTION_LABELS[fd.function] || fd.function} ${fd.qualification || ""} ${fd.note || ""}`)
+        .join(" ")
+        .toLowerCase();
+      if (fnHay.includes(q)) return true;
       for (const v of Object.values(m.raw || {})) {
         if (String(v).toLowerCase().includes(q)) return true;
       }
@@ -558,7 +572,7 @@ export default function Secretariat() {
     const lines = [header.map(csvEscape).join(";")];
     for (const m of sorted) {
       lines.push([
-        m.name, categoryLabel(m), medicoYearOf(m) || m.medicoNext || "",
+        formatMemberName(m), categoryLabel(m), medicoYearOf(m) || m.medicoNext || "",
         MEDICO_STATE_MAP[medicoState(m)].short, m.medicoComment || "", medicoLang(m), m.email || "", m.phone || "",
       ].map(csvEscape).join(";"));
     }
@@ -582,7 +596,7 @@ export default function Secretariat() {
     const lines = [header.map(csvEscape).join(";")];
     for (const m of sorted) {
       const row = [
-        m.name, m.lastName || "", m.firstName || "", categoryLabel(m),
+        formatMemberName(m), m.lastName || "", m.firstName || "", categoryLabel(m),
         TYPE_LABELS[m.memberType || ""] || m.memberType || "",
         m.functions.map((f) => FUNCTION_LABELS[f] || f).join(", "),
         STATUS_LABELS[m.membershipStatus || ""] || m.membershipStatus || "",
@@ -830,7 +844,7 @@ export default function Secretariat() {
           <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Suche (Name, Email, Code, Excel-Daten…)"
+              placeholder="Suche (Name, Email, Funktion/Qualifikation z.B. Chrono, Code, Excel-Daten…)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8"
@@ -1044,7 +1058,7 @@ export default function Secretariat() {
             <div className="space-y-3 text-sm">
               <div>
                 <span className="text-muted-foreground">Spiller: </span>
-                <strong>{convMember.name}</strong>
+                <strong>{formatMemberName(convMember)}</strong>
                 <span className="ml-2 rounded border px-1.5 py-0.5 text-[11px] text-muted-foreground" title={convMember.nationality || ""}>
                   Sprooch: {medicoLang(convMember)}
                 </span>

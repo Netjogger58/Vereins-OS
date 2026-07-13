@@ -35,6 +35,7 @@ import {
   Wallet
 } from "lucide-react";
 import { Link } from "wouter";
+import { formatMemberName } from "@/lib/utils";
 import type { FeeRule, MemberFee, Member } from "@shared/schema";
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: any }> = {
@@ -279,7 +280,7 @@ export default function Fees() {
                 
                 return (
                   <TableRow key={fee.id}>
-                    <TableCell className="font-medium">{member?.name || "Unbekannt"}</TableCell>
+                    <TableCell className="font-medium">{member ? formatMemberName(member) : "Unbekannt"}</TableCell>
                     <TableCell>{rule?.name || "-"}</TableCell>
                     <TableCell>{fee.amount.toFixed(2)} €</TableCell>
                     <TableCell>{fee.paidAmount.toFixed(2)} €</TableCell>
@@ -406,7 +407,7 @@ export default function Fees() {
                 </SelectTrigger>
                 <SelectContent>
                   {members.filter(m => m.membershipStatus === "active").map(m => (
-                    <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
+                    <SelectItem key={m.id} value={String(m.id)}>{formatMemberName(m)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

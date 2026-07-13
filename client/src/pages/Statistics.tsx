@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
+import { formatMemberName } from "@/lib/utils";
 import { 
   Users, 
   Euro, 
@@ -377,7 +378,7 @@ export default function Statistics() {
                 {attendanceStats?.byMember && attendanceStats.byMember.length > 0 ? (
                   <SimpleBarChart 
                     data={attendanceStats.byMember.slice(0, 10).map((m: any) => ({
-                      label: m.name,
+                      label: formatMemberName(m),
                       value: Math.round(m.rate),
                       color: m.rate > 80 ? "bg-green-500" : m.rate > 60 ? "bg-yellow-500" : "bg-red-500"
                     }))}

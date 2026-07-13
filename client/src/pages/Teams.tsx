@@ -5,8 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, ArrowLeft, Shield } from "lucide-react";
-import { initials } from "@/lib/utils";
+import { initials, formatMemberName } from "@/lib/utils";
 import type { Team, Member, PublicUser } from "@shared/schema";
+import { isActiveClubMember } from "@shared/memberStatus";
+import { medicoState, medicoLabel } from "@/lib/medico";
 
 export default function Teams() {
   const [, params] = useRoute("/teams/:id");
@@ -19,7 +21,7 @@ export default function Teams() {
   if (teamId) {
     const team = teams.find(t => t.id === teamId);
     if (!team) return <div className="text-sm text-muted-foreground">Team nicht gefunden</div>;
-    const roster = members.filter(m => m.teamId === team.id);
+    const roster = members.filter(m => m.teamId === team.id && isActiveClubMember(m));
     const trainer = users.find(u => u.id === team.trainerId);
 
     return (
@@ -63,11 +65,29 @@ export default function Teams() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">{m.name}</div>
+                  <div className="font-semibold text-sm">{formatMemberName(m)}</div>
                   <div className="text-xs text-muted-foreground">
                     {m.licenseNumber || "—"}
                     {m.birthdate && <> · Jg. {new Date(m.birthdate).getFullYear()}</>}
                   </div>
+                  {(() => {
+                    const st = medicoState(m);
+                    const label = medicoLabel(m);
+                    if (st === "due" || st === "overdue") {
+                      return (
+                        <span className="mt-1 inline-block rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                          {label}
+                        </span>
+                      );
+                    }
+                    if (st === "inapte") {
+                      return <span className="mt-1 inline-block rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">{label}</span>;
+                    }
+                    if (st === "valid") {
+                      return <span className="mt-1 inline-block text-[10px] text-emerald-600 dark:text-emerald-400">{label}</span>;
+                    }
+                    return <span className="mt-1 inline-block text-[10px] text-muted-foreground">{label}</span>;
+                  })()}
                 </div>
               </Link>
             ))}
@@ -86,7 +106,7 @@ export default function Teams() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {teams.map(team => {
-          const count = members.filter(m => m.teamId === team.id).length;
+          const count = members.filter(m => m.teamId === team.id && isActiveClubMember(m)).length;
           const trainer = users.find(u => u.id === team.trainerId);
           return (
             <Link
@@ -106,7 +126,7 @@ export default function Teams() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
-                      {members.filter(m => m.teamId === team.id).slice(0, 4).map(m => (
+                      {members.filter(m => m.teamId === team.id && isActiveClubMember(m)).slice(0, 4).map(m => (
                         <Avatar key={m.id} className="size-7 ring-2 ring-card">
                           <AvatarImage src={m.photoUrl || undefined} />
                           <AvatarFallback className="text-[10px] bg-muted">{initials(m.name)}</AvatarFallback>

@@ -30,6 +30,7 @@ import Documents from "@/pages/Documents";
 import EmailSettings from "@/pages/EmailSettings";
 import Statistics from "@/pages/Statistics";
 import TrainingSchedules from "@/pages/TrainingSchedules";
+import TrainerCodes from "@/pages/TrainerCodes";
 import Matches from "@/pages/Matches";
 import PlayerStatistics from "@/pages/PlayerStatistics";
 import Sponsors from "@/pages/Sponsors";
@@ -48,6 +49,8 @@ import Archive from "@/pages/Archive";
 import Secretariat from "@/pages/Secretariat";
 import { Logo } from "@/components/Logo";
 
+const FINANCE_ROLES = ["präsident", "admin", "kassenwart"];
+
 function AppRouter() {
   const { user, loading } = useAuth();
 
@@ -63,6 +66,8 @@ function AppRouter() {
 
   if (!user) return <Login />;
 
+  const canAccessFinance = FINANCE_ROLES.includes(user.role);
+
   return (
     <Layout>
       <Switch>
@@ -76,18 +81,19 @@ function AppRouter() {
         <Route path="/calendar" component={Calendar} />
         <Route path="/attendance" component={Attendance} />
         <Route path="/meetings" component={Meetings} />
-        <Route path="/finance" component={Finance} />
+        <Route path="/finance" component={canAccessFinance ? Finance : NotFound} />
         <Route path="/profile" component={Profile} />
         <Route path="/nominations" component={Nominations} />
         <Route path="/chat" component={Chat} />
         <Route path="/import" component={ImportMembers} />
-        <Route path="/fees" component={Fees} />
+        <Route path="/fees" component={canAccessFinance ? Fees : NotFound} />
         <Route path="/registration" component={Registration} />
         <Route path="/registrations" component={Registrations} />
         <Route path="/documents" component={Documents} />
         <Route path="/email-settings" component={EmailSettings} />
         <Route path="/statistics" component={Statistics} />
         <Route path="/training-schedules" component={TrainingSchedules} />
+        <Route path="/trainer-codes" component={TrainerCodes} />
         <Route path="/matches" component={Matches} />
         <Route path="/player-statistics" component={PlayerStatistics} />
         <Route path="/sponsors" component={Sponsors} />
@@ -96,7 +102,7 @@ function AppRouter() {
         <Route path="/facilities" component={Facilities} />
         <Route path="/shop" component={Shop} />
         <Route path="/waitlist" component={Waitlist} />
-        <Route path="/budget" component={Budget} />
+        <Route path="/budget" component={canAccessFinance ? Budget : NotFound} />
         <Route path="/newsletter" component={Newsletter} />
         <Route path="/gdpr" component={GdprTools} />
         <Route path="/website" component={Website} />

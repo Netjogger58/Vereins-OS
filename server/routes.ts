@@ -968,7 +968,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
 
   // ─── Fee Management (Beitragsmodul) ───────────────────────
   // Fee Rules (Beitragsregeln)
-  app.get("/api/fee-rules", requireAuth(), async (_req, res) => {
+  app.get("/api/fee-rules", requireAuth(["präsident", "admin", "kassenwart"]), async (_req, res) => {
     res.json(await storage.listFeeRules());
   });
 
@@ -1000,7 +1000,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   });
 
   // Member Fees (Beitragszuordnung)
-  app.get("/api/member-fees", requireAuth(), async (req, res) => {
+  app.get("/api/member-fees", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
     const { memberId, year } = req.query;
     res.json(await storage.listMemberFees(
       memberId ? parseInt(memberId as string) : undefined,
@@ -1008,7 +1008,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     ));
   });
 
-  app.get("/api/members/:id/fees", requireAuth(), async (req, res) => {
+  app.get("/api/members/:id/fees", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
     const memberId = parseInt(qs(req.params.id)!);
     const fees = await storage.listMemberFees(memberId);
     const summary = await storage.getMemberFeeSummary(memberId);
@@ -2453,7 +2453,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   });
 
   // Budget
-  app.get("/api/budget", requireAuth(), async (req, res) => {
+  app.get("/api/budget", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
     const year = req.query.year ? Number(req.query.year) : undefined;
     const items = await storage.listBudgetItems(year);
     res.json(items);

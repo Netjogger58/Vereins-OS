@@ -10,9 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle, XCircle, Clock, Plus, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { isActiveClubMember } from "@shared/memberStatus";
+import { formatMemberName } from "@/lib/utils";
 
 type Event = { id: number; title: string; type: string; date: string; time?: string; teamId?: number };
-type Member = { id: number; name: string; photoUrl?: string; teamId?: number; userId?: number | null };
+type Member = { id: number; name: string; photoUrl?: string; teamId?: number; userId?: number | null; membershipStatus?: string | null };
 type Nomination = { id: number; eventId: number; memberId: number; nominatedById: number; response?: string; reason?: string; createdAt: string };
 type User = { id: number; name: string; role: string; teamId?: number };
 
@@ -37,9 +39,10 @@ export default function Nominations() {
     enabled: !!selectedEventId,
   });
 
+  const activeMembers = members.filter(isActiveClubMember);
   const teamMembers = selectedEvent?.teamId
-    ? members.filter(m => m.teamId === selectedEvent.teamId)
-    : members;
+    ? activeMembers.filter(m => m.teamId === selectedEvent.teamId)
+    : activeMembers;
 
   const nominatedIds = new Set(nominations.map(n => n.memberId));
   const unnominatedMembers = teamMembers.filter(m => !nominatedIds.has(m.id));
@@ -168,7 +171,7 @@ export default function Nominations() {
                         <AvatarFallback>{member?.name?.[0]}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{member?.name ?? "Unbekannt"}</p>
+                        <p className="text-sm font-medium">{member ? formatMemberName(member) : "Unbekannt"}</p>
                         {nom.reason && <p className="text-xs text-muted-foreground">"{nom.reason}"</p>}
                       </div>
                       {responseIcon(nom.response)}
@@ -197,7 +200,7 @@ export default function Nominations() {
                       <AvatarImage src={m.photoUrl ?? undefined} />
                       <AvatarFallback>{m.name[0]}</AvatarFallback>
                     </Avatar>
-                    <span className="flex-1 text-sm">{m.name}</span>
+                    <span className="flex-1 text-sm">{formatMemberName(m)}</span>
                     <Button size="sm" variant="outline" onClick={() => nominateMutation.mutate(m.id)} disabled={nominateMutation.isPending}>
                       <Plus className="h-3 w-3 mr-1" /> Nominieren
                     </Button>

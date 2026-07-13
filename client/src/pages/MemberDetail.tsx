@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Upload, AlertCircle, User, Users, Shield, CreditCard, Pencil, Check, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { initials, formatDate } from "@/lib/utils";
+import { initials, formatDate, formatMemberName } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { CAT_CODE_LABELS } from "@shared/schema";
 import type { Member, Team, Attendance, PlayerFlag } from "@shared/schema";
@@ -200,7 +200,7 @@ export default function MemberDetail() {
 
             <div className="flex-1 space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-extrabold">{member.name}</h1>
+                <h1 className="text-2xl font-extrabold">{formatMemberName(member)}</h1>
                 <Badge variant={member.membershipStatus === "active" ? "default" : "outline"} className="text-[10px]">
                   {member.membershipStatus === "active" ? "Aktiv" : (member.membershipStatus || "Unbekannt")}
                 </Badge>
@@ -280,7 +280,7 @@ export default function MemberDetail() {
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{initials(fm.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm truncate">{fm.name}</div>
+                  <div className="font-semibold text-sm truncate">{formatMemberName(fm)}</div>
                   <div className="text-xs text-muted-foreground truncate">{memberCategoryLabel(fm, teams.find(t => t.id === fm.teamId)?.name)}</div>
                 </div>
                 <div className="text-xs text-right text-muted-foreground shrink-0">

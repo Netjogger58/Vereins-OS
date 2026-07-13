@@ -195,6 +195,26 @@ export default function Announcements() {
   );
 }
 
+// Wandelt URLs im Ankündigungstext in anklickbare Links um.
+function linkify(text: string) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary underline underline-offset-2 break-all hover:opacity-80"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
+
 function Item({
   a, canDelete, canPin, onDelete, onTogglePin,
 }: {
@@ -217,7 +237,7 @@ function Item({
               )}
               <span className="text-xs text-muted-foreground ml-auto">{relativeTime(a.createdAt)}</span>
             </div>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{a.content}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{linkify(a.content)}</p>
             {(canPin || canDelete) && (
               <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
                 {canPin && (

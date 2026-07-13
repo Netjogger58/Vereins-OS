@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { useState, useMemo } from "react";
 import { Archive as ArchiveIcon, AlertTriangle, CheckCircle2, Users, Download, ChevronDown, ChevronRight } from "lucide-react";
 import { CAT_CODE_LABELS } from "@shared/schema";
+import { formatMemberName } from "@/lib/utils";
 
 interface ArchiveSeason {
   id: number;
@@ -243,7 +244,7 @@ function SeasonRoster({ seasonId, seasonName }: { seasonId: number; seasonName: 
     const head = ["Team", "Name", "Kategorie", "Typ", "Funktionen", "Status", "Lizenz", "Spiele", "Tore"];
     const rows = filtered.map(m => [
       teamName(m.teamId),
-      m.name,
+      formatMemberName(m),
       m.catCode != null ? (CAT_CODE_LABELS[m.catCode] || String(m.catCode)) : "",
       TYPE_LABELS[m.memberType || ""] || m.memberType || "",
       parseFns(m.functions).map(f => FUNCTION_LABELS[f.function] || f.function).join("; "),
@@ -298,7 +299,7 @@ function SeasonRoster({ seasonId, seasonName }: { seasonId: number; seasonName: 
               <tbody className="divide-y">
                 {list.map(m => (
                   <tr key={m.id}>
-                    <td className="px-3 py-1.5 whitespace-nowrap font-medium">{m.name}</td>
+                    <td className="px-3 py-1.5 whitespace-nowrap font-medium">{formatMemberName(m)}</td>
                     <td className="px-3 py-1.5 whitespace-nowrap">{m.catCode != null ? (CAT_CODE_LABELS[m.catCode] || m.catCode) : "—"}</td>
                     <td className="px-3 py-1.5 whitespace-nowrap">{TYPE_LABELS[m.memberType || ""] || m.memberType || "—"}</td>
                     <td className="px-3 py-1.5">

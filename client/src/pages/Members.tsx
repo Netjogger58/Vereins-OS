@@ -30,7 +30,7 @@ const MEMBER_TYPE_LABELS: Record<string, string> = {
 // Nachname komplett groß, Vorname nur erster Buchstabe je Wort groß.
 const formatLastName = (s: string) => s.toUpperCase();
 const formatFirstName = (s: string) =>
-  s.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  s.toLowerCase().replace(/(^|[\s\-'’])([a-zà-ÿ])/g, (_m, sep, ch) => sep + ch.toUpperCase());
 function MemberName({ m }: { m: Member }) {
   const first = (m as any).firstName as string | null | undefined;
   const last = (m as any).lastName as string | null | undefined;

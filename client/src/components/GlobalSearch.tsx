@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Users, Shield, CalendarDays, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { initials } from "@/lib/utils";
+import { initials, formatMemberName } from "@/lib/utils";
 import { CAT_CODE_LABELS } from "@shared/schema";
 import type { Member, Team, Event } from "@shared/schema";
 
@@ -66,7 +66,7 @@ export function GlobalSearch() {
         m.name, m.email, m.phone, m.licenseNumber,
         (m as any).matricule, (m as any).familyCode, memberSub(m, team?.name),
       ].filter(Boolean).join(" ").toLowerCase();
-      if (hay.includes(term)) out.push({ kind: "member", id: m.id, title: m.name, sub: memberSub(m, team?.name), href: `/members/${m.id}` });
+      if (hay.includes(term)) out.push({ kind: "member", id: m.id, title: formatMemberName(m), sub: memberSub(m, team?.name), href: `/members/${m.id}` });
       if (out.filter(h => h.kind === "member").length >= 8) break;
     }
     for (const t of teams) {

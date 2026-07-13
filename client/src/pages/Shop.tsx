@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
-import { Plus, Trash2, Edit3, Save } from "lucide-react";
+import { Plus, Trash2, Edit3, Save, ShoppingBag, ExternalLink } from "lucide-react";
+
+const FANSHOP_URL = "https://www.peterssportsfirveraeiner.com/store/hb-mersch/";
 
 export default function Shop() {
   const { t } = useTranslation();
@@ -45,6 +47,42 @@ export default function Shop() {
           <Plus className="size-4" /> {t("common.create")}
         </Button>
       </div>
+
+      {/* Externer Fan-Shop (Biller & Link wie im Homepage-Karussell) */}
+      <Card className="overflow-hidden border-0 bg-gradient-to-br from-[#002F65] to-[#00193a] text-white">
+        <CardContent className="p-0">
+          <div className="flex flex-col sm:flex-row items-center gap-5 p-5 sm:p-6">
+            <img
+              src="/shop/fanshop-applestyle.png"
+              alt="Mersch75 Fan-Shop"
+              className="w-28 h-28 sm:w-32 sm:h-32 object-contain rounded-xl bg-white/5 shrink-0"
+              loading="lazy"
+            />
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-[#FFDE00]">Fanshop · Mersch75</p>
+              <h2 className="text-lg sm:text-xl font-extrabold mt-1">Dréi eis Faarwen och nieft dem Terrain</h2>
+              <p className="text-sm text-white/70 mt-1.5">
+                Am Mersch75 Fanshop fënns du Hoodies, T-Shirts an aner Fanartikelen am Look vum Club.
+                Weisen däi Support a dro eis blo-giel Faarwen mat Stolz.
+              </p>
+              <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start mt-3">
+                <Badge className="bg-white/10 text-white border-0">Hoodies</Badge>
+                <Badge className="bg-white/10 text-white border-0">T-Shirts</Badge>
+                <Badge className="bg-white/10 text-white border-0">💛💙 Mersch75</Badge>
+              </div>
+              <a
+                href={FANSHOP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-lg bg-[#FFDE00] text-[#002F65] font-semibold text-sm hover:opacity-90 transition-opacity"
+              >
+                <ShoppingBag className="size-4" /> Zum Fan-Shop
+                <ExternalLink className="size-3.5" />
+              </a>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {showForm && (
         <Card>
