@@ -20,6 +20,7 @@ import {
   type AuthedRequest,
 } from "./auth";
 import { maybeStartTwoFactor, verifyTwoFactorCode, trustDevice } from "./twofactor";
+import { isActiveClubMember } from "@shared/memberStatus";
 import {
   insertMemberSchema,
   insertTeamSchema,
@@ -2564,7 +2565,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
 
   // PDF Export
   app.get("/api/export/members/pdf", requireAuth(["präsident", "admin", "secretaire", "kassenwart"]), async (req: any, res: any) => {
-    const members = await storage.listMembers();
+    const members = (await storage.listMembers()).filter(isActiveClubMember);
     const html = generateMembersPdfHtml(members);
     res.setHeader("Content-Type", "text/html");
     res.send(html);

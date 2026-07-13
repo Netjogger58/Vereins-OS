@@ -4,6 +4,7 @@
 
 export interface MemberStatusFields {
   membershipStatus?: string | null;
+  membership_status?: string | null;
 }
 
 // Mitgliedschaftsstatus, die ein Ex-Mitglied kennzeichnen (Archiv „Ancien Membres").
@@ -20,5 +21,6 @@ const ARCHIVE_STATUS = new Set(["ehemalig", "abbruch", "abbruch_jeune", "inaktiv
  * Ex-Mitglieder (membership_status: ehemalig, abbruch, abbruch_jeune, inaktiv).
  */
 export function isActiveClubMember(m: MemberStatusFields): boolean {
-  return !ARCHIVE_STATUS.has((m.membershipStatus || "").toLowerCase());
+  const status = (m.membershipStatus || m.membership_status || "").toLowerCase();
+  return !ARCHIVE_STATUS.has(status);
 }
