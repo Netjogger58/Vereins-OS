@@ -37,6 +37,23 @@ export const insertTeamSchema = createInsertSchema(teams).omit({ id: true });
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type Team = typeof teams.$inferSelect;
 
+// ─── Trainer-Codes ──────────────────────────────────────
+// 8-stelliger Zugangscode (wie Karten-ID). Gültig für alle Teams oder eine Auswahl.
+// Auch für externe Helfer-Trainer ohne Benutzerkonto (dann nur Name + Code).
+export const trainerCodes = sqliteTable("trainer_codes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  code: text("code").notNull().unique(),   // 8-stellig
+  name: text("name").notNull(),            // Trainername (Pflicht)
+  userId: integer("user_id"),              // optional: verknüpftes Benutzerkonto
+  allTeams: integer("all_teams", { mode: "boolean" }).notNull().default(false),
+  teamIds: text("team_ids"),               // JSON-Array von Team-IDs, z.B. "[1,3]"
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+export const insertTrainerCodeSchema = createInsertSchema(trainerCodes).omit({ id: true, createdAt: true });
+export type InsertTrainerCode = z.infer<typeof insertTrainerCodeSchema>;
+export type TrainerCode = typeof trainerCodes.$inferSelect;
+
 // ─── Members ─────────────────────────────────────────────
 export const members = sqliteTable("members", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -88,6 +105,8 @@ export const attendance = sqliteTable("attendance", {
   teamId: integer("team_id").notNull(),
   date: text("date").notNull(), // ISO date YYYY-MM-DD
   present: integer("present", { mode: "boolean" }).notNull(),
+  // 'present' | 'absent' | 'excused' | 'unexcused'
+  status: text("status"),
   note: text("note"),
 });
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true });
@@ -241,8 +260,8 @@ export const MEMBER_TYPES = ["spieler", "donateur", "donateur_lizenz", "ehrenmit
 export const CAT_CODE_LABELS: Record<number, string> = {
   11: "Seniors H", 12: "U21 H", 13: "U17 H", 14: "U15 H", 15: "U13 H",
   16: "U11 H", 17: "U9 H", 18: "U7 H", 19: "U4 H", 20: "Vétérans H", 21: "Arbitre H",
-  31: "Seniors/Dames", 32: "U21 F", 33: "U17 F", 34: "U15 F", 35: "U13 F",
-  36: "U11 F", 37: "U9 F", 38: "U7 F", 39: "U4 F", 40: "Vétérans D", 41: "Arbitre F",
+  31: "Seniors FE", 32: "U21FE", 33: "U17FE", 34: "U15F", 35: "U13F",
+  36: "U11F", 37: "U9F", 38: "U7F", 39: "U4F", 40: "Vétérans FE", 41: "Arbitre FE",
 };
 
 // Funktions-Code (H/F) → Funktion
