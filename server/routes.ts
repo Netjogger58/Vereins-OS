@@ -23,10 +23,12 @@ import { maybeStartTwoFactor, verifyTwoFactorCode, trustDevice } from "./twofact
 import {
   insertMemberSchema,
   insertTeamSchema,
+  insertTrainerCodeSchema,
   insertAnnouncementSchema,
   insertEventSchema,
   insertMeetingSchema,
   insertTransactionSchema,
+  insertBudgetSchema,
   insertAccountSchema,
   insertPlayerFlagSchema,
   insertAttendanceSchema,
@@ -85,6 +87,26 @@ async function generateUniqueCardId(): Promise<string> {
     if (!existing) return id;
   }
   return generateCardId();
+}
+
+async function generateUniqueTrainerCode(): Promise<string> {
+  for (let tries = 0; tries < 8; tries++) {
+    const id = generateCardId();
+    const existing = await storage.getTrainerCodeByCode(id);
+    if (!existing) return id;
+  }
+  return generateCardId();
+}
+
+// Löst die Team-IDs auf, die ein Trainer-Code abdeckt (allTeams => alle Team-IDs)
+async function resolveTrainerTeamIds(code: { allTeams: boolean; teamIds: string | null }): Promise<number[]> {
+  if (code.allTeams) return (await storage.listTeams()).map((t) => t.id);
+  try {
+    const parsed = JSON.parse(code.teamIds || "[]");
+    return Array.isArray(parsed) ? parsed.map((n: any) => Number(n)).filter((n) => !Number.isNaN(n)) : [];
+  } catch {
+    return [];
+  }
 }
 
 // Extracts the canonical 8-char Card-ID from any payload:
@@ -381,6 +403,77 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     res.json({ ok: true });
   });
 
+  // ─── Trainer-Codes ────────────────────────────────────
+  // Verwaltung: 8-stellige Zugangscodes für Trainer, gültig für alle oder ausgewählte Teams.
+  app.get("/api/trainer-codes", requireAuth(["präsident", "admin", "secretaire"]), async (_req, res) => {
+    res.json(await storage.listTrainerCodes());
+  });
+
+  // Eigener Code + abgedeckte Teams des eingeloggten Nutzers (für Trainingsgenerierung)
+  app.get("/api/trainer-codes/me", requireAuth(), async (req, res) => {
+    const authed = req as AuthedRequest;
+    const code = await storage.getTrainerCodeByUser(authed.user!.id);
+    if (!code) return res.json(null);
+    res.json({ ...code, teamIdsResolved: await resolveTrainerTeamIds(code) });
+  });
+
+  app.post("/api/trainer-codes", requireAuth(["präsident", "admin"]), async (req, res) => {
+    const name = String(req.body?.name || "").trim();
+    if (!name) return res.status(400).json({ message: "Name erforderlich" });
+    const allTeams = !!req.body?.allTeams;
+    const teamIds = Array.isArray(req.body?.teamIds)
+      ? req.body.teamIds.map((n: any) => Number(n)).filter((n: number) => !Number.isNaN(n))
+      : [];
+    const code = await generateUniqueTrainerCode();
+    const created = await storage.createTrainerCode({
+      code,
+      name,
+      userId: req.body?.userId ? Number(req.body.userId) : null,
+      allTeams,
+      teamIds: JSON.stringify(teamIds),
+      active: true,
+    });
+    res.json(created);
+  });
+
+  app.patch("/api/trainer-codes/:id", requireAuth(["präsident", "admin"]), async (req, res) => {
+    const data: Record<string, any> = {};
+    if (req.body?.name !== undefined) data.name = String(req.body.name).trim();
+    if (req.body?.userId !== undefined) data.userId = req.body.userId ? Number(req.body.userId) : null;
+    if (req.body?.allTeams !== undefined) data.allTeams = !!req.body.allTeams;
+    if (req.body?.active !== undefined) data.active = !!req.body.active;
+    if (req.body?.teamIds !== undefined) {
+      const teamIds = Array.isArray(req.body.teamIds)
+        ? req.body.teamIds.map((n: any) => Number(n)).filter((n: number) => !Number.isNaN(n))
+        : [];
+      data.teamIds = JSON.stringify(teamIds);
+    }
+    const updated = await storage.updateTrainerCode(Number(req.params.id), data);
+    if (!updated) return res.status(404).json({ message: "Nicht gefunden" });
+    res.json(updated);
+  });
+
+  app.delete("/api/trainer-codes/:id", requireAuth(["präsident", "admin"]), async (req, res) => {
+    await storage.deleteTrainerCode(Number(req.params.id));
+    res.json({ ok: true });
+  });
+
+  // Trainer gibt seinen Code bei einem Team ein, wo er helfen möchte → Team wird hinzugefügt.
+  app.post("/api/trainer-codes/redeem", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
+    const codeStr = String(req.body?.code || "").trim().toUpperCase();
+    const teamId = Number(req.body?.teamId);
+    if (!codeStr || !teamId) return res.status(400).json({ message: "Code und teamId erforderlich" });
+    const code = await storage.getTrainerCodeByCode(codeStr);
+    if (!code || !code.active) return res.status(404).json({ message: "Code ungültig" });
+    if (code.allTeams) return res.json({ ...code, message: "Code gilt bereits für alle Teams" });
+    const team = await storage.getTeam(teamId);
+    if (!team) return res.status(404).json({ message: "Team nicht gefunden" });
+    const current = await resolveTrainerTeamIds(code);
+    if (!current.includes(teamId)) current.push(teamId);
+    const updated = await storage.updateTrainerCode(code.id, { teamIds: JSON.stringify(current) });
+    res.json(updated);
+  });
+
   // ─── Members ──────────────────────────────────────────
   app.get("/api/members", requireAuth(), async (_req, res) => {
     res.json(await storage.listMembers());
@@ -603,6 +696,18 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   app.get("/api/attendance/member/:id", requireAuth(), async (req, res) => {
     res.json(await storage.listAttendanceByMember(Number(req.params.id)));
   });
+  app.get("/api/attendance/summary", requireAuth(), async (req, res) => {
+    const teamId = Number(req.query.teamId);
+    if (!teamId) return res.json([]);
+    res.json(await storage.getAttendanceSummaryByTeam(teamId));
+  });
+  app.delete("/api/attendance", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
+    const memberId = Number(req.query.memberId);
+    const date = String(req.query.date || "");
+    if (!memberId || !date) return res.status(400).json({ message: "memberId und date erforderlich" });
+    await storage.deleteAttendance(memberId, date);
+    res.json({ ok: true });
+  });
   app.post("/api/attendance", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
     const parsed = insertAttendanceSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
@@ -732,6 +837,21 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   });
   app.delete("/api/transactions/:id", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
     await storage.deleteTransaction(Number(req.params.id));
+    res.json({ ok: true });
+  });
+
+  // ─── Saison-Budgets (Prévisioun) ──────────────────────
+  app.get("/api/season-budgets", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
+    const season = req.query.season as string | undefined;
+    res.json(await storage.listSeasonBudgets(season));
+  });
+  app.post("/api/season-budgets", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
+    const parsed = insertBudgetSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    res.json(await storage.createSeasonBudget(parsed.data));
+  });
+  app.delete("/api/season-budgets/:id", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
+    await storage.deleteSeasonBudget(Number(req.params.id));
     res.json({ ok: true });
   });
 
@@ -1291,7 +1411,36 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     if (!startDate || !endDate) {
       return res.status(400).json({ message: "startDate und endDate erforderlich" });
     }
-    const count = await storage.generateEventsFromSchedules(startDate, endDate);
+    const requestedTeamId: number | undefined = req.body.teamId ? Number(req.body.teamId) : undefined;
+
+    // Trainer dürfen nur die Teams generieren, die ihr Trainer-Code abdeckt.
+    if (authed.user!.role === "trainer") {
+      const code = await storage.getTrainerCodeByUser(authed.user!.id);
+      // Fallback auf altes Einzel-Team, falls (noch) kein Trainer-Code vorhanden ist
+      const allowed = code
+        ? await resolveTrainerTeamIds(code)
+        : (authed.user!.teamId ? [authed.user!.teamId] : []);
+      if (allowed.length === 0) {
+        return res.status(400).json({ message: "Keine Teams zugeordnet" });
+      }
+      // Bestimmtes Team gewünscht → muss erlaubt sein
+      if (requestedTeamId) {
+        if (!allowed.includes(requestedTeamId)) {
+          return res.status(403).json({ message: "Dieses Team ist deinem Code nicht zugeordnet" });
+        }
+        const count = await storage.generateEventsFromSchedules(startDate, endDate, requestedTeamId);
+        return res.json({ success: true, generatedCount: count });
+      }
+      // Kein Team gewählt → für alle erlaubten Teams generieren
+      let total = 0;
+      for (const tId of allowed) {
+        total += await storage.generateEventsFromSchedules(startDate, endDate, tId);
+      }
+      return res.json({ success: true, generatedCount: total });
+    }
+
+    // Admin/Präsident/Sekretär: optional ein Team, sonst alle
+    const count = await storage.generateEventsFromSchedules(startDate, endDate, requestedTeamId);
     res.json({ success: true, generatedCount: count });
   });
 
@@ -2497,7 +2646,15 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
       resolvedName = cardUser?.name || null;
       const allMembers = await storage.listMembers();
       const matchedMember = allMembers.find((m: any) => m.userId === card.userId);
-      if (matchedMember) memberId = matchedMember.id;
+      if (matchedMember) {
+        memberId = matchedMember.id;
+        // Vorname + kompletter Nachname in Großschrift (PT/ES-Doppelnamen, verheiratete Frauen)
+        const mm: any = matchedMember;
+        if (mm.lastName) {
+          const first = mm.firstName ? String(mm.firstName).toLowerCase().replace(/(^|[\s\-'’])([a-zà-ÿ])/g, (_m: string, sep: string, ch: string) => sep + ch.toUpperCase()) + " " : "";
+          resolvedName = first + String(mm.lastName).toUpperCase();
+        }
+      }
     }
 
     // Prevent duplicate check-ins for the same event (match on member or cardholder user)

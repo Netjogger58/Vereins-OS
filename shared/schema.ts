@@ -193,11 +193,89 @@ export const transactions = sqliteTable("transactions", {
   date: text("date").notNull(),
   type: text("type").notNull(), // income | expense
   visibility: text("visibility").notNull().default("intern"), // intern | öffentlich
+  category: text("category"), // siehe FINANCE_CATEGORIES
+  season: text("season"), // z.B. "2025-26"
   createdAt: text("created_at").notNull(),
 });
 export const insertTransactionSchema = createInsertSchema(transactions).omit({ id: true });
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+
+// ─── Budgets (Charges/Produits pro Saison und Kategorie) ─
+export const budgets = sqliteTable("budgets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  season: text("season").notNull(), // z.B. "2026-27"
+  category: text("category").notNull(),
+  type: text("type").notNull(), // income | expense
+  amount: real("amount").notNull(),
+});
+export const insertBudgetSchema = createInsertSchema(budgets).omit({ id: true });
+export type InsertBudget = z.infer<typeof insertBudgetSchema>;
+export type Budget = typeof budgets.$inferSelect;
+
+// ─── Finanz-Kategorien (aus Bilan/Compte de résultat) ────
+export const FINANCE_CATEGORIES = {
+  expense: [
+    "Activité Saison Opening",
+    "Activité Saison Closing",
+    "Activité Kleeschen",
+    "Activité Matchs Dames - Tréier",
+    "Activité Kidsdays",
+    "Activité Divers",
+    "Fanshop",
+    "Entraîneurs",
+    "Employée Sponsoring",
+    "Cotisations Sociales",
+    "Frais de déplacements",
+    "Frais de Logement",
+    "Frais Kinésithérapeute",
+    "Frais arbitrage",
+    "Frais de la Fédération",
+    "Frais Stage",
+    "Frais Tournois",
+    "Transferts Entrants",
+    "Salaire Net Joueurs",
+    "Frais Assurances",
+    "Frais Formation",
+    "Frais Informatiques / IT",
+    "Ammortissement",
+    "Matériel divers",
+    "Matériel de bureau, timbres",
+    "Matériel sportive",
+    "Matériel uniformes match",
+    "Matériel Médical",
+    "Frais bancaires",
+    "Frais de représentation / Cadeaux / Dons",
+    "Divers Charges",
+  ],
+  income: [
+    "Activité Marché Noel",
+    "Activité Quizowend",
+    "Activité Mämmories",
+    "Activité Nuit des Sports",
+    "Activité Grillen",
+    "Activité Kichelcher",
+    "Activité Kidsdays",
+    "Activité Buvette Final4",
+    "Activité Fundamentals",
+    "Activité Tournoi 50 Joer Mersch",
+    "Activité 50 Joer Mersch75",
+    "Activité Jeunes - compte épargne",
+    "Activité Divers",
+    "Fanshop",
+    "Buvette",
+    "Entrées match",
+    "Transfert Sortants",
+    "Reprise de proivision d'exploitation",
+    "Cotisations membres actifs",
+    "Dons",
+    "Subsides",
+    "Sponsoring",
+    "Sponsoring matériel/services",
+    "Intérêts bancaires",
+    "Divers Produits",
+  ],
+} as const;
 
 // ─── Player Flags ───────────────────────────────────────
 export const playerFlags = sqliteTable("player_flags", {

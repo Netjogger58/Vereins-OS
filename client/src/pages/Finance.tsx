@@ -18,7 +18,8 @@ import { Plus, TrendingUp, TrendingDown, Wallet, Trash2, Eye, EyeOff } from "luc
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { euro, formatDate, isoToday } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import type { Account, Transaction } from "@shared/schema";
+import type { Account, Transaction, Budget } from "@shared/schema";
+import { FINANCE_CATEGORIES } from "@shared/schema";
 
 export default function Finance() {
   const { toast } = useToast();
@@ -30,11 +31,15 @@ export default function Finance() {
     date: isoToday(),
     type: "income",
     visibility: "intern",
+    category: "",
+    season: "2026-27",
   });
   const [filter, setFilter] = useState<string>("all");
+  const [seasonFilter, setSeasonFilter] = useState<string>("all");
 
   const { data: accounts = [] } = useQuery<Account[]>({ queryKey: ["/api/accounts"] });
   const { data: transactions = [] } = useQuery<Transaction[]>({ queryKey: ["/api/transactions"] });
+  const { data: seasonBudgets = [] } = useQuery<Budget[]>({ queryKey: ["/api/season-budgets"] });
 
   const createMut = useMutation({
     mutationFn: async (data: any) => (await apiRequest("POST", "/api/transactions", {
@@ -46,7 +51,7 @@ export default function Finance() {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/accounts"] });
       setOpen(false);
-      setForm({ accountId: "", amount: "", description: "", date: isoToday(), type: "income", visibility: "intern" });
+      setForm({ accountId: "", amount: "", description: "", date: isoToday(), type: "income", visibility: "intern", category: "", season: "2026-27" });
       toast({ title: "Buchung erfasst" });
     },
   });
@@ -71,7 +76,33 @@ export default function Finance() {
     return { income, expense };
   }, [transactions]);
 
-  const filtered = transactions.filter(t => filter === "all" || t.visibility === filter);
+  const seasons = useMemo(() => {
+    const s = new Set(transactions.map(t => t.season).filter(Boolean) as string[]);
+    return Array.from(s).sort();
+  }, [transactions]);
+
+  const filtered = transactions.filter(t =>
+    (filter === "all" || t.visibility === filter) &&
+    (seasonFilter === "all" || t.season === seasonFilter)
+  );
+
+  // Budget 2026-27 vs. Ist 2026-27 pro Kategorie
+  const budgetRows = useMemo(() => {
+    const actual = new Map<string, number>();
+    transactions.filter(t => t.season === "2026-27" && t.category).forEach(t => {
+      const key = `${t.type}|${t.category}`;
+      actual.set(key, (actual.get(key) || 0) + t.amount);
+    });
+    return seasonBudgets
+      .filter(b => b.season === "2026-27")
+      .map(b => ({ ...b, actual: actual.get(`${b.type}|${b.category}`) || 0 }));
+  }, [seasonBudgets, transactions]);
+  const budgetTotals = useMemo(() => ({
+    expensePlanned: budgetRows.filter(r => r.type === "expense").reduce((s, r) => s + r.amount, 0),
+    incomePlanned: budgetRows.filter(r => r.type === "income").reduce((s, r) => s + r.amount, 0),
+    expenseActual: budgetRows.filter(r => r.type === "expense").reduce((s, r) => s + r.actual, 0),
+    incomeActual: budgetRows.filter(r => r.type === "income").reduce((s, r) => s + r.actual, 0),
+  }), [budgetRows]);
 
   // Mini bar chart: last 6 months income/expense
   const chart = useMemo(() => {
@@ -144,6 +175,28 @@ export default function Finance() {
                   <SelectContent>
                     <SelectItem value="intern">Intern</SelectItem>
                     <SelectItem value="öffentlich">Öffentlich</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Kategorie</Label>
+                <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {(form.type === "income" ? FINANCE_CATEGORIES.income : FINANCE_CATEGORIES.expense).map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Saison</Label>
+                <Select value={form.season} onValueChange={v => setForm(f => ({ ...f, season: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2024-25">2024-25</SelectItem>
+                    <SelectItem value="2025-26">2025-26</SelectItem>
+                    <SelectItem value="2026-27">2026-27</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -223,17 +276,67 @@ export default function Finance() {
         </Card>
       </div>
 
+      {/* Budget 2026-27 (Prévisioun) */}
+      {budgetRows.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Budget 2026-27 (Prévisioun vs. Ist)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-5">
+              {(["expense", "income"] as const).map(type => (
+                <div key={type}>
+                  <h4 className={`text-sm font-bold mb-2 ${type === "expense" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                    {type === "expense" ? "Charges" : "Produits"}
+                  </h4>
+                  <div className="space-y-1">
+                    {budgetRows.filter(r => r.type === type).map(r => (
+                      <div key={r.id} className="flex items-center justify-between text-sm py-1 border-b border-border/50">
+                        <span className="truncate mr-2">{r.category}</span>
+                        <span className="whitespace-nowrap tabular-nums">
+                          <span className="text-muted-foreground">{euro(r.actual)}</span>
+                          <span className="text-muted-foreground mx-1">/</span>
+                          <span className="font-semibold">{euro(r.amount)}</span>
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between text-sm py-1.5 font-bold">
+                      <span>Total</span>
+                      <span className="tabular-nums">
+                        {euro(type === "expense" ? budgetTotals.expenseActual : budgetTotals.incomeActual)}
+                        <span className="text-muted-foreground mx-1">/</span>
+                        {euro(type === "expense" ? budgetTotals.expensePlanned : budgetTotals.incomePlanned)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">Ist / Budget · Geplangte Resultat: {euro(budgetTotals.incomePlanned - budgetTotals.expensePlanned)}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Transactions */}
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex-row items-center justify-between space-y-0 flex-wrap gap-2">
           <CardTitle className="text-base">Buchungen</CardTitle>
-          <Tabs value={filter} onValueChange={setFilter}>
-            <TabsList>
-              <TabsTrigger value="all">Alle</TabsTrigger>
-              <TabsTrigger value="öffentlich"><Eye className="size-3.5 mr-1" />Öffentlich</TabsTrigger>
-              <TabsTrigger value="intern"><EyeOff className="size-3.5 mr-1" />Intern</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center gap-2">
+            {seasons.length > 0 && (
+              <Select value={seasonFilter} onValueChange={setSeasonFilter}>
+                <SelectTrigger className="w-32 h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Saisonen</SelectItem>
+                  {seasons.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <Tabs value={filter} onValueChange={setFilter}>
+              <TabsList>
+                <TabsTrigger value="all">Alle</TabsTrigger>
+                <TabsTrigger value="öffentlich"><Eye className="size-3.5 mr-1" />Öffentlich</TabsTrigger>
+                <TabsTrigger value="intern"><EyeOff className="size-3.5 mr-1" />Intern</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent className="p-0 divide-y divide-border">
           {filtered.length === 0 && <p className="p-6 text-sm text-muted-foreground text-center">Keine Buchungen</p>}
@@ -248,6 +351,7 @@ export default function Finance() {
                   <div className="font-medium text-sm truncate">{t.description}</div>
                   <div className="text-xs text-muted-foreground flex items-center gap-2">
                     {acc?.name || "Konto"} · {formatDate(t.date)}
+                    {t.season && <Badge variant="outline" className="text-[9px]">{t.season}</Badge>}
                     <Badge variant="outline" className="text-[9px]">{t.visibility}</Badge>
                   </div>
                 </div>

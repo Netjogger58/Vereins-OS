@@ -1,6 +1,9 @@
 import {
   users,
   teams,
+  trainerCodes,
+  type TrainerCode,
+  type InsertTrainerCode,
   members,
   attendance,
   announcements,
@@ -247,6 +250,9 @@ import {
   type InsertFlhSyncLog,
   type SepaTransaction,
   type InsertSepaTransaction,
+  budgets,
+  type Budget,
+  type InsertBudget,
 } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -293,6 +299,16 @@ function init() {
       name TEXT NOT NULL,
       category TEXT NOT NULL,
       trainer_id INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS trainer_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      user_id INTEGER,
+      all_teams INTEGER NOT NULL DEFAULT 0,
+      team_ids TEXT,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS members (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -343,6 +359,7 @@ function init() {
       team_id INTEGER NOT NULL,
       date TEXT NOT NULL,
       present INTEGER NOT NULL,
+      status TEXT,
       note TEXT
     );
     CREATE TABLE IF NOT EXISTS announcements (
@@ -992,6 +1009,15 @@ function runMigrations() {
   safeAddColumn("members", "last_name", "TEXT");
   safeAddColumn("members", "birth_name", "TEXT");
   safeAddColumn("member_functions", "team_id", "INTEGER");
+  // Anwesenheit: Status (present | absent | excused | unexcused); für Altdaten aus present ableiten
+  safeAddColumn("attendance", "status", "TEXT");
+  try {
+    sqlite.exec(
+      `UPDATE attendance SET status = CASE WHEN present = 1 THEN 'present' ELSE 'unexcused' END WHERE status IS NULL`
+    );
+  } catch (e) {
+    console.error("[migrate] failed to backfill attendance.status:", e);
+  }
   // Kalender: wer den Termin angelegt hat (darf ihn löschen)
   safeAddColumn("events", "created_by_id", "INTEGER");
   // SBO-Archiv (lokal/Hetzner Kopie vum SBO-PDF)
@@ -1013,6 +1039,20 @@ function runMigrations() {
   } catch (e) {
     console.error("[migrate] failed to create idx_members_card_id:", e);
   }
+  // Finanzen: Kategorien + Saison (siehe FINANCE_CATEGORIES)
+  safeAddColumn("transactions", "category", "TEXT");
+  safeAddColumn("transactions", "season", "TEXT");
+  try {
+    sqlite.exec(`CREATE TABLE IF NOT EXISTS budgets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      season TEXT NOT NULL,
+      category TEXT NOT NULL,
+      type TEXT NOT NULL,
+      amount REAL NOT NULL
+    )`);
+  } catch (e) {
+    console.error("[migrate] failed to create budgets:", e);
+  }
 }
 runMigrations();
 
@@ -1032,6 +1072,15 @@ export interface IStorage {
   updateTeam(id: number, data: Partial<InsertTeam>): Promise<Team | undefined>;
   deleteTeam(id: number): Promise<void>;
 
+  // Trainer-Codes
+  listTrainerCodes(): Promise<TrainerCode[]>;
+  getTrainerCode(id: number): Promise<TrainerCode | undefined>;
+  getTrainerCodeByCode(code: string): Promise<TrainerCode | undefined>;
+  getTrainerCodeByUser(userId: number): Promise<TrainerCode | undefined>;
+  createTrainerCode(data: InsertTrainerCode): Promise<TrainerCode>;
+  updateTrainerCode(id: number, data: Partial<InsertTrainerCode>): Promise<TrainerCode | undefined>;
+  deleteTrainerCode(id: number): Promise<void>;
+
   // Members
   listMembers(): Promise<Member[]>;
   listMembersByTeam(teamId: number): Promise<Member[]>;
@@ -1045,6 +1094,8 @@ export interface IStorage {
   listAttendanceByTeamDate(teamId: number, date: string): Promise<Attendance[]>;
   listAttendanceByMember(memberId: number): Promise<Attendance[]>;
   upsertAttendance(a: InsertAttendance): Promise<Attendance>;
+  deleteAttendance(memberId: number, date: string): Promise<void>;
+  getAttendanceSummaryByTeam(teamId: number): Promise<{ memberId: number; present: number; total: number }[]>;
 
   // Announcements
   listAnnouncements(): Promise<Announcement[]>;
@@ -1078,6 +1129,11 @@ export interface IStorage {
   listTransactions(): Promise<Transaction[]>;
   createTransaction(t: InsertTransaction): Promise<Transaction>;
   deleteTransaction(id: number): Promise<void>;
+
+  // Saison-Budgets (Prévisioun, z.B. 2026-27)
+  listSeasonBudgets(season?: string): Promise<Budget[]>;
+  createSeasonBudget(b: InsertBudget): Promise<Budget>;
+  deleteSeasonBudget(id: number): Promise<void>;
 
   // Player Flags
   listPlayerFlagsByMember(memberId: number): Promise<PlayerFlag[]>;
@@ -1160,7 +1216,7 @@ export interface IStorage {
   createTrainingSchedule(schedule: InsertTrainingSchedule): Promise<TrainingSchedule>;
   updateTrainingSchedule(id: number, data: Partial<InsertTrainingSchedule>): Promise<TrainingSchedule | undefined>;
   deleteTrainingSchedule(id: number): Promise<void>;
-  generateEventsFromSchedules(startDate: string, endDate: string): Promise<number>;
+  generateEventsFromSchedules(startDate: string, endDate: string, teamId?: number): Promise<number>;
 
   // Matches (Spiele)
   listMatches(options?: { teamId?: number; season?: string; status?: string; competition?: string }): Promise<Match[]>;
@@ -1498,6 +1554,17 @@ export class DatabaseStorage implements IStorage {
   async listTeams() { return db.select().from(teams).all(); }
   async getTeam(id: number) { return db.select().from(teams).where(eq(teams.id, id)).get(); }
   async createTeam(t: InsertTeam) { return db.insert(teams).values(t).returning().get(); }
+
+  // ─── Trainer-Codes ───────────────────────────────────
+  async listTrainerCodes() { return db.select().from(trainerCodes).orderBy(desc(trainerCodes.createdAt)).all(); }
+  async getTrainerCode(id: number) { return db.select().from(trainerCodes).where(eq(trainerCodes.id, id)).get(); }
+  async getTrainerCodeByCode(code: string) { return db.select().from(trainerCodes).where(eq(trainerCodes.code, code)).get(); }
+  async getTrainerCodeByUser(userId: number) { return db.select().from(trainerCodes).where(eq(trainerCodes.userId, userId)).get(); }
+  async createTrainerCode(data: InsertTrainerCode) { return db.insert(trainerCodes).values(data).returning().get(); }
+  async updateTrainerCode(id: number, data: Partial<InsertTrainerCode>) {
+    return db.update(trainerCodes).set(data).where(eq(trainerCodes.id, id)).returning().get();
+  }
+  async deleteTrainerCode(id: number) { db.delete(trainerCodes).where(eq(trainerCodes.id, id)).run(); }
   async updateTeam(id: number, data: Partial<InsertTeam>) {
     return db.update(teams).set(data).where(eq(teams.id, id)).returning().get();
   }
@@ -1529,6 +1596,19 @@ export class DatabaseStorage implements IStorage {
       return db.update(attendance).set(a).where(eq(attendance.id, existing.id)).returning().get()!;
     }
     return db.insert(attendance).values(a).returning().get()!;
+  }
+  async deleteAttendance(memberId: number, date: string) {
+    db.delete(attendance).where(and(eq(attendance.memberId, memberId), eq(attendance.date, date))).run();
+  }
+  // Zähler pro Mitglied für ein Team: present = Status 'present', total = alle erfassten Einheiten
+  async getAttendanceSummaryByTeam(teamId: number): Promise<{ memberId: number; present: number; total: number }[]> {
+    const rows = sqlite.prepare(
+      `SELECT member_id AS memberId,
+              SUM(CASE WHEN status = 'present' OR (status IS NULL AND present = 1) THEN 1 ELSE 0 END) AS present,
+              COUNT(*) AS total
+       FROM attendance WHERE team_id = ? GROUP BY member_id`
+    ).all(teamId) as { memberId: number; present: number; total: number }[];
+    return rows;
   }
 
   async listAnnouncements() {
@@ -1596,6 +1676,13 @@ export class DatabaseStorage implements IStorage {
       db.delete(transactions).where(eq(transactions.id, id)).run();
     }
   }
+
+  async listSeasonBudgets(season?: string) {
+    if (season) return db.select().from(budgets).where(eq(budgets.season, season)).all();
+    return db.select().from(budgets).all();
+  }
+  async createSeasonBudget(b: InsertBudget) { return db.insert(budgets).values(b).returning().get(); }
+  async deleteSeasonBudget(id: number) { db.delete(budgets).where(eq(budgets.id, id)).run(); }
 
   async listPlayerFlagsByMember(memberId: number) {
     return db.select().from(playerFlags).where(eq(playerFlags.memberId, memberId)).all();
@@ -1988,7 +2075,7 @@ export class DatabaseStorage implements IStorage {
     const averageAttendance = totalRecords > 0 ? (presentCount / totalRecords) * 100 : 0;
 
     // Group by member
-    const memberStats: Record<number, { present: number; total: number; name?: string }> = {};
+    const memberStats: Record<number, { present: number; total: number; name?: string; firstName?: string | null; lastName?: string | null }> = {};
     for (const record of allAttendance) {
       if (!memberStats[record.memberId]) {
         memberStats[record.memberId] = { present: 0, total: 0 };
@@ -2002,12 +2089,16 @@ export class DatabaseStorage implements IStorage {
       const member = allMembers.find(m => m.id === memberId);
       if (member) {
         memberStats[memberId].name = member.name;
+        memberStats[memberId].firstName = (member as any).firstName ?? null;
+        memberStats[memberId].lastName = (member as any).lastName ?? null;
       }
     }
 
     const byMember = Object.entries(memberStats).map(([id, stats]) => ({
       memberId: parseInt(id),
       name: stats.name || "Unbekannt",
+      firstName: stats.firstName ?? null,
+      lastName: stats.lastName ?? null,
       present: stats.present,
       total: stats.total,
       rate: stats.total > 0 ? (stats.present / stats.total) * 100 : 0,
@@ -2039,7 +2130,7 @@ export class DatabaseStorage implements IStorage {
   async deleteTrainingSchedule(id: number) {
     db.delete(trainingSchedules).where(eq(trainingSchedules.id, id)).run();
   }
-  async generateEventsFromSchedules(startDate: string, endDate: string): Promise<number> {
+  async generateEventsFromSchedules(startDate: string, endDate: string, teamId?: number): Promise<number> {
     const schedules = await this.listTrainingSchedules();
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -2047,6 +2138,8 @@ export class DatabaseStorage implements IStorage {
 
     for (const schedule of schedules) {
       if (!schedule.active) continue;
+      // Optional auf ein Team beschränken (z.B. Trainer generiert nur sein Team)
+      if (teamId && schedule.teamId !== teamId) continue;
       
       const scheduleStart = new Date(schedule.seasonStart);
       const scheduleEnd = new Date(schedule.seasonEnd);
