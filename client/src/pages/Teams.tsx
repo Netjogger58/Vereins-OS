@@ -1,11 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useRoute } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Users, ArrowLeft, Shield } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import { initials, formatMemberName, getAge, memberExtraTeamIds } from "@/lib/utils";
 import type { Team, Member, PublicUser } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
@@ -14,6 +16,18 @@ import { medicoState, medicoLabel } from "@/lib/medico";
 export default function Teams() {
   const [, params] = useRoute("/teams/:id");
   const teamId = params?.id ? Number(params.id) : null;
+  const { user } = useAuth();
+  const canEdit = user && ["präsident", "admin", "trainer"].includes(user.role);
+
+  const toggleExtraTeamMut = useMutation({
+    mutationFn: async ({ memberId, next }: { memberId: number; next: number[] }) => {
+      const res = await apiRequest("PATCH", `/api/members/${memberId}`, { extraTeamIds: JSON.stringify(next) });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/members"] });
+    },
+  });
 
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
   const { data: members = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
@@ -30,6 +44,15 @@ export default function Teams() {
     if (!team) return <div className="text-sm text-muted-foreground">Team nicht gefunden</div>;
     const isYouth = /^U/i.test(team.category || "");
     const isTeamMember = (m: Member) => m.teamId === team.id || memberExtraTeamIds(m).includes(team.id);
+    const youthRank = (cat?: string | null) => cat ? parseInt((cat.match(/U(\d+)/) || [])[1] || "0", 10) : 0;
+    const tierOf = (name?: string | null) => name ? (/Elite/i.test(name) ? 2 : /Espoir/i.test(name) ? 1 : 0) : 0;
+    const upgradeOptions = teams.filter(t => {
+      if (!/^U/i.test(t.category || "")) return false;
+      const rankDiff = youthRank(t.category) - youthRank(team.category);
+      if (rankDiff === 2) return true; // nächst älterer Altersjahrgang
+      if (rankDiff === 0 && t.id !== team.id && tierOf(t.name) > tierOf(team.name)) return true; // z.B. U11 Espoir -> U11 Elite
+      return false;
+    }).sort((a, b) => youthRank(a.category) - youthRank(b.category) || tierOf(a.name) - tierOf(b.name));
     const medicoPenalty = (m: Member) => {
       const st = medicoState(m);
       return st === "inapte" || st === "overdue" || st === "none" ? 1 : 0;
@@ -80,43 +103,63 @@ export default function Teams() {
           <CardContent className="p-0 divide-y divide-border">
             {roster.length === 0 && <p className="p-6 text-sm text-muted-foreground">Noch keine Spieler im Kader</p>}
             {roster.map(m => (
-              <Link
-                key={m.id}
-                href={`/members/${m.id}`}
-                className="flex items-center gap-3 p-3 hover-elevate"
-              >
-                <Avatar className="size-10">
-                  <AvatarImage src={m.photoUrl || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                    {initials(m.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">{formatMemberName(m)}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {m.licenseNumber || "—"}
-                    {m.birthdate && <> · Jg. {new Date(m.birthdate).getFullYear()}</>}
+              <div key={m.id} className="flex items-center gap-3 p-3 hover-elevate">
+                <Link href={`/members/${m.id}`} className="flex flex-1 items-center gap-3 min-w-0">
+                  <Avatar className="size-10">
+                    <AvatarImage src={m.photoUrl || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                      {initials(m.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm">{formatMemberName(m)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {m.licenseNumber || "—"}
+                      {m.birthdate && <> · Jg. {new Date(m.birthdate).getFullYear()}</>}
+                    </div>
+                    {(() => {
+                      const st = medicoState(m);
+                      const label = medicoLabel(m);
+                      if (st === "due" || st === "overdue") {
+                        return (
+                          <span className="mt-1 inline-block rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                            {label}
+                          </span>
+                        );
+                      }
+                      if (st === "inapte") {
+                        return <span className="mt-1 inline-block rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">{label}</span>;
+                      }
+                      if (st === "valid") {
+                        return <span className="mt-1 inline-block text-[10px] text-emerald-600 dark:text-emerald-400">{label}</span>;
+                      }
+                      return <span className="mt-1 inline-block text-[10px] text-muted-foreground">{label}</span>;
+                    })()}
                   </div>
-                  {(() => {
-                    const st = medicoState(m);
-                    const label = medicoLabel(m);
-                    if (st === "due" || st === "overdue") {
+                </Link>
+                {isYouth && upgradeOptions.length > 0 && (
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                    {upgradeOptions.map(opt => {
+                      const checked = memberExtraTeamIds(m).includes(opt.id);
                       return (
-                        <span className="mt-1 inline-block rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                          {label}
-                        </span>
+                        <label key={opt.id} className="flex items-center gap-1 cursor-pointer hover:text-foreground">
+                          <Checkbox
+                            checked={checked}
+                            disabled={!canEdit || toggleExtraTeamMut.isPending}
+                            onCheckedChange={v => {
+                              const next = v === true
+                                ? Array.from(new Set([...memberExtraTeamIds(m), opt.id]))
+                                : memberExtraTeamIds(m).filter(id => id !== opt.id);
+                              toggleExtraTeamMut.mutate({ memberId: m.id, next });
+                            }}
+                          />
+                          <span className="hidden sm:inline">{opt.name}</span>
+                        </label>
                       );
-                    }
-                    if (st === "inapte") {
-                      return <span className="mt-1 inline-block rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">{label}</span>;
-                    }
-                    if (st === "valid") {
-                      return <span className="mt-1 inline-block text-[10px] text-emerald-600 dark:text-emerald-400">{label}</span>;
-                    }
-                    return <span className="mt-1 inline-block text-[10px] text-muted-foreground">{label}</span>;
-                  })()}
-                </div>
-              </Link>
+                    })}
+                  </div>
+                )}
+              </div>
             ))}
           </CardContent>
         </Card>
