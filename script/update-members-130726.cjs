@@ -19,7 +19,10 @@ const APPLY = process.argv.includes("--apply");
 if (!FILE) { console.error("Pfad zur .xlsx fehlt"); process.exit(1); }
 
 // ─── Spalten (0-basiert) in der neuen Liste ───
-const C = { lastName: 0, firstName: 1, cardId: 2, catCode: 10, catInterne: 11, catFlh: 13 };
+// A=Nom, B=Prénom, C=Card-ID (DB), D=Alter Courrier-Code, E=Neuer Courrier-Code (Liste),
+// F=Courrier geändert, G=Alter Code (Liste), H=Neuer Code (Staffelung),
+// I=Neu — Bedeutung, J=Kategorie-Text (Liste), K=Status (DB)
+const C = { lastName: 0, firstName: 1, cardId: 2, familyCode: 4, oldCode: 6, catCode: 7, catInterne: 8, catFlh: 9, status: 10 };
 
 const norm = (s) => String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
 const T = (r, i) => String(r[i] ?? "").trim();
@@ -34,19 +37,20 @@ const isContactCat = (t) => /contact|famille/i.test(String(t || ""));
 
 // ─── Excel laden ───
 const wb = XLSX.readFile(FILE, { cellDates: false });
-const sheetName = "Membres 2026_2027";
+const sheetName = wb.SheetNames.find((n) => norm(n).includes("codes")) || wb.SheetNames[0];
 const ws = wb.Sheets[sheetName];
-if (!ws) { console.error("Sheet '" + sheetName + "' nicht gefunden"); process.exit(1); }
+if (!ws) { console.error("Kein Sheet gefunden"); process.exit(1); }
 const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: false });
 const data = rows.slice(1).filter((r) => T(r, C.lastName) || T(r, C.firstName));
 
 const excel = data.map((r) => {
-  const catCodeRaw = T(r, C.catCode) || T(r, C.catFlh);
-  const catCode = Number(catCodeRaw) || 0;
+  const catCode = Number(T(r, C.catCode)) || 0;
   return {
     rnd: T(r, C.cardId),
     nom: T(r, C.lastName), prenom: T(r, C.firstName),
+    familyCode: T(r, C.familyCode),
     catInterne: T(r, C.catInterne), catFlh: T(r, C.catFlh),
+    status: T(r, C.status),
     catCode,
   };
 });
@@ -54,7 +58,7 @@ const excel = data.map((r) => {
 // ─── DB laden ───
 const db = new Database("data.db", APPLY ? {} : { readonly: true });
 const members = db.prepare(
-  "SELECT id, card_id, name, first_name fn, last_name ln, membership_status ms, cat_code cc, flh_category flh, internal_category inte, team_id tid FROM members"
+  "SELECT id, card_id, name, first_name fn, last_name ln, membership_status ms, cat_code cc, flh_category flh, internal_category inte, team_id tid, family_code, member_type, contact_info_type FROM members"
 ).all();
 
 function nameKey(ln, fn, full) {
@@ -63,20 +67,26 @@ function nameKey(ln, fn, full) {
   return a + "|" + b;
 }
 const byName = new Map();
+const byCardId = new Map();
 for (const m of members) {
   const k = nameKey(m.ln, m.fn, m.name);
   if (!byName.has(k)) byName.set(k, []);
   byName.get(k).push(m);
+  if (m.card_id) byCardId.set(m.card_id, m);
 }
 
 const matched = [], unmatchedExcel = [], ambiguous = [];
 const matchedDbIds = new Set();
 for (const e of excel) {
-  const k = nameKey(e.nom, e.prenom, `${e.prenom} ${e.nom}`);
-  const cand = byName.get(k);
-  if (!cand || cand.length === 0) { unmatchedExcel.push(e); continue; }
-  if (cand.length > 1) ambiguous.push({ e, count: cand.length });
-  const m = cand[0];
+  let m = null;
+  if (e.rnd) m = byCardId.get(e.rnd);
+  if (!m) {
+    const k = nameKey(e.nom, e.prenom, `${e.prenom} ${e.nom}`);
+    const cand = byName.get(k);
+    if (!cand || cand.length === 0) { unmatchedExcel.push(e); continue; }
+    if (cand.length > 1) { ambiguous.push({ e, count: cand.length }); continue; }
+    m = cand[0];
+  }
   matched.push({ e, m });
   matchedDbIds.add(m.id);
 }
@@ -88,8 +98,10 @@ const catChanges = [];
 for (const { e, m } of matched) {
   const oldCC = m.cc || 0, newCC = e.catCode || 0;
   const oldFlh = m.flh || "", newFlh = e.catFlh || "";
-  if (oldCC !== newCC || oldFlh !== newFlh) {
-    catChanges.push({ name: m.name, rnd: e.rnd, oldCC, newCC, oldFlh, newFlh });
+  const oldInt = m.inte || "", newInt = e.catInterne || "";
+  const oldFam = m.family_code || "", newFam = e.familyCode || "";
+  if (oldCC !== newCC || oldFlh !== newFlh || oldInt !== newInt || oldFam !== newFam) {
+    catChanges.push({ name: m.name, rnd: e.rnd, oldCC, newCC, oldFlh, newFlh, oldInt, newInt, oldFam, newFam });
   }
 }
 
@@ -111,7 +123,7 @@ console.log(`\n--- Neue Personen (in Excel, nicht in DB) ---`);
 console.log(`Anzahl:                       ${unmatchedExcel.length}`);
 console.log(`\n--- Kategorie-Änderungen ---`);
 console.log(`Anzahl:                       ${catChanges.length}`);
-catChanges.slice(0, 40).forEach((c) => console.log(`   ${c.name}: catCode ${c.oldCC}->${c.newCC} | "${c.oldFlh}" -> "${c.newFlh}"`));
+catChanges.slice(0, 40).forEach((c) => console.log(`   ${c.name}: catCode ${c.oldCC}->${c.newCC} | "${c.oldInt}" -> "${c.newInt}" | "${c.oldFlh}" -> "${c.newFlh}" | family ${c.oldFam}->${c.newFam}`));
 if (catChanges.length > 40) console.log(`   ... insgesamt ${catChanges.length}`);
 
 const newActive = dbActive.length - gone.length;
@@ -128,29 +140,55 @@ const backup = `data.backup-before-update-130726-${new Date().toISOString().repl
 fs.copyFileSync("data.db", backup);
 console.log(`\nBackup erstellt: ${backup}`);
 
-const updCat = db.prepare("UPDATE members SET cat_code=@cc, flh_category=@flh, internal_category=@inte, team_id=@tid, membership_status='active' WHERE id=@id");
+const TYPE_BY_CODE = {
+  60: "donateur", 61: "donateur_lizenz", 62: "honoraire", 63: "sponsor",
+};
+function resolveMemberType(catCode) {
+  if (TYPE_BY_CODE[catCode]) return TYPE_BY_CODE[catCode];
+  if (catCode >= 70 && catCode < 80) return "contact";
+  return "spieler";
+}
+function resolveContactType(catCode, catText) {
+  if (catCode === 71 || /p[eè]re|m[eè]re.*accueil/i.test(catText || "")) return "mere_accueil";
+  if (catCode === 70 || /contact.*famille/i.test(catText || "")) return "contact_famille";
+  return null;
+}
+function resolveStatus(raw) {
+  const s = String(raw || "").toLowerCase();
+  if (s === "ehemalig" || s === "archiv" || s === "abandon" || s === "abbruch") return "ehemalig";
+  if (s === "inaktiv" || s === "inactif") return "inaktiv";
+  return "active";
+}
+
+const updCat = db.prepare("UPDATE members SET cat_code=@cc, flh_category=@flh, internal_category=@inte, team_id=@tid, membership_status=@ms, family_code=@familyCode, member_type=@memberType, contact_info_type=@contactType WHERE id=@id");
 const setEhemalig = db.prepare("UPDATE members SET membership_status='ehemalig' WHERE id=@id");
 const insNew = db.prepare(
-  "INSERT INTO members (name, first_name, last_name, membership_status, cat_code, flh_category, internal_category, team_id, member_type, card_id) " +
-  "VALUES (@name, @fn, @ln, 'active', @cc, @flh, @inte, @tid, @mt, @rnd)"
+  "INSERT INTO members (name, first_name, last_name, membership_status, cat_code, flh_category, internal_category, team_id, member_type, contact_info_type, family_code, card_id) " +
+  "VALUES (@name, @fn, @ln, @ms, @cc, @flh, @inte, @tid, @memberType, @contactType, @familyCode, @rnd)"
 );
 
 const tx = db.transaction(() => {
   let nCat = 0, nEhem = 0, nNew = 0;
   for (const { e, m } of matched) {
-    const catText = e.catFlh || e.catInterne;
-    updCat.run({ id: m.id, cc: e.catCode || 0, flh: e.catFlh || null, inte: e.catInterne || null, tid: resolveTeam(e.catCode) });
+    const memberType = resolveMemberType(e.catCode);
+    const contactType = resolveContactType(e.catCode, e.catFlh);
+    const ms = resolveStatus(e.status);
+    updCat.run({ id: m.id, cc: e.catCode || 0, flh: e.catFlh || null, inte: e.catInterne || null, tid: resolveTeam(e.catCode), ms, familyCode: e.familyCode || null, memberType, contactType });
     nCat++;
   }
   for (const m of gone) { setEhemalig.run({ id: m.id }); nEhem++; }
   for (const e of unmatchedExcel) {
-    const catText = e.catFlh || e.catInterne;
+    const memberType = resolveMemberType(e.catCode);
+    const contactType = resolveContactType(e.catCode, e.catFlh);
+    const ms = resolveStatus(e.status);
     insNew.run({
       name: `${e.prenom} ${titleCase(e.nom)}`.trim(),
       fn: e.prenom || null, ln: e.nom || null,
-      cc: e.catCode || 0, flh: e.catFlh || null, inte: e.catInterne || null,
+      ms, cc: e.catCode || 0, flh: e.catFlh || null, inte: e.catInterne || null,
       tid: resolveTeam(e.catCode),
-      mt: isContactCat(catText) ? "contact" : "spieler",
+      memberType,
+      contactType,
+      familyCode: e.familyCode || null,
       rnd: e.rnd || null,
     });
     nNew++;
