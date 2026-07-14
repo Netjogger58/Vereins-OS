@@ -38,6 +38,34 @@ const run = db.transaction(() => {
       if (APPLY) db.prepare(`UPDATE members SET ${col} = ? WHERE ${col} = ?`).run(newVal, oldVal);
     }
   }
+
+  // Auch in raw_data (JSON) "Dames"-Texte ersetzen
+  const rawRows = db.prepare("SELECT id, raw_data FROM members WHERE raw_data LIKE '%Dame%'").all();
+  for (const { id, raw_data } of rawRows) {
+    try {
+      const raw = JSON.parse(raw_data);
+      let changed = false;
+      function replace(v) {
+        if (typeof v === "string") {
+          const nv = MAP[v] || v;
+          if (nv !== v) { changed = true; return nv; }
+        }
+        return v;
+      }
+      function walk(obj) {
+        if (Array.isArray(obj)) {
+          for (let i = 0; i < obj.length; i++) obj[i] = replace(obj[i]);
+        } else if (obj && typeof obj === "object") {
+          for (const k of Object.keys(obj)) obj[k] = replace(obj[k]);
+        }
+      }
+      walk(raw);
+      if (changed && APPLY) {
+        db.prepare("UPDATE members SET raw_data = ? WHERE id = ?").run(JSON.stringify(raw), id);
+        total++;
+      }
+    } catch { /* ungültiges JSON ignorieren */ }
+  }
 });
 run();
 

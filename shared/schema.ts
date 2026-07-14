@@ -219,7 +219,7 @@ export const FINANCE_CATEGORIES = {
     "Activité Saison Opening",
     "Activité Saison Closing",
     "Activité Kleeschen",
-    "Activité Matchs Dames - Tréier",
+    "Activité Matchs Femmes - Tréier",
     "Activité Kidsdays",
     "Activité Divers",
     "Fanshop",
