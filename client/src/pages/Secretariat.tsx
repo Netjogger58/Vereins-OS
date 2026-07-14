@@ -100,6 +100,7 @@ interface RosterMember {
   name: string;
   firstName?: string | null;
   lastName?: string | null;
+  cardId?: string | null;
   email?: string | null;
   phone?: string | null;
   address?: string | null;
@@ -147,8 +148,26 @@ const formatMemberName = (m: any): string =>
     : (m?.name ?? "");
 
 function categoryLabel(m: RosterMember): string {
-  if (m.catCode && CAT_CODE_LABELS[m.catCode]) return CAT_CODE_LABELS[m.catCode];
-  return m.flhCategory || m.internalCategory || "—";
+  return m.internalCategory || (m.catCode && CAT_CODE_LABELS[m.catCode]) || m.flhCategory || "—";
+}
+
+function normalizeHeader(k: string): string {
+  return cleanLabel(k).toLowerCase();
+}
+function getRawValue(m: RosterMember, ...names: string[]) {
+  const raw = m.raw || {};
+  for (const n of names) {
+    const target = normalizeHeader(n);
+    if (raw[n] !== undefined && raw[n] !== null && raw[n] !== "") return raw[n];
+    for (const k of Object.keys(raw)) {
+      if (normalizeHeader(k) === target) return raw[k];
+    }
+  }
+  return undefined;
+}
+function oldCodeValue(m: RosterMember): string {
+  const v = getRawValue(m, "Cat", "Alter Code (Liste)", "AL Cat", "Al Cat");
+  return v != null && v !== "" ? String(v) : "—";
 }
 
 function csvEscape(v: any): string {
@@ -308,6 +327,12 @@ function memberGroup(m: RosterMember): string {
 function getSortValue(m: RosterMember, key: string): string | number {
   switch (key) {
     case "name": return (m.name || "").toLowerCase();
+    case "firstName": return (m.firstName || "").toLowerCase();
+    case "cardId": return (m.cardId || "").toLowerCase();
+    case "oldCode": return oldCodeValue(m).toLowerCase();
+    case "catCode": return m.catCode ?? -1;
+    case "newMeaning": return (m.internalCategory || "").toLowerCase();
+    case "catText": return (m.flhCategory || "").toLowerCase();
     case "category": return categoryLabel(m).toLowerCase();
     case "type": return (TYPE_LABELS[m.memberType || ""] || m.memberType || "").toLowerCase();
     case "functions": return m.functions.length;
@@ -317,6 +342,7 @@ function getSortValue(m: RosterMember, key: string): string | number {
     case "license": return (m.licenseNumber || "").toLowerCase();
     case "matricule": return (m.matricule || "").toLowerCase();
     case "family": return (m.familyCode || "").toLowerCase();
+    case "oldCourrier": return String(getRawValue(m, "code courrier", "Alter Courrier-Code") || "").toLowerCase();
     case "phone": return (m.phone || "").toLowerCase();
     case "email": return (m.email || "").toLowerCase();
     case "medico": return (m.medicoNext || "").toLowerCase();
@@ -403,20 +429,23 @@ export default function Secretariat() {
   const viewDonBenevole = () => { setStatusFilter("all"); setTypeFilter("don_benevole"); setFuncFilter(false); setMedicoOnly(false); setSort({ key: "name", dir: "asc" }); };
   const viewSponsors = () => { setStatusFilter("all"); setTypeFilter("sponsor"); setFuncFilter(false); setMedicoOnly(false); setSort({ key: "name", dir: "asc" }); };
 
-  // Excel-Rohspalten in Original-Reihenfolge (aus dem Datensatz mit den meisten Spalten)
+  // Excel-Rohspalten in Original-Reihenfolge (Codes alt-neu)
+  const EXCEL_COLUMN_ORDER = [
+    "Nom", "Prénom", "Card-ID (DB)", "Alter Courrier-Code", "Neuer Courrier-Code (Liste)", "Courrier geändert",
+    "Alter Code (Liste)", "Neuer Code (Staffelung)", "Neu — Bedeutung", "Kategorie-Text (Liste)", "Status (DB)",
+  ];
   const rawColumns = useMemo(() => {
-    let template: string[] = [];
+    const order = new Map(EXCEL_COLUMN_ORDER.map((k, i) => [cleanLabel(k), i]));
+    const all = new Set<string>();
     for (const r of roster) {
-      const keys = Object.keys(r.raw || {});
-      if (keys.length > template.length) template = keys;
+      for (const k of Object.keys(r.raw || {})) all.add(k);
     }
-    const seen = new Set(template);
-    for (const r of roster) {
-      for (const k of Object.keys(r.raw || {})) {
-        if (!seen.has(k)) { seen.add(k); template.push(k); }
-      }
-    }
-    return template;
+    return Array.from(all).sort((a, b) => {
+      const ia = order.get(cleanLabel(a)) ?? Number.MAX_SAFE_INTEGER;
+      const ib = order.get(cleanLabel(b)) ?? Number.MAX_SAFE_INTEGER;
+      if (ia !== ib) return ia - ib;
+      return a.localeCompare(b);
+    });
   }, [roster]);
 
   const filtered = useMemo(() => {
@@ -904,18 +933,24 @@ export default function Secretariat() {
               <table className="w-max min-w-full text-sm border-collapse">
                 <thead>
                   <tr className="border-b bg-muted/50 text-left">
-                    <HeadCell k="name" className="sticky left-0 bg-muted/50 z-10 min-w-[180px]">Name</HeadCell>
-                    <HeadCell k="category">Kategorie</HeadCell>
+                    <HeadCell k="name" className="sticky left-0 bg-muted/50 z-10 min-w-[180px]">Nom</HeadCell>
+                    <HeadCell k="firstName">Prénom</HeadCell>
+                    <HeadCell k="cardId">Card-ID</HeadCell>
+                    <HeadCell k="oldCourrier">Alt. Courrier</HeadCell>
+                    <HeadCell k="family">Neu. Courrier</HeadCell>
+                    <HeadCell k="oldCode">Al Cat</HeadCell>
+                    <HeadCell k="catCode">Nei CAT</HeadCell>
+                    <HeadCell k="newMeaning">Neu — Bedeutung</HeadCell>
+                    <HeadCell k="catText">Kategorie-Text</HeadCell>
+                    <HeadCell k="status">Status (DB)</HeadCell>
                     <HeadCell k="type">Typ</HeadCell>
                     <HeadCell k="functions">Funktionen</HeadCell>
-                    <HeadCell k="status">Status</HeadCell>
                     <HeadCell k="tr" className="text-center">TR</HeadCell>
                     <HeadCell k="ma" className="text-center">MA</HeadCell>
-                    <HeadCell k="license">Lizenz-Nr</HeadCell>
-                    <HeadCell k="matricule">Matricule</HeadCell>
-                    <HeadCell k="family">Familie</HeadCell>
                     <HeadCell k="phone">GSM</HeadCell>
                     <HeadCell k="email">Email</HeadCell>
+                    <HeadCell k="license">Lizenz-Nr</HeadCell>
+                    <HeadCell k="matricule">Matricule</HeadCell>
                     <HeadCell k="medico">Médico</HeadCell>
                     {showAllColumns && rawColumns.map((k) => (
                       <HeadCell key={k} k={`raw:${k}`}>{cleanLabel(k) || "—"}</HeadCell>
@@ -940,7 +975,22 @@ export default function Secretariat() {
                           <ChevronRight className="size-3 opacity-40 shrink-0" />
                         </Link>
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap">{categoryLabel(m)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{formatFirstName(m.firstName || "")}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.cardId || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "code courrier", "Alter Courrier-Code") || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.familyCode || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{m.internalCategory || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{m.flhCategory || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className={isActiveMember(m) ? "" : "text-muted-foreground"}>
+                            {STATUS_LABELS[m.membershipStatus || ""] || m.membershipStatus || "—"}
+                          </span>
+                          {!isActiveMember(m) && <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-600">nur Liste</Badge>}
+                        </div>
+                      </td>
                       <td className="px-3 py-2 whitespace-nowrap">{TYPE_LABELS[m.memberType || ""] || m.memberType || "—"}</td>
                       <td className="px-3 py-2">
                         <div className="flex flex-wrap gap-1">
@@ -957,14 +1007,6 @@ export default function Secretariat() {
                           })()}
                         </div>
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className={isActiveMember(m) ? "" : "text-muted-foreground"}>
-                            {STATUS_LABELS[m.membershipStatus || ""] || m.membershipStatus || "—"}
-                          </span>
-                          {!isActiveMember(m) && <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-600">nur Liste</Badge>}
-                        </div>
-                      </td>
                       <td className="px-3 py-2 text-center whitespace-nowrap">
                         {m.trainingTotal > 0 ? (
                           <span title={`${m.trainingPresent}/${m.trainingTotal}`}>
@@ -978,11 +1020,10 @@ export default function Secretariat() {
                       <td className="px-3 py-2 text-center">
                         {m.matchCount > 0 ? m.matchCount : <span className="text-muted-foreground">—</span>}
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.licenseNumber || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.matricule || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{m.familyCode || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{m.phone || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap max-w-[200px] truncate" title={m.email || ""}>{m.email || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.licenseNumber || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.matricule || "—"}</td>
                       <td className={`px-3 py-2 whitespace-nowrap ${medicoCellClass(medicoYearOf(m))}`}>
                         <div className="flex items-center gap-1.5">
                           <span>{m.medicoNext || "—"}</span>

@@ -41,7 +41,19 @@ const sheetName = wb.SheetNames.find((n) => norm(n).includes("codes")) || wb.She
 const ws = wb.Sheets[sheetName];
 if (!ws) { console.error("Kein Sheet gefunden"); process.exit(1); }
 const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: false });
+const headers = rows[0] || [];
 const data = rows.slice(1).filter((r) => T(r, C.lastName) || T(r, C.firstName));
+
+const buildRaw = (r) => {
+  const obj = {};
+  for (let i = 0; i < r.length; i++) {
+    const h = headers[i];
+    if (h == null) continue;
+    const key = String(h).trim();
+    if (key) obj[key] = r[i];
+  }
+  return obj;
+};
 
 const excel = data.map((r) => {
   const catCode = Number(T(r, C.catCode)) || 0;
@@ -52,6 +64,7 @@ const excel = data.map((r) => {
     catInterne: T(r, C.catInterne), catFlh: T(r, C.catFlh),
     status: T(r, C.status),
     catCode,
+    rawData: JSON.stringify(buildRaw(r)),
   };
 });
 
@@ -160,11 +173,11 @@ function resolveStatus(raw) {
   return "active";
 }
 
-const updCat = db.prepare("UPDATE members SET cat_code=@cc, flh_category=@flh, internal_category=@inte, team_id=@tid, membership_status=@ms, family_code=@familyCode, member_type=@memberType, contact_info_type=@contactType WHERE id=@id");
+const updCat = db.prepare("UPDATE members SET cat_code=@cc, flh_category=@flh, internal_category=@inte, team_id=@tid, membership_status=@ms, family_code=@familyCode, member_type=@memberType, contact_info_type=@contactType, raw_data=@rawData WHERE id=@id");
 const setEhemalig = db.prepare("UPDATE members SET membership_status='ehemalig' WHERE id=@id");
 const insNew = db.prepare(
-  "INSERT INTO members (name, first_name, last_name, membership_status, cat_code, flh_category, internal_category, team_id, member_type, contact_info_type, family_code, card_id) " +
-  "VALUES (@name, @fn, @ln, @ms, @cc, @flh, @inte, @tid, @memberType, @contactType, @familyCode, @rnd)"
+  "INSERT INTO members (name, first_name, last_name, membership_status, cat_code, flh_category, internal_category, team_id, member_type, contact_info_type, family_code, card_id, raw_data) " +
+  "VALUES (@name, @fn, @ln, @ms, @cc, @flh, @inte, @tid, @memberType, @contactType, @familyCode, @rnd, @rawData)"
 );
 
 const tx = db.transaction(() => {
@@ -173,7 +186,7 @@ const tx = db.transaction(() => {
     const memberType = resolveMemberType(e.catCode);
     const contactType = resolveContactType(e.catCode, e.catFlh);
     const ms = resolveStatus(e.status);
-    updCat.run({ id: m.id, cc: e.catCode || 0, flh: e.catFlh || null, inte: e.catInterne || null, tid: resolveTeam(e.catCode), ms, familyCode: e.familyCode || null, memberType, contactType });
+    updCat.run({ id: m.id, cc: e.catCode || 0, flh: e.catFlh || null, inte: e.catInterne || null, tid: resolveTeam(e.catCode), ms, familyCode: e.familyCode || null, memberType, contactType, rawData: e.rawData });
     nCat++;
   }
   for (const m of gone) { setEhemalig.run({ id: m.id }); nEhem++; }
@@ -190,6 +203,7 @@ const tx = db.transaction(() => {
       contactType,
       familyCode: e.familyCode || null,
       rnd: e.rnd || null,
+      rawData: e.rawData,
     });
     nNew++;
   }
