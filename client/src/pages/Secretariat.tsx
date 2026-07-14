@@ -180,6 +180,41 @@ function oldCodeValue(m: RosterMember): string {
   const v = getRawValue(m, "Cat", "Alter Code (Liste)", "AL Cat", "Al Cat");
   return v != null && v !== "" ? String(v) : "—";
 }
+function formatDateRaw(v: any): string {
+  if (v == null || v === "") return "—";
+  const s = String(v).trim();
+  if (!s) return "—";
+  // Bereits im gewünschten Format belassen
+  if (/^\d{2}\.\d{2}\.\d{2,4}$/.test(s)) return s;
+  // dd/mm/yy oder dd/mm/yyyy
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (m1) {
+    const [_, d, mo, y] = m1;
+    const yr = y.length === 2 ? `20${y.padStart(2, "0")}` : y;
+    return `${d.padStart(2, "0")}.${mo.padStart(2, "0")}.${yr.slice(-2)}`;
+  }
+  // ISO yyyy-mm-dd
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m2) {
+    const [_, y, mo, d] = m2;
+    return `${d}.${mo}.${y.slice(-2)}`;
+  }
+  // Excel/JS Date-String fallback
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}.${month}.${year}`;
+  }
+  return s;
+}
+const DATE_COLUMN_PATTERNS = ["date début licence", "date début membre", "prochain médico", "naissance"];
+function isDateColumn(name: string): boolean {
+  const n = cleanLabel(name).toLowerCase();
+  return DATE_COLUMN_PATTERNS.some((p) => n.includes(p));
+}
+
 const DISPLAY_LANG_MAP: Record<string, string> = {
   F: "FR", E: "EN", G: "EN", GB: "EN", I: "IT", P: "PT", S: "ES",
   D: "DE", A: "DE", H: "HU", N: "NL", L: "LU", LB: "LU", B: "BE",
@@ -680,7 +715,11 @@ export default function Secretariat() {
         m.licenseNumber || "", m.matricule || "", m.familyCode || "",
         m.phone || "", m.email || "", m.address || "", m.nationality || "",
         m.birthdate || "", m.medicoNext || "", m.joinDate || "",
-        ...rawColumns.map((k) => getRawValue(m, k) ?? ""),
+        ...rawColumns.map((k) => {
+          const rawV = getRawValue(m, k);
+          const v = isDateColumn(k) ? formatDateRaw(rawV) : rawV;
+          return v === "—" ? "" : (v ?? "");
+        }),
       ];
       lines.push(row.map(csvEscape).join(";"));
     }
@@ -1121,7 +1160,8 @@ export default function Secretariat() {
                         </div>
                       </td>
                       {showAllColumns && rawColumns.map((k) => {
-                        const v = getRawValue(m, k);
+                        const rawV = getRawValue(m, k);
+                        const v = isDateColumn(k) ? formatDateRaw(rawV) : rawV;
                         return (
                           <td key={k} className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground max-w-[200px] truncate" title={String(v ?? "")}>
                             {v != null && v !== "" ? String(v) : "—"}
