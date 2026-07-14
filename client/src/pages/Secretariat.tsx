@@ -154,6 +154,7 @@ function categoryLabel(m: RosterMember): string {
 function normalizeHeader(k: string): string {
   return cleanLabel(k).toLowerCase();
 }
+const RAW_KEY_ALIASES: Record<string, string> = { nom: "col0" };
 function getRawValue(m: RosterMember, ...names: string[]) {
   const raw = m.raw || {};
   for (const n of names) {
@@ -162,6 +163,8 @@ function getRawValue(m: RosterMember, ...names: string[]) {
     for (const k of Object.keys(raw)) {
       if (normalizeHeader(k) === target) return raw[k];
     }
+    const alias = RAW_KEY_ALIASES[target];
+    if (alias != null && raw[alias] !== undefined && raw[alias] !== null && raw[alias] !== "") return raw[alias];
   }
   return undefined;
 }
@@ -347,7 +350,7 @@ function getSortValue(m: RosterMember, key: string): string | number {
     case "email": return (m.email || "").toLowerCase();
     case "medico": return (m.medicoNext || "").toLowerCase();
     default:
-      if (key.startsWith("raw:")) { const v = m.raw?.[key.slice(4)]; return v == null ? "" : String(v).toLowerCase(); }
+      if (key.startsWith("raw:")) { const v = getRawValue(m, key.slice(4)); return v == null ? "" : String(v).toLowerCase(); }
       return "";
   }
 }
@@ -367,7 +370,7 @@ export default function Secretariat() {
   const [convSending, setConvSending] = useState(false);
   const [convMsg, setConvMsg] = useState<string>("");
   const [codesOpen, setCodesOpen] = useState(false);
-  const [showAllColumns, setShowAllColumns] = useState(false);
+  const [showAllColumns, setShowAllColumns] = useState(true);
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -429,10 +432,21 @@ export default function Secretariat() {
   const viewDonBenevole = () => { setStatusFilter("all"); setTypeFilter("don_benevole"); setFuncFilter(false); setMedicoOnly(false); setSort({ key: "name", dir: "asc" }); };
   const viewSponsors = () => { setStatusFilter("all"); setTypeFilter("sponsor"); setFuncFilter(false); setMedicoOnly(false); setSort({ key: "name", dir: "asc" }); };
 
-  // Excel-Rohspalten in Original-Reihenfolge (Codes alt-neu)
+  // Excel-Rohspalten in Original-Reihenfolge (Membres 2026_2027)
   const EXCEL_COLUMN_ORDER = [
-    "Nom", "Prénom", "Card-ID (DB)", "Alter Courrier-Code", "Neuer Courrier-Code (Liste)", "Courrier geändert",
-    "Alter Code (Liste)", "Neuer Code (Staffelung)", "Neu — Bedeutung", "Kategorie-Text (Liste)", "Status (DB)",
+    "Nom", "Prénom ou les prénoms", "Random-No", "Langue / Nationalité", "Adresse", "Code postale", "Localité",
+    "code courrier", "courrier ???", "AL Cat", "Nei CAT", "Catégorie interne Mersch75 2026-2027",
+    "Al Cat", "Nei Cat", "Catégorie Listing FLH 2026-2027", "Etudiant", "U17H", "U15H", "U13H", "U11M", "U9M", "U7M",
+    "U17F", "U15F", "U13F", "Pass Nummer (Licences Joueurs / Joueuses)", "Licences Off (officiels)",
+    "Licences ZS (secrétaires / chronométreurs)", "Licences SR (arbitre)", "Licences CL (Carte de Légitimation)",
+    "Commentaires & changements (Secrétaire)", "Transfert à faire en fin de saison", "Date début licence (JJ/MM/AA)",
+    "date début membre (JJ/MM/AA)", "Prochain Médico", "Naissance (JJ/MM/AA)", "Matricule",
+    "Lieu et pays de naissance seulement membre comité", "Tél.", "Tél.-Bureau", "GSM", "Email", "Communicateur",
+    "Membres commission des jeunes", "Cat_Arbitre", "Comité", "Officiel", "FLH", "Entraîneur Diplôme",
+    "cat cot 19-20", "cat cot 20-21", "envoi1 cot 19-20", "envoi2 cot 19-20", "carte membre 19-20", "pmt cot 19-20",
+    "rappel impayes 2019-20", "comment Cot 19-20", "pmt cot 20-21", "rappel impayes 2020-21", "comment Cot 20-21",
+    "pmt cot 21-22", "rappel impayes 2021-22", "comment Cot 21-22", "Go 2 Sports", "subs. etat 2018",
+    "Subside Etat 2018", "Subside Etat 2019", "Subside Etat 2020", "Commentaires 2021/22",
   ];
   const rawColumns = useMemo(() => {
     const order = new Map(EXCEL_COLUMN_ORDER.map((k, i) => [cleanLabel(k), i]));
@@ -440,12 +454,13 @@ export default function Secretariat() {
     for (const r of roster) {
       for (const k of Object.keys(r.raw || {})) all.add(k);
     }
-    return Array.from(all).sort((a, b) => {
+    const sorted = Array.from(all).sort((a, b) => {
       const ia = order.get(cleanLabel(a)) ?? Number.MAX_SAFE_INTEGER;
       const ib = order.get(cleanLabel(b)) ?? Number.MAX_SAFE_INTEGER;
       if (ia !== ib) return ia - ib;
       return a.localeCompare(b);
     });
+    return sorted.map((k) => (k === "col0" ? "Nom" : k));
   }, [roster]);
 
   const filtered = useMemo(() => {
@@ -637,7 +652,7 @@ export default function Secretariat() {
         m.licenseNumber || "", m.matricule || "", m.familyCode || "",
         m.phone || "", m.email || "", m.address || "", m.nationality || "",
         m.birthdate || "", m.medicoNext || "", m.joinDate || "",
-        ...rawColumns.map((k) => m.raw?.[k] ?? ""),
+        ...rawColumns.map((k) => getRawValue(m, k) ?? ""),
       ];
       lines.push(row.map(csvEscape).join(";"));
     }
@@ -1069,11 +1084,14 @@ export default function Secretariat() {
                           )}
                         </div>
                       </td>
-                      {showAllColumns && rawColumns.map((k) => (
-                        <td key={k} className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground max-w-[200px] truncate" title={String(m.raw?.[k] ?? "")}>
-                          {m.raw?.[k] != null && m.raw[k] !== "" ? String(m.raw[k]) : "—"}
-                        </td>
-                      ))}
+                      {showAllColumns && rawColumns.map((k) => {
+                        const v = getRawValue(m, k);
+                        return (
+                          <td key={k} className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground max-w-[200px] truncate" title={String(v ?? "")}>
+                            {v != null && v !== "" ? String(v) : "—"}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
