@@ -953,10 +953,12 @@ export default function Secretariat() {
                     <HeadCell k="cardId">Card-ID</HeadCell>
                     <HeadCell k="oldCourrier">Alt. Courrier</HeadCell>
                     <HeadCell k="family">Neu. Courrier</HeadCell>
-                    <HeadCell k="oldCode">Al Cat</HeadCell>
+                    <HeadCell k="oldCode">AL Cat</HeadCell>
                     <HeadCell k="catCode">Nei CAT</HeadCell>
-                    <HeadCell k="newMeaning">Neu — Bedeutung</HeadCell>
-                    <HeadCell k="catText">Kategorie-Text</HeadCell>
+                    <HeadCell k="newMeaning">Catégorie interne Mersch75 2026-2027</HeadCell>
+                    <HeadCell k="oldCode">Al Cat</HeadCell>
+                    <HeadCell k="catCode">Nei Cat</HeadCell>
+                    <HeadCell k="catText">Catégorie Listing FLH 2026-2027</HeadCell>
                     <HeadCell k="status">Status (DB)</HeadCell>
                     <HeadCell k="type">Typ</HeadCell>
                     <HeadCell k="functions">Funktionen</HeadCell>
@@ -997,6 +999,8 @@ export default function Secretariat() {
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{m.internalCategory || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{m.flhCategory || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
