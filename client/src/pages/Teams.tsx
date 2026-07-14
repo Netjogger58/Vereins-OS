@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, ArrowLeft, Shield } from "lucide-react";
-import { initials, formatMemberName } from "@/lib/utils";
+import { initials, formatMemberName, getAge } from "@/lib/utils";
 import type { Team, Member, PublicUser } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
 import { medicoState, medicoLabel } from "@/lib/medico";
@@ -21,7 +21,16 @@ export default function Teams() {
   if (teamId) {
     const team = teams.find(t => t.id === teamId);
     if (!team) return <div className="text-sm text-muted-foreground">Team nicht gefunden</div>;
-    const roster = members.filter(m => m.teamId === team.id && isActiveClubMember(m));
+    const isYouth = /^U/i.test(team.category || "");
+    const roster = members
+      .filter(m => m.teamId === team.id && isActiveClubMember(m))
+      .sort((a, b) => {
+        const ageA = getAge(a.birthdate) ?? (isYouth ? -Infinity : Infinity);
+        const ageB = getAge(b.birthdate) ?? (isYouth ? -Infinity : Infinity);
+        const ageDiff = isYouth ? ageB - ageA : ageA - ageB;
+        if (ageDiff !== 0 && Number.isFinite(ageDiff)) return ageDiff;
+        return formatMemberName(a).localeCompare(formatMemberName(b));
+      });
     const trainer = users.find(u => u.id === team.trainerId);
 
     return (

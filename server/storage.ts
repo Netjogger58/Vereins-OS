@@ -1600,12 +1600,13 @@ export class DatabaseStorage implements IStorage {
   async deleteAttendance(memberId: number, date: string) {
     db.delete(attendance).where(and(eq(attendance.memberId, memberId), eq(attendance.date, date))).run();
   }
-  // Zähler pro Mitglied für ein Team: present = Status 'present', total = alle erfassten Einheiten
+  // Zähler pro Mitglied für ein Team: total = nur anwesend gezählte Einheiten
+  // (so erscheint bei automatisch als 'unexcused' eingetragenen Spielern 0/0 statt 0/1).
   async getAttendanceSummaryByTeam(teamId: number): Promise<{ memberId: number; present: number; total: number }[]> {
     const rows = sqlite.prepare(
       `SELECT member_id AS memberId,
               SUM(CASE WHEN status = 'present' OR (status IS NULL AND present = 1) THEN 1 ELSE 0 END) AS present,
-              COUNT(*) AS total
+              SUM(CASE WHEN status = 'present' OR (status IS NULL AND present = 1) THEN 1 ELSE 0 END) AS total
        FROM attendance WHERE team_id = ? GROUP BY member_id`
     ).all(teamId) as { memberId: number; present: number; total: number }[];
     return rows;

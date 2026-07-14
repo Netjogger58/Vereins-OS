@@ -78,3 +78,30 @@ export function addDaysIso(base: string, days: number): string {
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+export function getAge(birthdate?: string | Date | null): number | null {
+  if (!birthdate) return null;
+  let d: Date;
+  if (birthdate instanceof Date) {
+    d = birthdate;
+  } else {
+    const s = String(birthdate).trim();
+    const parts = s.split(/[.\/\-]/);
+    if (parts.length === 3) {
+      const month = Number(parts[0]);
+      const day = Number(parts[1]);
+      let year = Number(parts[2]);
+      if (year < 100) year = year > 30 ? 1900 + year : 2000 + year;
+      d = new Date(year, month - 1, day);
+    } else {
+      d = new Date(s);
+    }
+  }
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const mNow = now.getMonth();
+  const mBirth = d.getMonth();
+  if (mNow < mBirth || (mNow === mBirth && now.getDate() < d.getDate())) age--;
+  return age;
+}

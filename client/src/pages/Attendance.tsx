@@ -14,7 +14,7 @@ import {
 import { Camera, Upload, Check, X, Sparkles, Info, Clock, Minus } from "lucide-react";
 import { apiRequest, queryClient, getAuthToken } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { initials, isoToday, formatMemberName } from "@/lib/utils";
+import { initials, isoToday, formatMemberName, getAge } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, Member, Attendance } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
@@ -156,11 +156,18 @@ export default function AttendancePage() {
   const presentCount = teamMembers.filter(m => statusByMember(m.id) === "present").length;
 
   // Anwesende oben, unmarkierte in der Mitte, "kommt nicht" (absent/entsch./unentsch.) ganz unten.
-  // Innerhalb einer Gruppe alphabetisch. Wer als anwesend markiert wird, springt sofort nach oben.
+  // Innerhalb einer Gruppe nach Alter: Senioren jung -> alt, Jugend alt -> jung.
+  const teamCategory = teams.find(t => t.id === selTeamId)?.category || "";
+  const isYouth = /^U/i.test(teamCategory);
+  const ageForSort = (m: Member) => getAge(m.birthdate) ?? (isYouth ? -Infinity : Infinity);
   const sortedMembers = [...teamMembers].sort((a, b) => {
     const oa = STATUS_ORDER[statusByMember(a.id) ?? ""] ?? UNMARKED_ORDER;
     const ob = STATUS_ORDER[statusByMember(b.id) ?? ""] ?? UNMARKED_ORDER;
     if (oa !== ob) return oa - ob;
+    const ageA = ageForSort(a);
+    const ageB = ageForSort(b);
+    const ageDiff = isYouth ? ageB - ageA : ageA - ageB;
+    if (ageDiff !== 0 && Number.isFinite(ageDiff)) return ageDiff;
     return formatMemberName(a).localeCompare(formatMemberName(b));
   });
 
@@ -228,7 +235,7 @@ export default function AttendancePage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm truncate">{formatMemberName(m)}</div>
                       <div className="text-[11px] text-muted-foreground flex items-center gap-2">
-                        <span className="tabular-nums font-semibold text-foreground/70" title="Anwesend / erfasste Einheiten">
+                        <span className="tabular-nums font-semibold text-foreground/70" title="Anwesend / anwesend gezählte Einheiten">
                           {s.present}/{s.total}
                         </span>
                         {m.licenseNumber && <span className="truncate">{m.licenseNumber}</span>}
