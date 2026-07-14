@@ -1,0 +1,18 @@
+# M75-Manager (Vereins-OS)
+
+Node/Express + Vite + SQLite App fir d'Verwaltung vum Mersch75 Handball Club.
+
+## Wichteg Dokumenter
+
+- [`M75-Manager-Statusbericht.md`](M75-Manager-Statusbericht.md) — aktuellen Zoustand.
+- [`M75-Manager-Features.md`](M75-Manager-Features.md) — Features.
+- [`docs/saison-archivierung.md`](docs/saison-archivierung.md) — Saison-Archivierung.
+- [`docs/flh-archive.md`](docs/flh-archive.md) — **FLH Statistik-Archiv**: Spillplang, Resultater, Tabellen a SBO-PDFen ginn lokal an der Schwëster-Repo `mersch75test.github.io` archivéiert; Integratioun an den M75-Manager ist geplant.
+- [`PROJEKTPLAN.md`](PROJEKTPLAN.md) — Gesamtprojet.
+
+## Start
+
+```bash
+npm install
+npm run dev   # Express API + Vite dev server
+```

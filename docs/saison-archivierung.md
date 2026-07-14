@@ -20,6 +20,9 @@ Die App hat bereits eine Archiv-Infrastruktur:
   `POST /api/archive/import`.
 - **Storage** (`server/storage.ts`): CRUD für die Archiv-Tabellen.
 - `archive_seasons.active` markiert die aktive Saison (nur eine).
+- **Externes FLH-Archiv:** Die Schwester-Repo `mersch75test.github.io` archiviert die
+  offiziellen FLH-Daten (Spielpläne, Ergebnisse, Tabellen, SBO-PDFs) lokal und stellt sie
+  via `data/flh-archive-*.json` und `sbo-archiv/` bereit. Siehe `docs/flh-archive.md`.
 
 **Lücke:** Es gibt (a) noch keinen **Rollover** („aktuelle Saison → Archiv + neue Saison
 anlegen") und (b) die Archiv-Tabellen kennen die **neuen Felder** noch nicht.
