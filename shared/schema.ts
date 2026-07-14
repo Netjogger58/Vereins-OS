@@ -109,6 +109,7 @@ export const attendance = sqliteTable("attendance", {
   // 'present' | 'absent' | 'excused' | 'unexcused'
   status: text("status"),
   note: text("note"),
+  isTrial: integer("is_trial", { mode: "boolean" }).default(false), // Prouftraining
 });
 export const insertAttendanceSchema = createInsertSchema(attendance).omit({ id: true });
 export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;

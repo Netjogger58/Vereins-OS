@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Camera, Upload, Check, X, Sparkles, Info, Clock, Minus } from "lucide-react";
+import { Camera, Upload, Check, X, Sparkles, Info, Clock, Minus, Plus } from "lucide-react";
 import { apiRequest, queryClient, getAuthToken } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { initials, isoToday, formatMemberName, getAge, memberExtraTeamIds } from "@/lib/utils";
@@ -69,6 +69,8 @@ export default function AttendancePage() {
   const { toast } = useToast();
   const [teamId, setTeamId] = useState<string>("");
   const [date, setDate] = useState<string>(isoToday());
+  const [trialMemberId, setTrialMemberId] = useState<string>("");
+  const canEdit = user && ["präsident", "admin", "trainer"].includes(user.role);
 
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
   const { data: members = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
@@ -80,8 +82,6 @@ export default function AttendancePage() {
   }, [teams, user, teamId]);
 
   const selTeamId = teamId ? Number(teamId) : 0;
-  const isTeamMember = (m: Member) => m.teamId === selTeamId || memberExtraTeamIds(m).includes(selTeamId);
-  const teamMembers = members.filter(m => isTeamMember(m) && isActiveClubMember(m));
 
   const { data: teamNominations = [] } = useQuery<{ memberId: number }[]>({
     queryKey: ["/api/nominations/team", selTeamId],
@@ -106,6 +106,12 @@ export default function AttendancePage() {
       return res.json();
     },
   });
+
+  const isTeamMember = (m: Member) => m.teamId === selTeamId || memberExtraTeamIds(m).includes(selTeamId);
+  const attendanceMemberIds = new Set(attendance.map(a => a.memberId));
+  const teamMembers = members.filter(m =>
+    isActiveClubMember(m) && (isTeamMember(m) || attendanceMemberIds.has(m.id))
+  );
 
   // Zähler pro Mitglied über alle erfassten Einheiten (present/total), startet bei 0/0
   const { data: summary = [] } = useQuery<{ memberId: number; present: number; total: number }[]>({
@@ -143,12 +149,28 @@ export default function AttendancePage() {
       toast({ title: "Löschen fehlgeschlagen", description: String(e?.message || e), variant: "destructive" }),
   });
 
+  const addTrialMut = useMutation({
+    mutationFn: async (memberId: number) =>
+      (await apiRequest("POST", "/api/attendance/bulk", {
+        items: [{ memberId, teamId: selTeamId, date, present: true, status: "present", isTrial: true }],
+      })).json(),
+    onSuccess: () => {
+      setTrialMemberId("");
+      invalidateAll();
+    },
+    onError: (e: any) =>
+      toast({ title: "Prouftraining hinzufügen fehlgeschlagen", description: String(e?.message || e), variant: "destructive" }),
+  });
+
   // Status ableiten (Altdaten ohne status aus present ableiten)
   const statusByMember = (memberId: number): AttStatus | undefined => {
     const rec = attendance.find(a => a.memberId === memberId);
     if (!rec) return undefined;
     return ((rec as any).status as AttStatus) ?? (rec.present ? "present" : "unexcused");
   };
+
+  const recordByMember = (memberId: number): Attendance | undefined =>
+    attendance.find(a => a.memberId === memberId);
 
   // Setzt Status – erneuter Klick auf denselben Status entfernt den Marker (neutral)
   const setStatus = (memberId: number, status: AttStatus) => {
@@ -234,6 +256,36 @@ export default function AttendancePage() {
 
         <TabsContent value="manual">
           <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Manuell erfassen</CardTitle>
+              {(() => {
+                const available = members.filter(m =>
+                  isActiveClubMember(m) && !teamMembers.some(tm => tm.id === m.id)
+                );
+                return available.length > 0 ? (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Select value={trialMemberId} onValueChange={setTrialMemberId}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Spieler für Prouftraining auswählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {available.map(m => (
+                          <SelectItem key={m.id} value={String(m.id)}>{formatMemberName(m)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!trialMemberId || addTrialMut.isPending}
+                      onClick={() => trialMemberId && addTrialMut.mutate(Number(trialMemberId))}
+                    >
+                      <Plus className="size-4 mr-1" /> Prouftraining
+                    </Button>
+                  </div>
+                ) : null;
+              })()}
+            </CardHeader>
             <CardContent className="p-0 divide-y divide-border">
               {teamMembers.length === 0 && (
                 <p className="p-8 text-center text-sm text-muted-foreground">
@@ -242,6 +294,7 @@ export default function AttendancePage() {
               )}
               {sortedMembers.map(m => {
                 const st = statusByMember(m.id);
+                const rec = recordByMember(m.id);
                 const s = summaryByMember(m.id);
                 const parked = st === "absent" || st === "excused" || st === "unexcused";
                 return (
@@ -259,9 +312,34 @@ export default function AttendancePage() {
                           {s.present}/{s.total}
                         </span>
                         {m.licenseNumber && <span className="truncate">{m.licenseNumber}</span>}
+                        {rec?.isTrial && (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-auto border-amber-500 text-amber-600">
+                            Prouftraining
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
+                      {rec && (
+                        <label className="flex items-center gap-1 text-[10px] text-muted-foreground mr-1 cursor-pointer" title="Prouftraining">
+                          <Checkbox
+                            checked={rec.isTrial ?? false}
+                            onCheckedChange={v => {
+                              const status = (rec.status as AttStatus) ?? (rec.present ? "present" : "absent");
+                              saveBulk.mutate([{
+                                memberId: m.id,
+                                teamId: selTeamId,
+                                date,
+                                present: rec.present,
+                                status,
+                                isTrial: v === true,
+                              }]);
+                            }}
+                            disabled={!canEdit || saveBulk.isPending}
+                          />
+                          <span className="hidden sm:inline">Prouf</span>
+                        </label>
+                      )}
                       {STATUS_OPTS.map(opt => {
                         const Icon = opt.icon;
                         const active = st === opt.key;
