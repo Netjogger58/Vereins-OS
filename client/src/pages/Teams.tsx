@@ -22,9 +22,16 @@ export default function Teams() {
     const team = teams.find(t => t.id === teamId);
     if (!team) return <div className="text-sm text-muted-foreground">Team nicht gefunden</div>;
     const isYouth = /^U/i.test(team.category || "");
+    const medicoPenalty = (m: Member) => {
+      const st = medicoState(m);
+      return st === "inapte" || st === "overdue" || st === "none" ? 1 : 0;
+    };
     const roster = members
       .filter(m => m.teamId === team.id && isActiveClubMember(m))
       .sort((a, b) => {
+        const pa = medicoPenalty(a);
+        const pb = medicoPenalty(b);
+        if (pa !== pb) return pa - pb;
         const ageA = getAge(a.birthdate) ?? (isYouth ? -Infinity : Infinity);
         const ageB = getAge(b.birthdate) ?? (isYouth ? -Infinity : Infinity);
         const ageDiff = isYouth ? ageB - ageA : ageA - ageB;

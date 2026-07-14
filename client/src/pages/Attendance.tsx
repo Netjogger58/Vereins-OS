@@ -18,6 +18,7 @@ import { initials, isoToday, formatMemberName, getAge } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, Member, Attendance } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
+import { medicoState } from "@/lib/medico";
 
 // ─── Anwesenheits-Status ────────────────────────────────
 type AttStatus = "present" | "absent" | "excused" | "unexcused";
@@ -156,14 +157,22 @@ export default function AttendancePage() {
   const presentCount = teamMembers.filter(m => statusByMember(m.id) === "present").length;
 
   // Anwesende oben, unmarkierte in der Mitte, "kommt nicht" (absent/entsch./unentsch.) ganz unten.
-  // Innerhalb einer Gruppe nach Alter: Senioren jung -> alt, Jugend alt -> jung.
+  // Innerhalb einer Gruppe: inapte / kein Médico / überfällig zuerst nach unten,
+  // dann nach Alter: Senioren jung -> alt, Jugend alt -> jung.
   const teamCategory = teams.find(t => t.id === selTeamId)?.category || "";
   const isYouth = /^U/i.test(teamCategory);
   const ageForSort = (m: Member) => getAge(m.birthdate) ?? (isYouth ? -Infinity : Infinity);
+  const medicoPenalty = (m: Member) => {
+    const st = medicoState(m);
+    return st === "inapte" || st === "overdue" || st === "none" ? 1 : 0;
+  };
   const sortedMembers = [...teamMembers].sort((a, b) => {
     const oa = STATUS_ORDER[statusByMember(a.id) ?? ""] ?? UNMARKED_ORDER;
     const ob = STATUS_ORDER[statusByMember(b.id) ?? ""] ?? UNMARKED_ORDER;
     if (oa !== ob) return oa - ob;
+    const pa = medicoPenalty(a);
+    const pb = medicoPenalty(b);
+    if (pa !== pb) return pa - pb;
     const ageA = ageForSort(a);
     const ageB = ageForSort(b);
     const ageDiff = isYouth ? ageB - ageA : ageA - ageB;
