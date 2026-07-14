@@ -881,6 +881,9 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   app.get("/api/nominations/event/:eventId", requireAuth(), async (req, res) => {
     res.json(await storage.listNominationsByEvent(Number(req.params.eventId)));
   });
+  app.get("/api/nominations/team/:teamId", requireAuth(), async (req, res) => {
+    res.json(await storage.listNominationsByTeam(Number(req.params.teamId)));
+  });
   app.get("/api/nominations/member/:memberId", requireAuth(), async (req, res) => {
     res.json(await storage.listNominationsByMember(Number(req.params.memberId)));
   });

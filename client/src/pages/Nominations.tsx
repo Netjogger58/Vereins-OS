@@ -11,10 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle, XCircle, Clock, Plus, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { isActiveClubMember } from "@shared/memberStatus";
-import { formatMemberName } from "@/lib/utils";
+import { formatMemberName, getAge, memberExtraTeamIds } from "@/lib/utils";
+import { medicoState } from "@/lib/medico";
+import type { Team } from "@shared/schema";
 
 type Event = { id: number; title: string; type: string; date: string; time?: string; teamId?: number };
-type Member = { id: number; name: string; photoUrl?: string; teamId?: number; userId?: number | null; membershipStatus?: string | null };
+type Member = { id: number; name: string; photoUrl?: string; teamId?: number; userId?: number | null; membershipStatus?: string | null; birthdate?: string | null; medicoNext?: string | null; medicoResult?: string | null; medicoComment?: string | null; extraTeamIds?: string | null };
 type Nomination = { id: number; eventId: number; memberId: number; nominatedById: number; response?: string; reason?: string; createdAt: string };
 type User = { id: number; name: string; role: string; teamId?: number };
 
@@ -29,6 +31,7 @@ export default function Nominations() {
   const { data: me } = useQuery<User>({ queryKey: ["/api/auth/me"] });
   const { data: events = [] } = useQuery<Event[]>({ queryKey: ["/api/events"] });
   const { data: members = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
+  const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
 
   const spielEvents = events.filter(e => e.type === "spiel").sort((a, b) => a.date.localeCompare(b.date));
   const selectedEvent = spielEvents.find(e => e.id === Number(selectedEventId));
@@ -40,9 +43,35 @@ export default function Nominations() {
   });
 
   const activeMembers = members.filter(isActiveClubMember);
-  const teamMembers = selectedEvent?.teamId
-    ? activeMembers.filter(m => m.teamId === selectedEvent.teamId)
+  const isTeamMember = (m: Member, tid?: number) => m.teamId === tid || memberExtraTeamIds(m).includes(tid ?? 0);
+  const rawTeamMembers = selectedEvent?.teamId
+    ? activeMembers.filter(m => isTeamMember(m, selectedEvent.teamId))
     : activeMembers;
+
+  const teamCategory = selectedEvent?.teamId
+    ? teams.find(t => t.id === selectedEvent.teamId)?.category || ""
+    : "";
+  const isYouth = /^U/i.test(teamCategory);
+
+  const memberSort = (a: Member, b: Member) => {
+    const pa = medicoState(a) === "inapte" || medicoState(a) === "overdue" || medicoState(a) === "none" ? 1 : 0;
+    const pb = medicoState(b) === "inapte" || medicoState(b) === "overdue" || medicoState(b) === "none" ? 1 : 0;
+    if (pa !== pb) return pa - pb;
+    const ageA = getAge(a.birthdate) ?? (isYouth ? -Infinity : Infinity);
+    const ageB = getAge(b.birthdate) ?? (isYouth ? -Infinity : Infinity);
+    const ageDiff = isYouth ? ageB - ageA : ageA - ageB;
+    if (ageDiff !== 0 && Number.isFinite(ageDiff)) return ageDiff;
+    return formatMemberName(a).localeCompare(formatMemberName(b));
+  };
+
+  const teamMembers = [...rawTeamMembers].sort(memberSort);
+  const sortNominations = (a: Nomination, b: Nomination) => {
+    const ma = getMember(a.memberId);
+    const mb = getMember(b.memberId);
+    if (!ma || !mb) return 0;
+    return memberSort(ma, mb);
+  };
+  const sortedNominations = [...nominations].sort(sortNominations);
 
   const nominatedIds = new Set(nominations.map(n => n.memberId));
   const unnominatedMembers = teamMembers.filter(m => !nominatedIds.has(m.id));
@@ -162,7 +191,7 @@ export default function Nominations() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
-                {nominations.map(nom => {
+                {sortedNominations.map(nom => {
                   const member = getMember(nom.memberId);
                   return (
                     <div key={nom.id} className="flex items-center gap-3 p-2 rounded-lg border bg-card" data-testid={`nomination-row-${nom.id}`}>

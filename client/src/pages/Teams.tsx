@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, ArrowLeft, Shield } from "lucide-react";
-import { initials, formatMemberName, getAge } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
+import { initials, formatMemberName, getAge, memberExtraTeamIds } from "@/lib/utils";
 import type { Team, Member, PublicUser } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
 import { medicoState, medicoLabel } from "@/lib/medico";
@@ -17,18 +18,28 @@ export default function Teams() {
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
   const { data: members = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
   const { data: users = [] } = useQuery<PublicUser[]>({ queryKey: ["/api/users"] });
+  const { data: teamNominations = [] } = useQuery<{ memberId: number }[]>({
+    queryKey: ["/api/nominations/team", teamId],
+    queryFn: () => teamId ? apiRequest("GET", `/api/nominations/team/${teamId}`).then(r => r.json()) : Promise.resolve([]),
+    enabled: !!teamId,
+  });
+  const nominatedIds = new Set(teamNominations.map(n => n.memberId));
 
   if (teamId) {
     const team = teams.find(t => t.id === teamId);
     if (!team) return <div className="text-sm text-muted-foreground">Team nicht gefunden</div>;
     const isYouth = /^U/i.test(team.category || "");
+    const isTeamMember = (m: Member) => m.teamId === team.id || memberExtraTeamIds(m).includes(team.id);
     const medicoPenalty = (m: Member) => {
       const st = medicoState(m);
       return st === "inapte" || st === "overdue" || st === "none" ? 1 : 0;
     };
     const roster = members
-      .filter(m => m.teamId === team.id && isActiveClubMember(m))
+      .filter(m => isTeamMember(m) && isActiveClubMember(m))
       .sort((a, b) => {
+        const na = nominatedIds.has(a.id) ? 0 : 1;
+        const nb = nominatedIds.has(b.id) ? 0 : 1;
+        if (na !== nb) return na - nb;
         const pa = medicoPenalty(a);
         const pb = medicoPenalty(b);
         if (pa !== pb) return pa - pb;

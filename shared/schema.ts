@@ -93,6 +93,7 @@ export const members = sqliteTable("members", {
   memberType: text("member_type").default("spieler"), // spieler | donateur | donateur_lizenz | ehrenmitglied | sponsor
   contactInfoType: text("contact_info_type"), // contact_famille | mere_accueil (rein informativ, Nicht-Mitglied)
   familyCode: text("family_code"), // = code courrier (F999 = Familie+Nr, S = einzeln, D = Donateur); gruppiert Familien
+  extraTeamIds: text("extra_team_ids"), // JSON-Array zusätzlicher team_ids (z.B. Aufsteiger: U13 -> U15)
 });
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true });
 export type InsertMember = z.infer<typeof insertMemberSchema>;

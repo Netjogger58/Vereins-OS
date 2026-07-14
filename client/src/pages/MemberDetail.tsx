@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Upload, AlertCircle, User, Users, Shield, CreditCard, Pencil, Check, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { initials, formatDate, formatMemberName } from "@/lib/utils";
+import { initials, formatDate, formatMemberName, memberExtraTeamIds } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { CAT_CODE_LABELS } from "@shared/schema";
 import type { Member, Team, Attendance, PlayerFlag } from "@shared/schema";
@@ -336,6 +337,39 @@ export default function MemberDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Extra Teams (Aufsteiger / Doppelspiel) */}
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Users className="size-4" />Zusätzliche Teams (Aufsteiger / Doppelspiel)</CardTitle></CardHeader>
+        <CardContent>
+          {(() => {
+            const extraIds = memberExtraTeamIds(member as any);
+            const toggle = (tid: number, checked: boolean) => {
+              const next = checked
+                ? Array.from(new Set([...extraIds, tid]))
+                : extraIds.filter(id => id !== tid);
+              updateMut.mutate({ extraTeamIds: JSON.stringify(next) });
+            };
+            const otherTeams = teams.filter(t => t.id !== member.teamId);
+            return otherTeams.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Keine weiteren Teams verfügbar.</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-2">
+                {otherTeams.map(t => (
+                  <label key={t.id} className="flex items-center gap-2 text-sm p-2 rounded border hover:bg-muted/40 cursor-pointer">
+                    <Checkbox
+                      checked={extraIds.includes(t.id)}
+                      onCheckedChange={v => toggle(t.id, v === true)}
+                      disabled={!canEdit || updateMut.isPending}
+                    />
+                    <span>{t.name}</span>
+                  </label>
+                ))}
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
     </div>
   );
 }

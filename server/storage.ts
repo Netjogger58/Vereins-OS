@@ -257,7 +257,9 @@ import {
 import { isActiveClubMember } from "@shared/memberStatus";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
-import { eq, and, or, like, desc, asc, sql, isNull, gte, lte, type SQL } from "drizzle-orm";
+
+const isoToday = () => new Date().toISOString().slice(0, 10);
+import { eq, and, or, like, desc, asc, sql, isNull, gte, lte, inArray, type SQL } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export const sqlite = new Database("data.db");
@@ -1144,6 +1146,7 @@ export interface IStorage {
   // Nominations
   listNominationsByEvent(eventId: number): Promise<Nomination[]>;
   listNominationsByMember(memberId: number): Promise<Nomination[]>;
+  listNominationsByTeam(teamId: number): Promise<Nomination[]>;
   createNomination(n: InsertNomination): Promise<Nomination>;
   updateNominationResponse(id: number, response: string, reason?: string): Promise<Nomination | undefined>;
   deleteNomination(id: number): Promise<void>;
@@ -1695,6 +1698,13 @@ export class DatabaseStorage implements IStorage {
   // ── Nominations ──────────────────────────────────────────
   async listNominationsByEvent(eventId: number) {
     return db.select().from(nominations).where(eq(nominations.eventId, eventId)).orderBy(asc(nominations.createdAt)).all();
+  }
+  async listNominationsByTeam(teamId: number) {
+    // Alle Nominierungen für aktuelle/zukünftige Events dieses Teams
+    const evs = db.select({ id: events.id }).from(events).where(and(eq(events.teamId, teamId), gte(events.date, isoToday()))).all();
+    const ids = evs.map(e => e.id);
+    if (!ids.length) return [];
+    return db.select().from(nominations).where(inArray(nominations.eventId, ids)).all();
   }
   async listNominationsByMember(memberId: number) {
     return db.select().from(nominations).where(eq(nominations.memberId, memberId)).orderBy(desc(nominations.createdAt)).all();

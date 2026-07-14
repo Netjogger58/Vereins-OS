@@ -79,6 +79,18 @@ export function addDaysIso(base: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+export function memberExtraTeamIds(m: { extraTeamIds?: string | null }): number[] {
+  if (!m.extraTeamIds) return [];
+  try {
+    const parsed = JSON.parse(m.extraTeamIds);
+    if (Array.isArray(parsed)) return parsed.map(Number).filter(id => Number.isFinite(id));
+  } catch {
+    // fallback: comma-separated
+    return m.extraTeamIds.split(/[,;\s]+/).map(Number).filter(id => Number.isFinite(id));
+  }
+  return [];
+}
+
 export function getAge(birthdate?: string | Date | null): number | null {
   if (!birthdate) return null;
   let d: Date;

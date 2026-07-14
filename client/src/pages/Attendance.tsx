@@ -14,7 +14,7 @@ import {
 import { Camera, Upload, Check, X, Sparkles, Info, Clock, Minus } from "lucide-react";
 import { apiRequest, queryClient, getAuthToken } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { initials, isoToday, formatMemberName, getAge } from "@/lib/utils";
+import { initials, isoToday, formatMemberName, getAge, memberExtraTeamIds } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import type { Team, Member, Attendance } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
@@ -80,7 +80,15 @@ export default function AttendancePage() {
   }, [teams, user, teamId]);
 
   const selTeamId = teamId ? Number(teamId) : 0;
-  const teamMembers = members.filter(m => m.teamId === selTeamId && isActiveClubMember(m));
+  const isTeamMember = (m: Member) => m.teamId === selTeamId || memberExtraTeamIds(m).includes(selTeamId);
+  const teamMembers = members.filter(m => isTeamMember(m) && isActiveClubMember(m));
+
+  const { data: teamNominations = [] } = useQuery<{ memberId: number }[]>({
+    queryKey: ["/api/nominations/team", selTeamId],
+    queryFn: () => selTeamId ? apiRequest("GET", `/api/nominations/team/${selTeamId}`).then(r => r.json()) : Promise.resolve([]),
+    enabled: !!selTeamId,
+  });
+  const nominatedIds = new Set(teamNominations.map(n => n.memberId));
 
   const { data: attendance = [] } = useQuery<Attendance[]>({
     queryKey: ["/api/attendance", { teamId: selTeamId, date }],
@@ -170,6 +178,9 @@ export default function AttendancePage() {
     const oa = STATUS_ORDER[statusByMember(a.id) ?? ""] ?? UNMARKED_ORDER;
     const ob = STATUS_ORDER[statusByMember(b.id) ?? ""] ?? UNMARKED_ORDER;
     if (oa !== ob) return oa - ob;
+    const na = nominatedIds.has(a.id) ? 0 : 1;
+    const nb = nominatedIds.has(b.id) ? 0 : 1;
+    if (na !== nb) return na - nb;
     const pa = medicoPenalty(a);
     const pb = medicoPenalty(b);
     if (pa !== pb) return pa - pb;
