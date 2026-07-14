@@ -155,7 +155,7 @@ function normalizeHeader(k: string): string {
   return cleanLabel(k).toLowerCase();
 }
 const RAW_KEY_ALIASES: Record<string, string> = { nom: "col0" };
-function getRawValue(m: RosterMember, ...names: string[]) {
+function getRawValue(m: RosterMember, ...names: string[]): any {
   const raw = m.raw || {};
   for (const n of names) {
     const target = normalizeHeader(n);
@@ -165,12 +165,32 @@ function getRawValue(m: RosterMember, ...names: string[]) {
     }
     const alias = RAW_KEY_ALIASES[target];
     if (alias != null && raw[alias] !== undefined && raw[alias] !== null && raw[alias] !== "") return raw[alias];
+    // Langue / Nationalité aufsplitten
+    if (target === "langue" || target === "nationalite") {
+      const combined: string = m.nationality || getRawValue(m, "Langue / Nationalité") || "";
+      const parts: string[] = String(combined).split(" / ");
+      return target === "langue"
+        ? mapLangCode((parts[0] || "").trim())
+        : (parts[1] || "").trim();
+    }
   }
   return undefined;
 }
 function oldCodeValue(m: RosterMember): string {
   const v = getRawValue(m, "Cat", "Alter Code (Liste)", "AL Cat", "Al Cat");
   return v != null && v !== "" ? String(v) : "—";
+}
+const DISPLAY_LANG_MAP: Record<string, string> = {
+  F: "FR", E: "EN", G: "EN", GB: "EN", I: "IT", P: "PT", S: "ES",
+  D: "DE", A: "DE", H: "HU", N: "NL", L: "LU", LB: "LU", B: "BE",
+};
+function mapLangCode(code: string): string {
+  return DISPLAY_LANG_MAP[code.toUpperCase()] || code;
+}
+function langNat(m: RosterMember): { lang: string; nat: string } {
+  const raw = m.nationality || getRawValue(m, "Langue / Nationalité") || "";
+  const parts = String(raw).split(" / ");
+  return { lang: mapLangCode((parts[0] || "").trim()), nat: (parts[1] || "").trim() };
 }
 
 function csvEscape(v: any): string {
@@ -331,6 +351,8 @@ function getSortValue(m: RosterMember, key: string): string | number {
   switch (key) {
     case "name": return (m.name || "").toLowerCase();
     case "firstName": return (m.firstName || "").toLowerCase();
+    case "langue": return (langNat(m).lang || "").toLowerCase();
+    case "nationalite": return (langNat(m).nat || "").toLowerCase();
     case "cardId": return (m.cardId || "").toLowerCase();
     case "oldCode": return oldCodeValue(m).toLowerCase();
     case "catCode": return m.catCode ?? -1;
@@ -434,7 +456,7 @@ export default function Secretariat() {
 
   // Excel-Rohspalten in Original-Reihenfolge (Membres 2026_2027)
   const EXCEL_COLUMN_ORDER = [
-    "Nom", "Prénom ou les prénoms", "Random-No", "Langue / Nationalité", "Adresse", "Code postale", "Localité",
+    "Nom", "Prénom ou les prénoms", "Random-No", "Langue", "Nationalité", "Adresse", "Code postale", "Localité",
     "code courrier", "courrier ???", "AL Cat", "Nei CAT", "Catégorie interne Mersch75 2026-2027",
     "Al Cat", "Nei Cat", "Catégorie Listing FLH 2026-2027", "Etudiant", "U17H", "U15H", "U13H", "U11M", "U9M", "U7M",
     "U17F", "U15F", "U13F", "Pass Nummer (Licences Joueurs / Joueuses)", "Licences Off (officiels)",
@@ -460,7 +482,13 @@ export default function Secretariat() {
       if (ia !== ib) return ia - ib;
       return a.localeCompare(b);
     });
-    return sorted.map((k) => (k === "col0" ? "Nom" : k));
+    const mapped: string[] = [];
+    for (const k of sorted) {
+      if (k === "col0") { mapped.push("Nom"); continue; }
+      if (cleanLabel(k).toLowerCase() === "langue / nationalité") { mapped.push("Langue", "Nationalité"); continue; }
+      mapped.push(k);
+    }
+    return mapped;
   }, [roster]);
 
   const filtered = useMemo(() => {
@@ -950,6 +978,8 @@ export default function Secretariat() {
                   <tr className="border-b bg-muted/50 text-left">
                     <HeadCell k="name" className="sticky left-0 bg-muted/50 z-10 min-w-[180px]">Nom</HeadCell>
                     <HeadCell k="firstName">Prénom</HeadCell>
+                    <HeadCell k="langue">Langue</HeadCell>
+                    <HeadCell k="nationalite">Nationalité</HeadCell>
                     <HeadCell k="cardId">Card-ID</HeadCell>
                     <HeadCell k="oldCourrier">Alt. Courrier</HeadCell>
                     <HeadCell k="family">Neu. Courrier</HeadCell>
@@ -993,6 +1023,8 @@ export default function Secretariat() {
                         </Link>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{formatFirstName(m.firstName || "")}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{langNat(m).lang || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{langNat(m).nat || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.cardId || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "code courrier", "Alter Courrier-Code") || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.familyCode || "—"}</td>
