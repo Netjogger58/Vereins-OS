@@ -66,6 +66,18 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ---
 
+### Mitgliederselbstbedienung
+
+| Modul | Status | Was kann man damit machen? |
+|---|---|---|
+| **Meine Termine** | ✅ *(neu)* | Spieler/innen sehen ihre anstehenden Mannschafts-Termine und können ihre Verfügbarkeit setzen. |
+| **Nominierungs-Antworten** | ✅ *(neu)* | Für ein Spiel nominierte Spieler können direkt „Ja“ oder „Nein“ sagen – inkl. Begründung bei Absage. |
+| **Profil & Datenpflege** | 🟡 | Eigenes Profil bearbeiten ist vorbereitet, wird aber noch ausgebaut. |
+
+> Die Selbstbedienung erreichen Mitglieder über den neuen mobilen Tab **„Termine“** oder die Seite **„Meine Termine“**.
+
+---
+
 ### Spielbetrieb & Statistik
 
 | Modul | Status | Was kann man damit machen? |
@@ -99,8 +111,10 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | **Trainer-Codes** | ✅ | Trainer erhalten einen Code, mit dem sie sich anmelden oder ein Team zuordnen können. |
 | **Dienste (Duties)** | 🟡 | Einfache Verwaltung von Diensten (z. B. Aufbau, Kasse). |
 | **Hallen / Facilities** | 🟡 | Einfache Verwaltung von Hallen/Plätzen. |
-| **Warteliste** | ✅ *(neu)* | Interessenten erfassen, zum Probetraining einladen, als Mitglied übernehmen oder ablehnen. |
-| **DSGVO-Tools** | ✅ *(neu)* | Consent-Übersicht, Datenauszug pro Mitglied, Löschanträge mit Freigabe-Workflow. |
+| **Inventar / Material** | ✅ *(neu)* | Gegenstände mit Menge, Lagerort, Zustand und QR-Code verwalten; Ausleihen an Mitglieder mit Rückgabeverfolgung. |
+| **Warteliste** | ✅ | Interessenten erfassen, zum Probetraining einladen, als Mitglied übernehmen oder ablehnen. |
+| **DSGVO-Tools** | ✅ | Consent-Übersicht, Datenauszug pro Mitglied, Löschanträge mit Freigabe-Workflow. |
+| **Mobile Ansicht / PWA** | ✅ *(neu)* | App ist als installierbare Web-App nutzbar (Service Worker, Manifest, Install-Hinweis). |
 
 ---
 
@@ -174,10 +188,13 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 - ✅ **Familienverknüpfung** im Mitglied-Detail sichtbar
 - ✅ **DSGVO-Tools**: Consent, Datenauszug, Löschantrag
 - ✅ **Saison-Archiv** aus der Website importiert
-- ✅ **Code-Modularisierung** gestartet (Waitlist, DSGVO, Archiv ausgelagert)
+- ✅ **Code-Modularisierung** gestartet (Waitlist, DSGVO, Archiv, Inventory ausgelagert)
 - ✅ **Erste Tests** eingeführt
 - ✅ **Datenbank-Anschluss abstrahiert** (SQLite oder PostgreSQL)
 - ✅ **Secrets gehärtet** (Admin-Passwort und Seed-Passwörter kommen aus der Umgebung)
+- ✅ **Mobile Ansicht / PWA** installierbar (Service Worker, Manifest, Install-Hinweis)
+- ✅ **Mitgliederselbstbedienung „Meine Termine“** inkl. Verfügbarkeit und Nominierungs-Antworten
+- ✅ **Inventar-Modul** mit Gegenstandsverwaltung und Ausleihen
 
 ---
 
@@ -207,16 +224,16 @@ Die folgende Übersicht nutzt eine einfache Ampel:
    Magic-Link per SMS versenden (Zugangsdaten für Mixvoip fehlen noch).
 
 8. **Mobile App / PWA**  
-   Damit Trainer direkt vom Handy aus die Anwesenheit erfassen können.
+   ✅ Einführung erledigt. Nächster Schritt: weitere Abläufe für Trainer direkt vom Handy ermöglichen.
 
 9. **Spielwochen-Recap**  
    Jede Woche automatisch einen kurzen Text mit allen Mannschafts-Resultaten für die News-Seite generieren.
 
-10. **Weitere Datenmodelle ohne Oberfläche noch freischalten**
+10. **Geplante weitere Module**
     - Schiedsrichter-Einsätze
-    - Material & Inventar
+    - Raumreservierungen (Hallen/Plätze mit Kalenderbuchung)
     - Verletzungen & Reha
-    - Umfragen
+    - Umfragen / Abstimmungen
     - Gegner-Scouting
     - Fahrgemeinschaften
     - Fan-Content / Live-Ticker
@@ -230,11 +247,12 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ## 7. Fazit
 
-Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools und das Saison-Archiv hinzu.
+Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar und die Mitgliederselbstbedienung hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
 
 Der Fokus für die nächsten Wochen sollte sein:
 - Test-Abdeckung erhöhen
 - Mehrsprachigkeit und Komfort in den Basis-Modulen verbessern
+- Raumreservierungen und Umfragen als nächste Selbstbedienungs-Features umsetzen
 - Produktiv-Umgebung vorbereiten
 
 > **Wichtigster offener Punkt für den Vorstand:** Entscheiden, ob/wann die App auf einen Server umzieht und wer die Zugangsdaten/Secrets verwaltet.
