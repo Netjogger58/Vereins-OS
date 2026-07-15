@@ -274,6 +274,9 @@ import {
   matchEvents,
   type MatchEvent,
   type InsertMatchEvent,
+  trialRegistrations,
+  type TrialRegistration,
+  type InsertTrialRegistration,
 } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
 import "dotenv/config";
@@ -1029,6 +1032,18 @@ function init() {
       player_id INTEGER,
       description TEXT,
       team_side TEXT NOT NULL DEFAULT 'home',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS trial_registrations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      child_name TEXT NOT NULL,
+      age INTEGER,
+      parent_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT,
+      team_category TEXT,
+      note TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS shop_products (
@@ -1927,6 +1942,14 @@ export class DatabaseStorage implements IStorage {
   async listMatchEvents(matchId: number) { return db.select().from(matchEvents).where(eq(matchEvents.matchId, matchId)).orderBy(asc(matchEvents.minute), asc(matchEvents.createdAt)).all(); }
   async createMatchEvent(e: InsertMatchEvent) { return db.insert(matchEvents).values(e).returning().get(); }
   async deleteMatchEvent(id: number) { db.delete(matchEvents).where(eq(matchEvents.id, id)).run(); }
+
+  // ─── Trial Registrations ────────────────────────────────
+  async listTrialRegistrations(status?: string) {
+    if (status) return db.select().from(trialRegistrations).where(eq(trialRegistrations.status, status)).orderBy(desc(trialRegistrations.createdAt)).all();
+    return db.select().from(trialRegistrations).orderBy(desc(trialRegistrations.createdAt)).all();
+  }
+  async createTrialRegistration(r: InsertTrialRegistration) { return db.insert(trialRegistrations).values(r).returning().get(); }
+  async updateTrialRegistration(id: number, data: Partial<TrialRegistration>) { return db.update(trialRegistrations).set(data).where(eq(trialRegistrations.id, id)).returning().get(); }
 
   // ─── iCal lookup ────────────────────────────────────────
   async getUserByIcalToken(token: string) { return db.select().from(users).where(eq(users.icalToken, token)).get(); }

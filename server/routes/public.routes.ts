@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { insertDonationSchema } from "@shared/schema";
+import { insertDonationSchema, insertTrialRegistrationSchema } from "@shared/schema";
 
 export function registerPublicRoutes(app: any) {
   const router = Router();
@@ -59,6 +59,13 @@ export function registerPublicRoutes(app: any) {
     if (!data.success) return res.status(400).json({ message: data.error.message });
     const donation = await storage.createDonation(data.data);
     res.status(201).json(donation);
+  });
+
+  router.post("/trial-registrations", async (req: Request, res: Response) => {
+    const data = insertTrialRegistrationSchema.safeParse(req.body);
+    if (!data.success) return res.status(400).json({ message: data.error.message });
+    const registration = await storage.createTrialRegistration(data.data);
+    res.status(201).json(registration);
   });
 
   app.use("/api/public", router);

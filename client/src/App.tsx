@@ -29,6 +29,7 @@ import Donations from "@/pages/Donations";
 import CalendarFeed from "@/pages/CalendarFeed";
 import TrainingExercises from "@/pages/TrainingExercises";
 import LiveMatch from "@/pages/LiveMatch";
+import TrialRegistrations from "@/pages/TrialRegistrations";
 import Calendar from "@/pages/Calendar";
 import Attendance from "@/pages/Attendance";
 import Meetings from "@/pages/Meetings";
@@ -111,6 +112,7 @@ function AppRouter() {
         <Route path="/calendar-feed" component={CalendarFeed} />
         <Route path="/training-exercises" component={TrainingExercises} />
         <Route path="/live-match" component={LiveMatch} />
+        <Route path="/trial-registrations" component={TrialRegistrations} />
         <Route path="/nominations" component={Nominations} />
         <Route path="/chat" component={Chat} />
         <Route path="/import" component={ImportMembers} />

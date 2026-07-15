@@ -112,6 +112,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | **Sitzungen (Meetings)** | ✅ | Interne Sitzungen erfassen. |
 | **Dokumente** | ✅ | PDFs/Bilder hochladen, kategorisieren, herunterladen. |
 | **Anmeldungen (öffentlich + intern)** | ✅ | Externes Anmeldeformular für neue Mitglieder; interne Registrierungen genehmigen/ablehnen. |
+| **Probetraining-Anmeldung** | ✅ *(neu)* | Öffentliche Landingpage für Probetraining mit API-Anbindung; interne Verwaltung der Anfragen. |
 | **Trainer-Codes** | ✅ | Trainer erhalten einen Code, mit dem sie sich anmelden oder ein Team zuordnen können. |
 | **Dienste (Duties)** | 🟡 | Einfache Verwaltung von Diensten (z. B. Aufbau, Kasse). |
 | **Hallen / Facilities** | 🟡 | Einfache Verwaltung von Hallen/Plätzen. |
@@ -229,6 +230,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 - ✅ **Öffentliche Website-API** mit CORS für mersch75.lu
 - ✅ **Live-Spielanalyse** mit Ereignis-Erfassung
 - ✅ **Übungsdatenbank** mit Kategorien, Tags und Medien
+- ✅ **Probetraining-Anmeldung** mit öffentlicher Landingpage und internem Verwaltungsbereich
 
 ---
 
@@ -278,7 +280,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ## 7. Fazit
 
-Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail, Bankimport, Rechnungen, Spenden, iCal-Kalender-Feed, öffentliche Website-API, Live-Spielanalyse und Übungsdatenbank hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
+Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail, Bankimport, Rechnungen, Spenden, iCal-Kalender-Feed, öffentliche Website-API, Live-Spielanalyse, Übungsdatenbank und Probetraining-Anmeldung hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
 
 Der Fokus für die nächsten Wochen sollte sein:
 - Test-Abdeckung erhöhen

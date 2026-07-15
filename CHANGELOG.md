@@ -11,6 +11,8 @@ Neueste Änderungen zuerst.
   - Öffentliche Website-API unter `/api/public/*` (Events, Spiele, Sponsoren, Hallen, Umfragen, Spenden) mit CORS.
   - Neue Seite `/training-exercises` mit Übungsdatenbank (Kategorie, Tags, Altersgruppe, Dauer, Medien).
   - Neue Seite `/live-match` zum Erfassen von Spielereignissen (Tore, Assists, Karten etc.) mit Zeitlinie und Statistik.
+  - Öffentliche Probetraining-Anmeldung via `/api/public/trial-registrations` plus Landingpage-Vorlage für `mersch75.lu`.
+  - Interne Seite `/trial-registrations` zur Verwaltung der Probetraining-Ufroe.
 
 - **Vereins-OS-App – Fahrgemeinschaften.**
   - Neue Seite `/carpools` für Mitfahrgelegenheiten zu Terminen.

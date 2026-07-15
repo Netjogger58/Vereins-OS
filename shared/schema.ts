@@ -1219,6 +1219,24 @@ export type InsertExerciseMedia = z.infer<typeof insertExerciseMediaSchema>;
 export type Exercise = typeof exercises.$inferSelect;
 export type ExerciseMedia = typeof exerciseMedia.$inferSelect;
 
+// ─── Trial Registrations (öffentliche Probetraining-Anmeldung) ──
+export const trialRegistrations = sqliteTable("trial_registrations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  childName: text("child_name").notNull(),
+  age: integer("age"),
+  parentName: text("parent_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  teamCategory: text("team_category"),
+  note: text("note"),
+  status: text("status").notNull().default("pending"), // pending | contacted | converted | cancelled
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
+export const insertTrialRegistrationSchema = createInsertSchema(trialRegistrations).omit({ id: true, status: true, createdAt: true });
+export type InsertTrialRegistration = z.infer<typeof insertTrialRegistrationSchema>;
+export type TrialRegistration = typeof trialRegistrations.$inferSelect;
+
 // ─── Live Match Events ────────────────────────────────────
 export const matchEvents = sqliteTable("match_events", {
   id: integer("id").primaryKey({ autoIncrement: true }),
