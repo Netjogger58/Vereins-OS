@@ -86,6 +86,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | **Statistiken** | ✅ | Ligastatistiken, Tabellen, Team-Bilanzen ansehen. |
 | **Spielerstatistiken** | ✅ | Top-Scorer, persönliche Tore pro Spieler/in. |
 | **Aufstellungen / Nominierungen** | ✅ | Für ein Spiel/Training Spieler nominieren, Zusage/Absage erfassen. |
+| **Gegner-Scouting** | ✅ *(neu)* | Gegner-Datebank mit Kontakt, Halle, Stärken/Schwächen; Spielhistorie mit Bilanz. |
 
 ---
 
@@ -111,9 +112,12 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | **Trainer-Codes** | ✅ | Trainer erhalten einen Code, mit dem sie sich anmelden oder ein Team zuordnen können. |
 | **Dienste (Duties)** | 🟡 | Einfache Verwaltung von Diensten (z. B. Aufbau, Kasse). |
 | **Hallen / Facilities** | 🟡 | Einfache Verwaltung von Hallen/Plätzen. |
+| **Raumreservierung** | ✅ *(neu)* | Hallen/Plätze buchen mit Datum, Zeit und Überschneidungsprüfung. |
 | **Inventar / Material** | ✅ *(neu)* | Gegenstände mit Menge, Lagerort, Zustand und QR-Code verwalten; Ausleihen an Mitglieder mit Rückgabeverfolgung. |
+| **Umfragen** | ✅ *(neu)* | Abstimmungen mit einfacher oder Mehrfach-Antwort, Live-Ergebnissen und Schließen-Funktion. |
 | **Warteliste** | ✅ | Interessenten erfassen, zum Probetraining einladen, als Mitglied übernehmen oder ablehnen. |
 | **DSGVO-Tools** | ✅ | Consent-Übersicht, Datenauszug pro Mitglied, Löschanträge mit Freigabe-Workflow. |
+| **Fahrgemeinschaften** | ✅ *(neu)* | Mitfahrgelegenheiten zu Terminen anbieten, Plätze verwalten und ein-/austeigen. |
 | **Mobile Ansicht / PWA** | ✅ *(neu)* | App ist als installierbare Web-App nutzbar (Service Worker, Manifest, Install-Hinweis). |
 
 ---
@@ -195,6 +199,10 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 - ✅ **Mobile Ansicht / PWA** installierbar (Service Worker, Manifest, Install-Hinweis)
 - ✅ **Mitgliederselbstbedienung „Meine Termine“** inkl. Verfügbarkeit und Nominierungs-Antworten
 - ✅ **Inventar-Modul** mit Gegenstandsverwaltung und Ausleihen
+- ✅ **Raumreservierung** mit Buchungen und Überschneidungsprüfung
+- ✅ **Umfragen** mit einfacher/Mehrfach-Antwort und Live-Ergebnissen
+- ✅ **Gegner-Scouting** mit Historie und Bilanz
+- ✅ **Fahrgemeinschaften** für Termine mit Mitfahrer-Verwaltung
 
 ---
 
@@ -231,12 +239,9 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 10. **Geplante weitere Module**
     - Schiedsrichter-Einsätze
-    - Raumreservierungen (Hallen/Plätze mit Kalenderbuchung)
     - Verletzungen & Reha
-    - Umfragen / Abstimmungen
-    - Gegner-Scouting
-    - Fahrgemeinschaften
     - Fan-Content / Live-Ticker
+    - Externe Integrationen (Banking, handball4all, SMS)
 
 ### 🏗️ Technisch
 11. **Vollständig auf PostgreSQL umstellen** (optional, wenn Cloud-Deploy kommt)
@@ -247,12 +252,12 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ## 7. Fazit
 
-Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar und die Mitgliederselbstbedienung hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
+Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting und Fahrgemeinschaften hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
 
 Der Fokus für die nächsten Wochen sollte sein:
 - Test-Abdeckung erhöhen
 - Mehrsprachigkeit und Komfort in den Basis-Modulen verbessern
-- Raumreservierungen und Umfragen als nächste Selbstbedienungs-Features umsetzen
+- Entscheidung zu externen Integrationen treffen (Banking, handball4all, SMS)
 - Produktiv-Umgebung vorbereiten
 
 > **Wichtigster offener Punkt für den Vorstand:** Entscheiden, ob/wann die App auf einen Server umzieht und wer die Zugangsdaten/Secrets verwaltet.
