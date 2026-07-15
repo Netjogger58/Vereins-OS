@@ -5,6 +5,9 @@ import { randomBytes } from "node:crypto";
 import { getArchiveDir } from "./sboArchive";
 import bcrypt from "bcryptjs";
 import { storage, seedIfEmpty, seedTestCards, sqlite } from "./storage";
+import { registerWaitlistRoutes } from "./routes/waitlist.routes";
+import { registerGdprRoutes } from "./routes/gdpr.routes";
+import { registerArchiveRoutes } from "./routes/archive.routes";
 import {
   authMiddleware,
   requireAuth,
@@ -326,7 +329,11 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     const key = loginKey(req, "admin-login");
     const lock = checkLockout(key);
     if (lock.locked) return res.status(429).json({ message: "Zu viele Fehlversuche. Bitte später erneut versuchen.", retryAfter: lock.retryAfter });
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "mersch75";
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === "production" ? undefined : "mersch75");
+    if (!ADMIN_PASSWORD) {
+      console.error("[security] ADMIN_PASSWORD ist in Produktion nicht gesetzt");
+      return res.status(500).json({ message: "Server nicht konfiguriert" });
+    }
     if (!password || password !== ADMIN_PASSWORD) {
       recordLoginFailure(key);
       return res.status(401).json({ message: "Falsches Passwort" });
@@ -2441,21 +2448,6 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     res.json(item);
   });
 
-  // Waitlist
-  app.get("/api/waitlist", requireAuth(), async (req, res) => {
-    const teamId = req.query.teamId ? Number(req.query.teamId) : undefined;
-    const items = await storage.listWaitlistEntries(teamId);
-    res.json(items);
-  });
-  app.post("/api/waitlist", requireAuth(), async (req, res) => {
-    const item = await storage.createWaitlistEntry(req.body);
-    res.status(201).json(item);
-  });
-  app.delete("/api/waitlist/:id", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
-    await storage.deleteWaitlistEntry(Number(req.params.id));
-    res.status(204).end();
-  });
-
   // Budget
   app.get("/api/budget", requireAuth(["präsident", "admin", "kassenwart"]), async (req, res) => {
     const year = req.query.year ? Number(req.query.year) : undefined;
@@ -2513,34 +2505,6 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
-  });
-
-  // GDPR
-  app.get("/api/gdpr", requireAuth(), async (req, res) => {
-    const items = await storage.listGdprConsents((req as any).user.id);
-    res.json(items);
-  });
-  app.post("/api/gdpr/consent", requireAuth(), async (req, res) => {
-    const item = await storage.createGdprConsent({
-      userId: (req as any).user.id,
-      consentType: req.body.consentType || "data_processing",
-      consented: true,
-      ipAddress: req.ip,
-    });
-    res.status(201).json(item);
-  });
-  app.get("/api/gdpr/export", requireAuth(), async (req, res) => {
-    const user = (req as any).user!;
-    const members = await storage.listMembers();
-    const member = members.find((m: any) => m.userId === user.id) || null;
-    const consents = await storage.listGdprConsents(user.id);
-    const data = { user: { id: user.id, email: user.email, role: user.role }, member, consents };
-    res.json(data);
-  });
-  app.delete("/api/gdpr/delete", requireAuth(), async (req, res) => {
-    const userId = (req as any).user.id;
-    console.log(`GDPR delete requested for user ${userId}`);
-    res.status(204).end();
   });
 
   // Website Pages (public + admin)
@@ -2765,80 +2729,10 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     res.json({ xml, total, count: transactions.length });
   });
 
-  // GET /api/archive/seasons - Alle Archiv-Saisons
-  app.get("/api/archive/seasons", requireAuth(), async (_req, res) => {
-    const seasons = await storage.getArchiveSeasons();
-    res.json(seasons);
-  });
-
-  // GET /api/archive/teams/:seasonId - Teams einer Archiv-Saison
-  app.get("/api/archive/teams/:seasonId", requireAuth(), async (req, res) => {
-    const seasonId = parseInt(qs(req.params.seasonId)!);
-    const teams = await storage.getArchiveTeams(seasonId);
-    res.json(teams);
-  });
-
-  // GET /api/archive/members/:seasonId - Mitglieder einer Archiv-Saison
-  app.get("/api/archive/members/:seasonId", requireAuth(), async (req, res) => {
-    const seasonId = parseInt(qs(req.params.seasonId)!);
-    const members = await storage.getArchiveMembers(seasonId);
-    res.json(members);
-  });
-
-  // GET /api/archive/matches/:seasonId - Spiele einer Archiv-Saison
-  app.get("/api/archive/matches/:seasonId", requireAuth(), async (req, res) => {
-    const seasonId = parseInt(qs(req.params.seasonId)!);
-    const matches = await storage.getArchiveMatches(seasonId);
-    res.json(matches);
-  });
-
-  // GET /api/archive/export/:seasonId - Export einer Archiv-Saison als JSON
-  app.get("/api/archive/export/:seasonId", requireAuth(), async (req, res) => {
-    const seasonId = parseInt(qs(req.params.seasonId)!);
-    const jsonData = await storage.exportSeasonToJson(seasonId);
-    if (!jsonData) {
-      return res.status(404).json({ message: "Saison nicht gefunden" });
-    }
-    res.json(JSON.parse(jsonData));
-  });
-
-  // POST /api/archive/import - Import einer Archiv-Saison aus JSON
-  app.post("/api/archive/import", requireAuth(), async (req, res) => {
-    const authed = req as AuthedRequest;
-    if (!["präsident", "admin"].includes(authed.user!.role)) {
-      return res.status(403).json({ message: "Keine Berechtigung" });
-    }
-    try {
-      const imported = await storage.importSeasonFromJson(JSON.stringify(req.body));
-      res.json(imported);
-    } catch (error) {
-      res.status(400).json({ message: "Import fehlgeschlagen", error: String(error) });
-    }
-  });
-
-  // POST /api/archive/rollover - Saison abschließen & neue Saison starten
-  app.post("/api/archive/rollover", requireAuth(), async (req, res) => {
-    const authed = req as AuthedRequest;
-    if (!["präsident", "admin", "secretaire"].includes(authed.user!.role)) {
-      return res.status(403).json({ message: "Keine Berechtigung" });
-    }
-    const { newSeasonName, newSeasonStart, newSeasonEnd, finishedSeasonName, resetLiveData } = req.body || {};
-    if (!newSeasonName || !newSeasonStart || !newSeasonEnd) {
-      return res.status(400).json({ message: "newSeasonName, newSeasonStart und newSeasonEnd sind erforderlich" });
-    }
-    try {
-      const result = await storage.rolloverSeason({
-        newSeasonName,
-        newSeasonStart,
-        newSeasonEnd,
-        finishedSeasonName,
-        resetLiveData: resetLiveData !== false,
-      });
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ message: "Saison-Rollover fehlgeschlagen", error: String(error) });
-    }
-  });
+  // Modulare Routen registrieren
+  registerWaitlistRoutes(app);
+  registerGdprRoutes(app);
+  registerArchiveRoutes(app);
 
   return _httpServer;
 }

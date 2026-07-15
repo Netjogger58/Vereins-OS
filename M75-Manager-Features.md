@@ -113,7 +113,7 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
   - ✅ Manuelle Erfassung mit Status (anwesend, entschuldigt, unentschuldigt, krank)
   - ✅ Prouftraining / Probe-Training markieren
   - ✅ Existente Mitglieder schnell als Prouftraining hinzufügen
-  - 🟡 Vereinfachter Eingabe-Fluss für neue/spontane Spieler (Name, Geburtsdatum, Handy, KV-Karte letzte 5 Ziffern) · *geplant*
+  - ✅ Vereinfachter Eingabe-Fluss für neue/spontane Spieler (Name, Geburtsdatum, Handy, KV-Karte letzte 5 Ziffern) · *neu*
 - ✅ Check-In / Karten-Scan (QR) · *neu*
 
 **Organisation**
@@ -129,7 +129,7 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
 **Finanzen**
 - ✅ Finanzen (Konten/Buchungen)
 - ✅ Beiträge (Fees)
-- 🟡 Budget
+- ✅ Budget ( saisonale Charges/Produits + Ist-Vergleich in Finanzen)
 
 **Kommunikation**
 - ✅ Ankündigungen
@@ -142,7 +142,7 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
 - ✅ Willkommensmappe (mehrsprachige Wëllkomm-Mapp) · *neu*
 - 🟡 Galerie
 - 🟡 Sponsoren
-- 🟡 Shop
+- ✅ Shop (externer Fan-Shop-Link + interne Produkt-/Bestandsliste)
 
 > Mehrsprachigkeit (DE/FR/LU/EN/PT) ist über `i18n` bereits aktiv und wird modulweise ergänzt (🔄).
 

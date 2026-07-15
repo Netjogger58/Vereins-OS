@@ -887,6 +887,7 @@ export const shopOrders = sqliteTable("shop_orders", {
 export const waitlistEntries = sqliteTable("waitlist_entries", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   memberName: text("member_name").notNull(),
+  birthdate: text("birthdate"),
   email: text("email"),
   phone: text("phone"),
   teamId: integer("team_id").notNull().references(() => teams.id),
@@ -921,11 +922,22 @@ export const newsletters = sqliteTable("newsletters", {
 export const gdprConsents = sqliteTable("gdpr_consents", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),
-  consentType: text("consent_type").notNull(),
+  consentType: text("consent_type").notNull(), // data_processing | photos | newsletter
   consented: integer("consented", { mode: "boolean" }).notNull().default(true),
   consentedAt: text("consented_at").notNull().default("CURRENT_TIMESTAMP"),
   ipAddress: text("ip_address"),
   createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
+export const gdprDeletionRequests = sqliteTable("gdpr_deletion_requests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  reason: text("reason"),
+  status: text("status").notNull().default("pending"), // pending | approved | rejected
+  requestedAt: text("requested_at").notNull().default("CURRENT_TIMESTAMP"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewedAt: text("reviewed_at"),
+  notes: text("notes"),
 });
 
 export const websitePages = sqliteTable("website_pages", {
@@ -1538,6 +1550,7 @@ export const insertWaitlistEntrySchema = createInsertSchema(waitlistEntries).omi
 export const insertBudgetItemSchema = createInsertSchema(budgetItems).omit({ id: true, createdAt: true });
 export const insertNewsletterSchema = createInsertSchema(newsletters).omit({ id: true, createdAt: true });
 export const insertGdprConsentSchema = createInsertSchema(gdprConsents).omit({ id: true, createdAt: true });
+export const insertGdprDeletionRequestSchema = createInsertSchema(gdprDeletionRequests).omit({ id: true, requestedAt: true, reviewedAt: true });
 export const insertWebsitePageSchema = createInsertSchema(websitePages).omit({ id: true, createdAt: true });
 
 export type InsertSponsor = z.infer<typeof insertSponsorSchema>;
@@ -1551,6 +1564,7 @@ export type InsertWaitlistEntry = z.infer<typeof insertWaitlistEntrySchema>;
 export type InsertBudgetItem = z.infer<typeof insertBudgetItemSchema>;
 export type InsertNewsletter = z.infer<typeof insertNewsletterSchema>;
 export type InsertGdprConsent = z.infer<typeof insertGdprConsentSchema>;
+export type InsertGdprDeletionRequest = z.infer<typeof insertGdprDeletionRequestSchema>;
 export type InsertWebsitePage = z.infer<typeof insertWebsitePageSchema>;
 
 export type Sponsor = typeof sponsors.$inferSelect;
@@ -1564,6 +1578,7 @@ export type WaitlistEntry = typeof waitlistEntries.$inferSelect;
 export type BudgetItem = typeof budgetItems.$inferSelect;
 export type Newsletter = typeof newsletters.$inferSelect;
 export type GdprConsent = typeof gdprConsents.$inferSelect;
+export type GdprDeletionRequest = typeof gdprDeletionRequests.$inferSelect;
 export type WebsitePage = typeof websitePages.$inferSelect;
 
 export const insertEventRsvpSchema = createInsertSchema(eventRsvps).omit({ id: true, createdAt: true });

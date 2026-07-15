@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "node:http";
 import { setupSecurity } from "./security";
+import { initDatabase } from "./storage";
 
 const app = express();
 // Hinter Reverse-Proxy (Deployment): echte Client-IP + x-forwarded-proto auswerten.
@@ -69,6 +70,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  await initDatabase();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {

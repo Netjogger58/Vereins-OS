@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useState, useMemo } from "react";
-import { Archive as ArchiveIcon, AlertTriangle, CheckCircle2, Users, Download, ChevronDown, ChevronRight } from "lucide-react";
+import { Archive as ArchiveIcon, AlertTriangle, CheckCircle2, Users, Download, ChevronDown, ChevronRight, Globe } from "lucide-react";
 import { CAT_CODE_LABELS } from "@shared/schema";
 import { formatMemberName } from "@/lib/utils";
 

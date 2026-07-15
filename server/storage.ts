@@ -210,6 +210,7 @@ import {
   budgetItems,
   newsletters,
   gdprConsents,
+  gdprDeletionRequests,
   websitePages,
   type Sponsor,
   type InsertSponsor,
@@ -233,6 +234,8 @@ import {
   type InsertNewsletter,
   type GdprConsent,
   type InsertGdprConsent,
+  type GdprDeletionRequest,
+  type InsertGdprDeletionRequest,
   type WebsitePage,
   type InsertWebsitePage,
   eventRsvps,
@@ -255,17 +258,40 @@ import {
   type InsertBudget,
 } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import "dotenv/config";
+import { drizzle as drizzleSqlite, type BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import Database from "better-sqlite3";
+import { Client as PgClient } from "pg";
+
+type AnyDrizzleDatabase = BetterSQLite3Database;
+import * as waitlistService from "./services/waitlist.service";
+import * as gdprService from "./services/gdpr.service";
 
 const isoToday = () => new Date().toISOString().slice(0, 10);
 import { eq, and, or, like, desc, asc, sql, isNull, gte, lte, inArray, type SQL } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
-export const sqlite = new Database("data.db");
-sqlite.pragma("journal_mode = WAL");
+export let sqlite: any;
+export let db: BetterSQLite3Database = undefined as unknown as BetterSQLite3Database;
 
-export const db = drizzle(sqlite);
+export async function initDatabase() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    const client = new PgClient({ connectionString: databaseUrl });
+    await client.connect();
+    db = drizzlePg(client) as unknown as BetterSQLite3Database;
+    console.log("[db] PostgreSQL verbunden");
+    return;
+  }
+  const dbPath = process.env.SQLITE_PATH || "data.db";
+  sqlite = new Database(dbPath);
+  sqlite.pragma("journal_mode = WAL");
+  db = drizzleSqlite(sqlite);
+  init();
+  runMigrations();
+  console.log(`[db] SQLite initialisiert: ${dbPath}`);
+}
 
 // Create tables (idempotent)
 function init() {
@@ -972,7 +998,6 @@ function init() {
     );
   `);
 }
-init();
 
 // ─── Lightweight migrations (idempotent) ────────────────
 // SQLite CREATE TABLE IF NOT EXISTS does not add new columns to existing tables,
@@ -1056,7 +1081,6 @@ function runMigrations() {
     console.error("[migrate] failed to create budgets:", e);
   }
 }
-runMigrations();
 
 export interface IStorage {
   // Users
@@ -1477,7 +1501,9 @@ export interface IStorage {
   // Waitlist
   listWaitlistEntries(teamId?: number): Promise<WaitlistEntry[]>;
   createWaitlistEntry(data: InsertWaitlistEntry): Promise<WaitlistEntry>;
+  updateWaitlistEntry(id: number, data: Partial<InsertWaitlistEntry>): Promise<WaitlistEntry | undefined>;
   deleteWaitlistEntry(id: number): Promise<void>;
+  convertWaitlistEntryToMember(id: number): Promise<Member | undefined>;
 
   // Budget
   listBudgetItems(year?: number): Promise<BudgetItem[]>;
@@ -1495,6 +1521,10 @@ export interface IStorage {
   // GDPR
   listGdprConsents(userId?: number): Promise<GdprConsent[]>;
   createGdprConsent(data: InsertGdprConsent): Promise<GdprConsent>;
+  listGdprDeletionRequests(status?: string): Promise<GdprDeletionRequest[]>;
+  createGdprDeletionRequest(data: InsertGdprDeletionRequest): Promise<GdprDeletionRequest>;
+  updateGdprDeletionRequest(id: number, data: Partial<InsertGdprDeletionRequest>): Promise<GdprDeletionRequest | undefined>;
+  getMemberDataExport(userId: number): Promise<any>;
 
   // Website Pages
   listWebsitePages(): Promise<WebsitePage[]>;
@@ -3224,16 +3254,21 @@ export class DatabaseStorage implements IStorage {
     return db.update(shopOrders).set(data).where(eq(shopOrders.id, id)).returning().get();
   }
 
-  // Waitlist
+  // Waitlist (delegiert an Service)
   async listWaitlistEntries(teamId?: number): Promise<WaitlistEntry[]> {
-    if (teamId) return db.select().from(waitlistEntries).where(eq(waitlistEntries.teamId, teamId)).orderBy(asc(waitlistEntries.createdAt)).all();
-    return db.select().from(waitlistEntries).orderBy(asc(waitlistEntries.createdAt)).all();
+    return waitlistService.listWaitlistEntries(teamId);
   }
   async createWaitlistEntry(data: InsertWaitlistEntry): Promise<WaitlistEntry> {
-    return db.insert(waitlistEntries).values(data).returning().get();
+    return waitlistService.createWaitlistEntry(data);
+  }
+  async updateWaitlistEntry(id: number, data: Partial<InsertWaitlistEntry>): Promise<WaitlistEntry | undefined> {
+    return waitlistService.updateWaitlistEntry(id, data);
   }
   async deleteWaitlistEntry(id: number): Promise<void> {
-    db.delete(waitlistEntries).where(eq(waitlistEntries.id, id)).run();
+    return waitlistService.deleteWaitlistEntry(id);
+  }
+  async convertWaitlistEntryToMember(id: number): Promise<Member | undefined> {
+    return waitlistService.convertWaitlistEntryToMember(id);
   }
 
   // Budget
@@ -3268,13 +3303,24 @@ export class DatabaseStorage implements IStorage {
     db.delete(newsletters).where(eq(newsletters.id, id)).run();
   }
 
-  // GDPR
+  // GDPR (delegiert an Service)
   async listGdprConsents(userId?: number): Promise<GdprConsent[]> {
-    if (userId) return db.select().from(gdprConsents).where(eq(gdprConsents.userId, userId)).orderBy(desc(gdprConsents.consentedAt)).all();
-    return db.select().from(gdprConsents).orderBy(desc(gdprConsents.consentedAt)).all();
+    return gdprService.listGdprConsents(userId);
   }
   async createGdprConsent(data: InsertGdprConsent): Promise<GdprConsent> {
-    return db.insert(gdprConsents).values(data).returning().get();
+    return gdprService.createGdprConsent(data);
+  }
+  async listGdprDeletionRequests(status?: string): Promise<GdprDeletionRequest[]> {
+    return gdprService.listGdprDeletionRequests(status);
+  }
+  async createGdprDeletionRequest(data: InsertGdprDeletionRequest): Promise<GdprDeletionRequest> {
+    return gdprService.createGdprDeletionRequest(data);
+  }
+  async updateGdprDeletionRequest(id: number, data: Partial<InsertGdprDeletionRequest>): Promise<GdprDeletionRequest | undefined> {
+    return gdprService.updateGdprDeletionRequest(id, data);
+  }
+  async getMemberDataExport(userId: number): Promise<any> {
+    return gdprService.getMemberDataExport(userId);
   }
 
   // Website Pages
@@ -3635,6 +3681,11 @@ export async function seedIfEmpty() {
   const count = db.select().from(users).all();
   if (count.length > 0) return;
 
+  const seedPassword = process.env.SEED_USER_PASSWORD || "demo123";
+  if (process.env.NODE_ENV === "production" && !process.env.SEED_USER_PASSWORD) {
+    console.warn("[security] SEED_USER_PASSWORD nicht gesetzt – Demo-Seed wird in Produktion übersprungen");
+    return;
+  }
   const hash = (pw: string) => bcrypt.hashSync(pw, 10);
   const now = new Date().toISOString();
   const today = new Date();
@@ -3662,7 +3713,7 @@ export async function seedIfEmpty() {
   // Users - Vorstand
   const president = db.insert(users).values({
     email: "praesident@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Präsident",
     role: "präsident",
     active: true,
@@ -3673,7 +3724,7 @@ export async function seedIfEmpty() {
   // Max Blanc (LUXQF3) - NEU seit Saison 2025/26 - Koordinator für Jugend U4-U15
   const maxBlanc = db.insert(users).values({
     email: "max.blanc@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Max Blanc",
     role: "trainer",
     qualifications: "LUXQF3",
@@ -3685,7 +3736,7 @@ export async function seedIfEmpty() {
   // U4: Grégory Redavid, Christophe Kremer, Marc Jungels (LUXQF3)
   const gregoryRedavid = db.insert(users).values({
     email: "gregory.redavid@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Grégory Redavid",
     role: "trainer",
     teamId: u4.id,
@@ -3695,7 +3746,7 @@ export async function seedIfEmpty() {
   
   const christopheKremer = db.insert(users).values({
     email: "christophe.kremer@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Christophe Kremer",
     role: "trainer",
     teamId: u4.id,
@@ -3705,7 +3756,7 @@ export async function seedIfEmpty() {
   
   const marcJungels = db.insert(users).values({
     email: "marc.jungels@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Marc Jungels",
     role: "trainer",
     teamId: u4.id,
@@ -3716,7 +3767,7 @@ export async function seedIfEmpty() {
   // U7: Anne Holm (LUXQF3)
   const anneHolm = db.insert(users).values({
     email: "anne.holm@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Anne Holm",
     role: "trainer",
     qualifications: "LUXQF3",
@@ -3728,7 +3779,7 @@ export async function seedIfEmpty() {
   // U9: Louis Van der Weken (LUXQF2Bis)
   const louisVanderweken = db.insert(users).values({
     email: "louis.vanderweken@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Louis Van der Weken",
     role: "trainer",
     qualifications: "LUXQF2Bis",
@@ -3740,7 +3791,7 @@ export async function seedIfEmpty() {
   // U11: Elie Schuster
   const elieSchuster = db.insert(users).values({
     email: "elie.schuster@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Elie Schuster",
     role: "trainer",
     teamId: u11Elite.id,
@@ -3751,7 +3802,7 @@ export async function seedIfEmpty() {
   // U13 & U15: Max Blanc (Koordinator) + Mathis Derneden (Co-Trainer)
   const mathisDerneden = db.insert(users).values({
     email: "mathis.derneden@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Mathis Derneden",
     role: "trainer",
     teamId: u13.id,
@@ -3762,7 +3813,7 @@ export async function seedIfEmpty() {
   // Mädchengruppe (U9/U11/U13): Katarzyna Pietrasik
   const katarzynaPietrasik = db.insert(users).values({
     email: "katarzyna.pietrasik@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Katarzyna Pietrasik",
     role: "trainer",
     teamId: frauen.id,
@@ -3773,7 +3824,7 @@ export async function seedIfEmpty() {
   // Frauen: Anne Bisenius Holm
   const anneBisenius = db.insert(users).values({
     email: "anne.bisenius@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Anne Bisenius Holm",
     role: "trainer",
     qualifications: "LUXQF3",
@@ -3785,7 +3836,7 @@ export async function seedIfEmpty() {
   // Seniors 1 / U21 / U17: Laurent Metzler
   const laurentMetzler = db.insert(users).values({
     email: "laurent.metzler@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Laurent Metzler",
     role: "trainer",
     teamId: seniors1.id,
@@ -3796,7 +3847,7 @@ export async function seedIfEmpty() {
   // Demo Spieler
   const spieler = db.insert(users).values({
     email: "spieler@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Max Mustermann",
     role: "spieler",
     teamId: seniors1.id,
@@ -3806,7 +3857,7 @@ export async function seedIfEmpty() {
 
   db.insert(users).values({
     email: "kassenwart@mersch75.lu",
-    passwordHash: hash("demo123"),
+    passwordHash: hash(seedPassword),
     name: "Anne Müller",
     role: "kassenwart",
     active: true,
