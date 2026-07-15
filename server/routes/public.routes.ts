@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
+import { sendEmail } from "../email";
 import { insertDonationSchema, insertTrialRegistrationSchema } from "@shared/schema";
 
 export function registerPublicRoutes(app: any) {
@@ -64,7 +65,56 @@ export function registerPublicRoutes(app: any) {
   router.post("/trial-registrations", async (req: Request, res: Response) => {
     const data = insertTrialRegistrationSchema.safeParse(req.body);
     if (!data.success) return res.status(400).json({ message: data.error.message });
-    const registration = await storage.createTrialRegistration(data.data);
+
+    // Alter am Saisonbeginn (1. August) berechnen
+    const body = data.data as any;
+    if (body.birthdate) {
+      const seasonStart = new Date(new Date().getFullYear(), 7, 1);
+      const birth = new Date(body.birthdate);
+      let age = seasonStart.getFullYear() - birth.getFullYear();
+      if (new Date(seasonStart.getFullYear(), birth.getMonth(), birth.getDate()) > seasonStart) age--;
+      body.age = age;
+    }
+
+    const registration = await storage.createTrialRegistration(body);
+
+    const category = body.teamCategory || "k.A.";
+    const childInfo = `${body.childName} (${body.birthdate}${body.gender ? ", " + body.gender : ""})`;
+    const parentInfo = `${body.parentName} <${body.email}>${body.phone ? " Tel.: " + body.phone : ""}`;
+    const notes = body.note ? "Bemerkung: " + body.note : "";
+
+    const nowIso = new Date().toISOString();
+
+    await sendEmail({
+      createdAt: nowIso,
+      toEmail: "max.hbm75@gmail.com",
+      subject: "Neue Probetraining-Anfrage für Mersch 75",
+      body: `<p>Hallo Max,</p>
+<p>es liegt eine neue Probetraining-Anfrage vor:</p>
+<ul>
+  <li>Kind: ${childInfo}</li>
+  <li>Kategorie: ${category}</li>
+  <li>Elternteil: ${parentInfo}</li>
+  ${notes ? "<li>" + notes + "</li>" : ""}
+</ul>
+<p>Die Anfrage wurde im Vereins-OS erfasst.</p>`
+    });
+
+    await sendEmail({
+      createdAt: nowIso,
+      toEmail: "info@mersch75.lu",
+      subject: "Nouvelle demande d'entraînement d'essai – Mersch 75",
+      body: `<p>Bonjour,</p>
+<p>Une nouvelle demande d'entraînement d'essai est arrivée :</p>
+<ul>
+  <li>Enfant : ${childInfo}</li>
+  <li>Catégorie : ${category}</li>
+  <li>Responsable : ${parentInfo}</li>
+  ${notes ? "<li>" + notes + "</li>" : ""}
+</ul>
+<p>Max Blanc a été informé de cette demande.</p>`
+    });
+
     res.status(201).json(registration);
   });
 

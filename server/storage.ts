@@ -1037,6 +1037,8 @@ function init() {
     CREATE TABLE IF NOT EXISTS trial_registrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       child_name TEXT NOT NULL,
+      birthdate TEXT NOT NULL,
+      gender TEXT NOT NULL DEFAULT 'other',
       age INTEGER,
       parent_name TEXT NOT NULL,
       email TEXT NOT NULL,

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="lb">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Probéieren-Training | Mersch 75</title>
+  <style>
+    :root {
+      --primary: #0055a4;
+      --primary-dark: #003f7a;
+      --bg: #f5f5f5;
+      --card: #ffffff;
+      --text: #1a1a1a;
+      --muted: #666666;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    .hero {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: linear-gradient(135deg, #e0f0ff 0%, #f5f5f5 100%);
+    }
+    .hero h1 { margin: 0; font-size: 2rem; }
+    .hero p { font-size: 1.2rem; max-width: 600px; margin: 1rem auto; color: var(--muted); }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 1.6rem;
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    .card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      margin-bottom: 2rem;
+    }
+    ul { padding-left: 1.2rem; }
+    li { margin-bottom: 0.5rem; }
+    form { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+    input, select, textarea {
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+    label { font-size: 0.95rem; display: flex; align-items: flex-start; gap: 0.5rem; }
+    label input[type="checkbox"] { margin-top: 0.25rem; }
+    #formMessage { margin-top: 0.5rem; min-height: 1.5rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      background: #eee;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      margin-right: 0.5rem;
+    }
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <h1>Probéieren-Training bei Mersch 75</h1>
+    <p>Handball, fair Play an eng super Equipe fir Kanner a Jugendlecher. Gratis probéieren, keng Verpflichtung.</p>
+    <a href="#anmeldung" class="btn">Platz fir Probéieren sicheren</a>
+  </section>
+
+  <div class="container">
+    <div class="card">
+      <h2>Wat kanns du erwaarden?</h2>
+      <ul>
+        <li><strong>Erfuerene Trainer</strong> – fir all Niveau</li>
+        <li><strong>Gemëschte Teams</strong> – vum Spill bis zum Training</li>
+        <li><strong>Fair Play</strong> – Respekt steet bei eis uewen</li>
+      </ul>
+    </div>
+
+    <div class="card" id="anmeldung">
+      <h2>Jetzt unmelden</h2>
+      <p style="color: var(--muted);">
+        Fëllt d’Formulaire aus. Mir schécken Iech all Detailer zum nächsten Training.
+      </p>
+
+      <form id="trialForm">
+        <input type="text" name="childName" placeholder="Numm vum Kand" required />
+        <input type="number" name="age" placeholder="Alter vum Kand" required />
+        <input type="text" name="parentName" placeholder="Numm vum Erzéiungsberechtegten" required />
+        <input type="email" name="email" placeholder="E-Mail" required />
+        <input type="tel" name="phone" placeholder="Telefon (optional)" />
+        <select name="teamCategory" required>
+          <option value="">Kategorie wielen</option>
+          <option value="Mini">Mini</option>
+          <option value="E-Jugend">E-Jugend</option>
+          <option value="D-Jugend">D-Jugend</option>
+          <option value="C-Jugend">C-Jugend</option>
+          <option value="B-Jugend">B-Jugend</option>
+          <option value="A-Jugend">A-Jugend</option>
+          <option value="Senior">Senior</option>
+        </select>
+        <textarea name="note" placeholder="Nachricht / Bemierkung (optional)" rows="3"></textarea>
+        <label>
+          <input type="checkbox" required />
+          Ech erlaben d’Kontaktaufnahm per E-Mail / Telefon fir d’Organisatioun vum Probéieren-Training.
+        </label>
+        <button type="submit" class="btn">Platz sichern</button>
+        <p id="formMessage"></p>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    © Mersch 75 · <a href="/">Zeréck op d’Websäit</a>
+  </footer>
+
+  <script>
+    // Im Preview-Modus wird der Submit simuliert, damit man das Layout testen kann.
+    const API_URL = "https://api.mersch75.lu/api/public/trial-registrations";
+    const PREVIEW_MODE = true;
+
+    document.getElementById("trialForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+      const messageEl = document.getElementById("formMessage");
+
+      if (PREVIEW_MODE) {
+        messageEl.textContent = "[PREVIEW] Daten wären gesendet: " + JSON.stringify(data);
+        messageEl.style.color = "green";
+        return;
+      }
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        if (res.ok) {
+          messageEl.textContent = "Merci! Mir schécken Iech d’Detailer per Mail.";
+          messageEl.style.color = "green";
+          form.reset();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          messageEl.textContent = err.message || "Eppes ass schif gaangen. Probéiert et spéider nees.";
+          messageEl.style.color = "red";
+        }
+      } catch (error) {
+        messageEl.textContent = "Verbindungsfeeler. Probéiert et nees.";
+        messageEl.style.color = "red";
+      }
+    });
+  </script>
+
+</body>
+</html>

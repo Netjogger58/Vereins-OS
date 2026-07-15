@@ -1223,6 +1223,8 @@ export type ExerciseMedia = typeof exerciseMedia.$inferSelect;
 export const trialRegistrations = sqliteTable("trial_registrations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   childName: text("child_name").notNull(),
+  birthdate: text("birthdate").notNull(),
+  gender: text("gender").notNull().default("other"),
   age: integer("age"),
   parentName: text("parent_name").notNull(),
   email: text("email").notNull(),
@@ -1233,7 +1235,7 @@ export const trialRegistrations = sqliteTable("trial_registrations", {
   createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
 });
 
-export const insertTrialRegistrationSchema = createInsertSchema(trialRegistrations).omit({ id: true, status: true, createdAt: true });
+export const insertTrialRegistrationSchema = createInsertSchema(trialRegistrations).omit({ id: true, age: true, status: true, createdAt: true });
 export type InsertTrialRegistration = z.infer<typeof insertTrialRegistrationSchema>;
 export type TrialRegistration = typeof trialRegistrations.$inferSelect;
 
