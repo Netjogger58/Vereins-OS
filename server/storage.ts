@@ -1111,6 +1111,7 @@ export interface IStorage {
   listMembers(): Promise<Member[]>;
   listMembersByTeam(teamId: number): Promise<Member[]>;
   getMember(id: number): Promise<Member | undefined>;
+  getMemberByUserId(userId: number): Promise<Member | undefined>;
   getMemberByCardId(cardId: string): Promise<Member | undefined>;
   createMember(member: InsertMember): Promise<Member>;
   updateMember(id: number, data: Partial<InsertMember>): Promise<Member | undefined>;
@@ -1608,6 +1609,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(members).where(eq(members.teamId, teamId)).all();
   }
   async getMember(id: number) { return db.select().from(members).where(eq(members.id, id)).get(); }
+  async getMemberByUserId(userId: number) { return db.select().from(members).where(eq(members.userId, userId)).get(); }
   async getMemberByCardId(cardId: string) { return db.select().from(members).where(eq(members.cardId, cardId)).get(); }
   async createMember(m: InsertMember) { return db.insert(members).values(m).returning().get(); }
   async updateMember(id: number, data: Partial<InsertMember>) {

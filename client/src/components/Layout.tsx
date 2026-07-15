@@ -6,6 +6,7 @@ import {
   Users,
   Shield,
   CalendarDays,
+  Calendar,
   ClipboardCheck,
   Video,
   Euro,
@@ -65,6 +66,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "Übersicht" },
   { href: "/announcements", label: "Ankündigungen", icon: Megaphone, section: "Übersicht" },
+  { href: "/my-events", label: "Meine Termine", icon: Calendar, section: "Übersicht" },
   { href: "/calendar", label: "Kalender", icon: CalendarDays, section: "Übersicht" },
   { href: "/chat", label: "Team-Chat", icon: MessageCircle, section: "Übersicht" },
   { href: "/teams", label: "Teams", icon: Shield, section: "Sport" },
@@ -100,7 +102,7 @@ const NAV: NavItem[] = [
 
 const MOBILE_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: LayoutDashboard },
-  { href: "/calendar", label: "Kalender", icon: CalendarDays },
+  { href: "/my-events", label: "Termine", icon: CalendarDays },
   { href: "/teams", label: "Teams", icon: Shield },
   { href: "/chat", label: "Chat", icon: MessageCircle },
   { href: "/profile", label: "Profil", icon: User },

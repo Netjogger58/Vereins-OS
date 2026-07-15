@@ -4,6 +4,12 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
+- **Vereins-OS-App – Mitgliederselbstbedienung "Meine Termine".**
+  - Neue Seite `/my-events` und mobiler Tab "Termine".
+  - Jedes Mitglied sieht seine eigenen anstehenden Mannschafts-Termine und kann Verfügbarkeit setzen.
+  - Nominierungen für Spiele können direkt mit "Ja"/"Nein" + Begründung beantwortet werden.
+  - Neuer API-Endpunkt `GET /api/members/me` liefert das zum Benutzer gehörige Mitgliedsprofil.
+
 - **Vereins-OS-App – Mobile-Ansicht / PWA gestartet.**
   - Service Worker `sw.js` wird jetzt im Frontend registriert.
   - Installations-Banner für Android/Chrome und Hinweis für iOS „Zum Home-Bildschirm".

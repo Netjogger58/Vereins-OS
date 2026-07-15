@@ -491,6 +491,11 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     if (!m) return res.status(404).json({ message: "Nicht gefunden" });
     res.json(m);
   });
+  app.get("/api/members/me", requireAuth(), async (req: AuthedRequest, res) => {
+    const m = await storage.getMemberByUserId(req.user!.id);
+    if (!m) return res.status(404).json({ message: "Nicht gefunden" });
+    res.json(m);
+  });
   app.post("/api/members", requireAuth(["präsident", "admin", "trainer"]), async (req, res) => {
     const parsed = insertMemberSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });

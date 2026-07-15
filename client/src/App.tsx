@@ -14,6 +14,7 @@ import Dashboard from "@/pages/Dashboard";
 import Announcements from "@/pages/Announcements";
 import Members from "@/pages/Members";
 import MemberDetail from "@/pages/MemberDetail";
+import MyEvents from "@/pages/MyEvents";
 import Teams from "@/pages/Teams";
 import Calendar from "@/pages/Calendar";
 import Attendance from "@/pages/Attendance";
@@ -76,6 +77,7 @@ function AppRouter() {
         <Route path="/secretariat" component={Secretariat} />
         <Route path="/members/:id" component={MemberDetail} />
         <Route path="/members" component={Members} />
+        <Route path="/my-events" component={MyEvents} />
         <Route path="/teams/:id" component={Teams} />
         <Route path="/teams" component={Teams} />
         <Route path="/calendar" component={Calendar} />
