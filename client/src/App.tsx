@@ -19,6 +19,7 @@ import Teams from "@/pages/Teams";
 import Inventory from "@/pages/Inventory";
 import Polls from "@/pages/Polls";
 import FacilityBookings from "@/pages/FacilityBookings";
+import Opponents from "@/pages/Opponents";
 import Calendar from "@/pages/Calendar";
 import Attendance from "@/pages/Attendance";
 import Meetings from "@/pages/Meetings";
@@ -91,6 +92,7 @@ function AppRouter() {
         <Route path="/inventory" component={Inventory} />
         <Route path="/polls" component={Polls} />
         <Route path="/facility-bookings" component={FacilityBookings} />
+        <Route path="/opponents" component={Opponents} />
         <Route path="/nominations" component={Nominations} />
         <Route path="/chat" component={Chat} />
         <Route path="/import" component={ImportMembers} />

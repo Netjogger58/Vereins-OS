@@ -11,6 +11,7 @@ import { registerArchiveRoutes } from "./routes/archive.routes";
 import { registerInventoryRoutes } from "./routes/inventory.routes";
 import { registerPollRoutes } from "./routes/poll.routes";
 import { registerFacilityRoutes } from "./routes/facility.routes";
+import { registerOpponentRoutes } from "./routes/opponent.routes";
 import {
   authMiddleware,
   requireAuth,
@@ -2744,6 +2745,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   registerInventoryRoutes(app);
   registerPollRoutes(app);
   registerFacilityRoutes(app);
+  registerOpponentRoutes(app);
 
   return _httpServer;
 }

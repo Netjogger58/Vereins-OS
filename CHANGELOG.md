@@ -4,6 +4,12 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
+- **Vereins-OS-App – Gegner-Scouting.**
+  - Neue Seite `/opponents` zur Verwaltung von Gegnern (Kontakt, Halle, Stärken/Schwächen).
+  - Historie der Spiele gegen Mersch75 mit Ergebnissen, Taktik und wichtigen Spielern.
+  - Automatische Bilanz (Siege / Remis / Niederlagen).
+  - API-Endpunkte unter `/api/opponents`.
+
 - **Vereins-OS-App – Raumreservierungen und Umfragen.**
   - Neue Seite `/facility-bookings` zum Verwalten von Hallen/Plätzen und deren Buchungen inkl. Überschneidungsprüfung.
   - Neue Seite `/polls` für Umfragen mit Mehrfach-Antworten, Live-Ergebnissen und Schließen-Funktion.

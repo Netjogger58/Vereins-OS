@@ -908,6 +908,32 @@ function init() {
       user_id INTEGER,
       voted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS opponents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      short_name TEXT,
+      logo_url TEXT,
+      venue TEXT,
+      contact_person TEXT,
+      contact_email TEXT,
+      contact_phone TEXT,
+      notes TEXT,
+      strengths TEXT,
+      weaknesses TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS opponent_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      opponent_id INTEGER NOT NULL,
+      match_id INTEGER NOT NULL,
+      our_score INTEGER NOT NULL,
+      their_score INTEGER NOT NULL,
+      result TEXT NOT NULL,
+      match_notes TEXT,
+      key_players TEXT,
+      tactics TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS shop_products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -2916,6 +2942,15 @@ export class DatabaseStorage implements IStorage {
 
   async updateOpponentAnalysis(id: number, strengths: string, weaknesses: string): Promise<void> {
     db.update(opponents).set({ strengths, weaknesses }).where(eq(opponents.id, id)).run();
+  }
+
+  async updateOpponent(id: number, data: Partial<InsertOpponent>): Promise<Opponent | undefined> {
+    return db.update(opponents).set(data).where(eq(opponents.id, id)).returning().get();
+  }
+
+  async deleteOpponent(id: number): Promise<void> {
+    db.delete(opponents).where(eq(opponents.id, id)).run();
+    db.delete(opponentHistory).where(eq(opponentHistory.opponentId, id)).run();
   }
 
   async addOpponentHistory(history: InsertOpponentHistory): Promise<OpponentHistory> {
