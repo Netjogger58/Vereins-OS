@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { LogoLockup, Logo } from "./Logo";
 import { GlobalSearch } from "./GlobalSearch";
+import { PwaInstall } from "./PwaInstall";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/lib/theme";
@@ -361,6 +362,8 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
+
+      <PwaInstall />
 
       {/* ─── Mobile Bottom Nav (iOS Tab Bar) ─── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40">

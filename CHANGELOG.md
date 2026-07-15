@@ -4,6 +4,11 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
+- **Vereins-OS-App – Mobile-Ansicht / PWA gestartet.**
+  - Service Worker `sw.js` wird jetzt im Frontend registriert.
+  - Installations-Banner für Android/Chrome und Hinweis für iOS „Zum Home-Bildschirm".
+  - App ist damit ohne App Store als installierbare Web-App nutzbar.
+
 - **Vereins-OS-App – Secrets härten.**
   - `ADMIN_PASSWORD` muss in Produktion gesetzt sein, lokal weiterhin Fallback auf `mersch75`.
   - Demo-Seed-Passwörter jetzt via `SEED_USER_PASSWORD` konfigurierbar (Default lokal: `demo123`).
