@@ -106,6 +106,11 @@
 | News / Spielberichte | Auto-Post aus App → Website |
 | Spielerprofile | Optionale öffentliche Profile |
 | Hallenkarte Marker | Hallen-Daten aus DB → Karte automatisch aktuell |
+| Spenden-Widget | Öffentliche Kampagnenseite + Spendenformular → `/api/donations` |
+| Sponsoren-Liste | Öffentliche Partner-Übersicht aus Vereins-OS |
+| Fan-Umfragen | Öffentliche Umfragen (nur Ergebnisse oder Teilnahme ohne Login) |
+| iCal-Abonnement | Mitglied-Login generiert Token → Button "Termine abonnieren" auf Website |
+| Hallen-/Raumreservierung | Öffentliche Ansicht belegter Plätze (optional) |
 
 **Technologie:**
 - Vereins-OS Backend stellt öffentliche REST-API bereit
