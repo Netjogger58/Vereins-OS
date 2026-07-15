@@ -1790,6 +1790,7 @@ export class DatabaseStorage implements IStorage {
 
   async listAccounts() { return db.select().from(accounts).all(); }
   async createAccount(a: InsertAccount) { return db.insert(accounts).values(a).returning().get(); }
+  async getAccountById(id: number) { return db.select().from(accounts).where(eq(accounts.id, id)).get(); }
 
   async listTransactions() { return db.select().from(transactions).orderBy(desc(transactions.date)).all(); }
   async createTransaction(t: InsertTransaction) {

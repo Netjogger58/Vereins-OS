@@ -13,6 +13,9 @@ import { registerPollRoutes } from "./routes/poll.routes";
 import { registerFacilityRoutes } from "./routes/facility.routes";
 import { registerOpponentRoutes } from "./routes/opponent.routes";
 import { registerCarpoolRoutes } from "./routes/carpool.routes";
+import { registerBulkRoutes } from "./routes/bulk.routes";
+import { registerMassEmailRoutes } from "./routes/massEmail.routes";
+import { registerBankImportRoutes } from "./routes/bankImport.routes";
 import {
   authMiddleware,
   requireAuth,
@@ -2748,6 +2751,9 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   registerFacilityRoutes(app);
   registerOpponentRoutes(app);
   registerCarpoolRoutes(app);
+  registerBulkRoutes(app);
+  registerMassEmailRoutes(app);
+  registerBankImportRoutes(app);
 
   return _httpServer;
 }

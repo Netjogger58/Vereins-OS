@@ -10,6 +10,12 @@ Neueste Änderungen zuerst.
   - Übersicht über freie Plätze, Fahrer und Mitfahrer.
   - API-Endpunkte unter `/api/carpools`.
 
+- **Vereins-OS-App – Massendaten, Serien-E-Mail und Bankimport.**
+  - Neue Seite `/bulk-operations` zum Filtern und Massen-Aktualisieren von Mitgliedern.
+  - Neue Seite `/mass-email` für personalisierte Serien-E-Mails mit Platzhaltern und optionalem PDF-Anhang.
+  - Neue Seite `/finance/import` zum Importieren von Bank-CSV in Buchungen.
+  - API-Endpunkte unter `/api/bulk`, `/api/mass-email` und `/api/finance/import`.
+
 - **Vereins-OS-App – Gegner-Scouting.**
   - Neue Seite `/opponents` zur Verwaltung von Gegnern (Kontakt, Halle, Stärken/Schwächen).
   - Historie der Spiele gegen Mersch75 mit Ergebnissen, Taktik und wichtigen Spielern.

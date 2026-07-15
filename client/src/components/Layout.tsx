@@ -44,6 +44,7 @@ import {
   BookOpen,
   Archive,
   KeyRound,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -88,6 +89,9 @@ const NAV: NavItem[] = [
   { href: "/fees", label: "Beiträge", icon: Wallet, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },
   { href: "/documents", label: "Dokumente", icon: FileText, section: "Verwaltung", roles: ["präsident", "admin", "secretaire", "kassenwart"] },
   { href: "/statistics", label: "Berichte", icon: BarChart3, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart", "secretaire"] },
+  { href: "/bulk-operations", label: "Massendaten", icon: Users, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
+  { href: "/mass-email", label: "Serien-E-Mail", icon: Mail, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
+  { href: "/finance/import", label: "Bankimport", icon: Upload, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },
   { href: "/meetings", label: "Meetings", icon: Video, section: "Verwaltung" },
   { href: "/email-settings", label: "E-Mail", icon: Mail, section: "Verwaltung", roles: ["präsident", "admin"] },
   { href: "/sponsors", label: "Sponsoren", icon: Star, section: "Verein", roles: ["präsident", "admin", "secretaire"] },

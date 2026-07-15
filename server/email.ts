@@ -33,7 +33,10 @@ export async function initEmailTransporter(): Promise<boolean> {
   }
 }
 
-export async function sendEmail(email: InsertEmail): Promise<{ success: boolean; error?: string }> {
+export async function sendEmail(
+  email: InsertEmail,
+  attachments?: { filename: string; path: string }[]
+): Promise<{ success: boolean; error?: string }> {
   const settings = await storage.getEmailSettings();
   if (!settings || !settings.enabled || !transporter) {
     return { success: false, error: "Email not configured" };
@@ -46,6 +49,7 @@ export async function sendEmail(email: InsertEmail): Promise<{ success: boolean;
       subject: email.subject,
       html: email.body,
       replyTo: settings.replyTo || settings.fromEmail,
+      attachments,
     });
 
     return { success: true };

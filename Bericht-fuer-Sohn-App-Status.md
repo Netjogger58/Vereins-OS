@@ -159,6 +159,16 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ---
 
+### Verwaltung & Office
+
+| Modul | Status | Was kann man damit machen? |
+|---|---|---|
+| **Massendatenänderungen** | ✅ *(neu)* | Filter auf Mitglieder anwenden und ein Feld für viele Datensätze gleichzeitig ändern. |
+| **Serien-E-Mail** | ✅ *(neu)* | Personalisierte E-Mails an gefilterte Mitglieder versenden (Platzhalter + optionaler PDF-Anhang). |
+| **Bankimport (CSV)** | ✅ *(neu)* | Bank-CSV einfügen und automatisch Buchungen (Einnahmen/Ausgaben) erzeugen. |
+
+---
+
 ### Sekretariat & Medico
 
 | Modul | Status | Was kann man damit machen? |
@@ -203,6 +213,9 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 - ✅ **Umfragen** mit einfacher/Mehrfach-Antwort und Live-Ergebnissen
 - ✅ **Gegner-Scouting** mit Historie und Bilanz
 - ✅ **Fahrgemeinschaften** für Termine mit Mitfahrer-Verwaltung
+- ✅ **Massendatenänderungen** in der Mitgliederverwaltung
+- ✅ **Serien-E-Mail** mit Platzhaltern und optionalem PDF-Anhang
+- ✅ **Bankimport (CSV)** für automatische Buchungen
 
 ---
 
@@ -252,7 +265,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ## 7. Fazit
 
-Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting und Fahrgemeinschaften hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
+Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail und Bankimport hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
 
 Der Fokus für die nächsten Wochen sollte sein:
 - Test-Abdeckung erhöhen
