@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { sendEmail } from "../email";
 import { insertDonationSchema, insertTrialRegistrationSchema } from "@shared/schema";
+import { z } from "zod";
 
 export function registerPublicRoutes(app: any) {
   const router = Router();
@@ -116,6 +117,64 @@ export function registerPublicRoutes(app: any) {
     });
 
     res.status(201).json(registration);
+  });
+
+  router.post("/sponsor-inquiries", async (req: Request, res: Response) => {
+    const sponsorInquirySchema = z.object({
+      company: z.string().min(1, "Firma erforderlich"),
+      contactName: z.string().min(1, "Kontaktperson erforderlich"),
+      email: z.string().email("Gültige E-Mail erforderlich"),
+      phone: z.string().optional(),
+      interest: z.string().min(1, "Interesse erforderlich"),
+      message: z.string().optional(),
+      consent: z.boolean().or(z.string().transform((v) => v === "true" || v === "on")).optional(),
+    });
+
+    const parsed = sponsorInquirySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.message });
+    }
+
+    const body = parsed.data;
+    const nowIso = new Date().toISOString();
+    const phone = body.phone || "k.A.";
+    const message = body.message || "k.A.";
+
+    await sendEmail({
+      createdAt: nowIso,
+      toEmail: "max.hbm75@gmail.com",
+      subject: "Neue Sponsor / Partner-Anfrage für Mersch 75",
+      body: `<p>Hallo Max,</p>
+<p>es liegt eine neue Sponsor / Partner-Anfrage vor:</p>
+<ul>
+  <li>Firma: ${body.company}</li>
+  <li>Kontakt: ${body.contactName}</li>
+  <li>E-Mail: ${body.email}</li>
+  <li>Telefon: ${phone}</li>
+  <li>Interesse: ${body.interest}</li>
+  <li>Nachricht: ${message}</li>
+</ul>
+<p>Die Anfrage wurde über die Website erfasst.</p>`
+    });
+
+    await sendEmail({
+      createdAt: nowIso,
+      toEmail: "info@mersch75.lu",
+      subject: "Nouvelle demande de sponsoring / partenariat – Mersch 75",
+      body: `<p>Bonjour,</p>
+<p>Une nouvelle demande de sponsoring / partenariat est arrivée :</p>
+<ul>
+  <li>Entreprise : ${body.company}</li>
+  <li>Contact : ${body.contactName}</li>
+  <li>E-mail : ${body.email}</li>
+  <li>Téléphone : ${phone}</li>
+  <li>Intérêt : ${body.interest}</li>
+  <li>Message : ${message}</li>
+</ul>
+<p>Max Blanc a été informé de cette demande.</p>`
+    });
+
+    res.status(201).json({ success: true });
   });
 
   app.use("/api/public", router);
