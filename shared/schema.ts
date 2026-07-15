@@ -1189,6 +1189,52 @@ export type InsertRefereeAssignment = z.infer<typeof insertRefereeAssignmentSche
 export type Referee = typeof referees.$inferSelect;
 export type RefereeAssignment = typeof refereeAssignments.$inferSelect;
 
+// ─── Training Exercises ───────────────────────────────────
+export const exercises = sqliteTable("exercises", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category").notNull().default("technique"), // technique | tactics | fitness | goalkeeping | warmup | game
+  tags: text("tags"), // comma-separated
+  minAge: integer("min_age"),
+  maxAge: integer("max_age"),
+  durationMinutes: integer("duration_minutes"),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
+export const exerciseMedia = sqliteTable("exercise_media", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  exerciseId: integer("exercise_id").notNull().references(() => exercises.id, { onDelete: "cascade" }),
+  fileUrl: text("file_url").notNull(),
+  fileName: text("file_name"),
+  mediaType: text("media_type").notNull().default("image"), // image | video | sketch
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
+export const insertExerciseSchema = createInsertSchema(exercises).omit({ id: true, createdAt: true });
+export const insertExerciseMediaSchema = createInsertSchema(exerciseMedia).omit({ id: true, createdAt: true });
+export type InsertExercise = z.infer<typeof insertExerciseSchema>;
+export type InsertExerciseMedia = z.infer<typeof insertExerciseMediaSchema>;
+export type Exercise = typeof exercises.$inferSelect;
+export type ExerciseMedia = typeof exerciseMedia.$inferSelect;
+
+// ─── Live Match Events ────────────────────────────────────
+export const matchEvents = sqliteTable("match_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  matchId: integer("match_id").notNull().references(() => matches.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // goal, assist, shot, save, turnover, timeout, foul_yellow, foul_red, substitution, seven_meters, other
+  minute: integer("minute"),
+  playerId: integer("player_id").references(() => members.id),
+  description: text("description"),
+  teamSide: text("team_side").notNull().default("home"), // home | opponent
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
+export const insertMatchEventSchema = createInsertSchema(matchEvents).omit({ id: true, createdAt: true });
+export type InsertMatchEvent = z.infer<typeof insertMatchEventSchema>;
+export type MatchEvent = typeof matchEvents.$inferSelect;
+
 // ─── 3. INVENTORY (Material-Inventar) ───────────────────
 export const inventoryItems = sqliteTable("inventory_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),

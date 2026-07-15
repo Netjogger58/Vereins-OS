@@ -265,6 +265,15 @@ import {
   donations,
   type Donation,
   type InsertDonation,
+  exercises,
+  exerciseMedia,
+  type Exercise,
+  type InsertExercise,
+  type ExerciseMedia,
+  type InsertExerciseMedia,
+  matchEvents,
+  type MatchEvent,
+  type InsertMatchEvent,
 } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
 import "dotenv/config";
@@ -990,6 +999,36 @@ function init() {
       note TEXT,
       date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       receipt_sent INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS exercises (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT,
+      category TEXT NOT NULL DEFAULT 'technique',
+      tags TEXT,
+      min_age INTEGER,
+      max_age INTEGER,
+      duration_minutes INTEGER,
+      created_by INTEGER,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS exercise_media (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      exercise_id INTEGER NOT NULL,
+      file_url TEXT NOT NULL,
+      file_name TEXT,
+      media_type TEXT NOT NULL DEFAULT 'image',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS match_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      match_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      minute INTEGER,
+      player_id INTEGER,
+      description TEXT,
+      team_side TEXT NOT NULL DEFAULT 'home',
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS shop_products (
@@ -1875,6 +1914,19 @@ export class DatabaseStorage implements IStorage {
   async createDonation(d: InsertDonation) { return db.insert(donations).values(d).returning().get(); }
   async updateDonation(id: number, data: Partial<InsertDonation>) { return db.update(donations).set(data).where(eq(donations.id, id)).returning().get(); }
   async deleteDonation(id: number) { db.delete(donations).where(eq(donations.id, id)).run(); }
+
+  // ─── Training Exercises ─────────────────────────────────
+  async listExercises() { return db.select().from(exercises).orderBy(desc(exercises.createdAt)).all(); }
+  async createExercise(e: InsertExercise) { return db.insert(exercises).values(e).returning().get(); }
+  async getExercise(id: number) { return db.select().from(exercises).where(eq(exercises.id, id)).get(); }
+  async deleteExercise(id: number) { db.delete(exerciseMedia).where(eq(exerciseMedia.exerciseId, id)).run(); db.delete(exercises).where(eq(exercises.id, id)).run(); }
+  async listExerciseMedia(exerciseId: number) { return db.select().from(exerciseMedia).where(eq(exerciseMedia.exerciseId, exerciseId)).all(); }
+  async addExerciseMedia(m: InsertExerciseMedia) { return db.insert(exerciseMedia).values(m).returning().get(); }
+
+  // ─── Live Match Events ──────────────────────────────────
+  async listMatchEvents(matchId: number) { return db.select().from(matchEvents).where(eq(matchEvents.matchId, matchId)).orderBy(asc(matchEvents.minute), asc(matchEvents.createdAt)).all(); }
+  async createMatchEvent(e: InsertMatchEvent) { return db.insert(matchEvents).values(e).returning().get(); }
+  async deleteMatchEvent(id: number) { db.delete(matchEvents).where(eq(matchEvents.id, id)).run(); }
 
   // ─── iCal lookup ────────────────────────────────────────
   async getUserByIcalToken(token: string) { return db.select().from(users).where(eq(users.icalToken, token)).get(); }

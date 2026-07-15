@@ -47,6 +47,7 @@ import {
   Upload,
   Receipt,
   Heart,
+  Dumbbell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -83,7 +84,9 @@ const NAV: NavItem[] = [
   { href: "/registrations", label: "Anmeldungen", icon: UserPlus, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
   { href: "/checkin", label: "Ausweis & Check-in", icon: QrCode, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
   { href: "/training-schedules", label: "Trainingsplan", icon: CalendarClock, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
+  { href: "/training-exercises", label: "Übungsdatenbank", icon: Dumbbell, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
   { href: "/trainer-codes", label: "Trainer-Codes", icon: KeyRound, section: "Sport", roles: ["präsident", "admin"] },
+  { href: "/live-match", label: "Live-Spielanalyse", icon: Target, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire", "spieler"] },
   { href: "/attendance", label: "Anwesenheit", icon: ClipboardCheck, section: "Sport", roles: ["präsident", "admin", "trainer"] },
   { href: "/matches", label: "Spiele", icon: Trophy, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire", "spieler"] },
   { href: "/player-statistics", label: "Statistiken", icon: TrendingUp, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire", "spieler"] },

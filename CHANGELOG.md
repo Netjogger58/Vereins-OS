@@ -4,11 +4,13 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
-- **Vereins-OS-App – Rechnungen, Spenden und Kalender-Feed.**
+- **Vereins-OS-App – Rechnungen, Spenden, Kalender-Feed, Übungsdatenbank und Live-Spielanalyse.**
   - Neue Seite `/invoices` für Rechnungen mit Zahlungserfassung, Mahnungen und offenen Posten.
   - Neue Seite `/donations` für Spendenmanagement inkl. Quittungsstatus.
   - iCal-Abonnement-Feed unter `/calendar/:token.ics` für Google/Apple/Outlook.
   - Öffentliche Website-API unter `/api/public/*` (Events, Spiele, Sponsoren, Hallen, Umfragen, Spenden) mit CORS.
+  - Neue Seite `/training-exercises` mit Übungsdatenbank (Kategorie, Tags, Altersgruppe, Dauer, Medien).
+  - Neue Seite `/live-match` zum Erfassen von Spielereignissen (Tore, Assists, Karten etc.) mit Zeitlinie und Statistik.
 
 - **Vereins-OS-App – Fahrgemeinschaften.**
   - Neue Seite `/carpools` für Mitfahrgelegenheiten zu Terminen.

@@ -19,6 +19,8 @@ import { registerBankImportRoutes } from "./routes/bankImport.routes";
 import { registerInvoiceRoutes } from "./routes/invoice.routes";
 import { registerDonationRoutes } from "./routes/donation.routes";
 import { registerIcalRoutes } from "./routes/ical.routes";
+import { registerExerciseRoutes } from "./routes/exercise.routes";
+import { registerMatchEventRoutes } from "./routes/matchEvent.routes";
 import { registerPublicRoutes } from "./routes/public.routes";
 import {
   authMiddleware,
@@ -2764,6 +2766,8 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   registerInvoiceRoutes(app);
   registerDonationRoutes(app);
   registerIcalRoutes(app);
+  registerExerciseRoutes(app);
+  registerMatchEventRoutes(app);
 
   return _httpServer;
 }

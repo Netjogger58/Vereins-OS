@@ -83,6 +83,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | Modul | Status | Was kann man damit machen? |
 |---|---|---|
 | **Spiele (Matches)** | ✅ | Spiele erfassen, bearbeiten, Resultate eintragen, aus der FLH importieren. |
+| **Live-Spielanalyse** | ✅ *(neu)* | Ereignisse live erfassen (Tore, Assists, Karten, 7m etc.) mit Zeitlinie und Statistik. |
 | **Statistiken** | ✅ | Ligastatistiken, Tabellen, Team-Bilanzen ansehen. |
 | **Spielerstatistiken** | ✅ | Top-Scorer, persönliche Tore pro Spieler/in. |
 | **Aufstellungen / Nominierungen** | ✅ | Für ein Spiel/Training Spieler nominieren, Zusage/Absage erfassen. |
@@ -95,6 +96,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | Modul | Status | Was kann man damit machen? |
 |---|---|---|
 | **Trainingspläne** | ✅ | Wann trainiert welches Team? |
+| **Übungsdatenbank** | ✅ *(neu)* | Übungen mit Kategorie, Tags, Altersgruppe, Dauer und Medien verwalten und teilen. |
 | **Anwesenheit** | ✅ | Trainer erfasst, wer da war (anwesend, entschuldigt, unentschuldigt, krank). |
 | **Prouftraining / Probe-Training** | ✅ | Neue/spontane Spieler schnell erfassen – entweder als bekanntes Mitglied markieren oder als temporärer Gast. |
 | **Check-In / Karten-Scan** | ✅ | QR-Code auf der Mitgliederkarte scannen. Zeigt sofort: gültig, bereits gescannt, unbekannt, gesperrt, abgelaufen. |
@@ -225,6 +227,8 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 - ✅ **Spendenmanagement** mit Kampagnen und Quittungen
 - ✅ **iCal-Kalender-Feed** für externe Kalender
 - ✅ **Öffentliche Website-API** mit CORS für mersch75.lu
+- ✅ **Live-Spielanalyse** mit Ereignis-Erfassung
+- ✅ **Übungsdatenbank** mit Kategorien, Tags und Medien
 
 ---
 
@@ -274,7 +278,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ## 7. Fazit
 
-Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail, Bankimport, Rechnungen, Spenden, iCal-Kalender-Feed und eine öffentliche Website-API hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
+Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail, Bankimport, Rechnungen, Spenden, iCal-Kalender-Feed, öffentliche Website-API, Live-Spielanalyse und Übungsdatenbank hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
 
 Der Fokus für die nächsten Wochen sollte sein:
 - Test-Abdeckung erhöhen
