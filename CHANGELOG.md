@@ -4,6 +4,12 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
+- **Vereins-OS-App – Fahrgemeinschaften.**
+  - Neue Seite `/carpools` für Mitfahrgelegenheiten zu Terminen.
+  - Fahrer können Plätze anbieten; Mitglieder können ein- und austeigen.
+  - Übersicht über freie Plätze, Fahrer und Mitfahrer.
+  - API-Endpunkte unter `/api/carpools`.
+
 - **Vereins-OS-App – Gegner-Scouting.**
   - Neue Seite `/opponents` zur Verwaltung von Gegnern (Kontakt, Halle, Stärken/Schwächen).
   - Historie der Spiele gegen Mersch75 mit Ergebnissen, Taktik und wichtigen Spielern.

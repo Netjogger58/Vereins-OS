@@ -12,6 +12,7 @@ import { registerInventoryRoutes } from "./routes/inventory.routes";
 import { registerPollRoutes } from "./routes/poll.routes";
 import { registerFacilityRoutes } from "./routes/facility.routes";
 import { registerOpponentRoutes } from "./routes/opponent.routes";
+import { registerCarpoolRoutes } from "./routes/carpool.routes";
 import {
   authMiddleware,
   requireAuth,
@@ -2746,6 +2747,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   registerPollRoutes(app);
   registerFacilityRoutes(app);
   registerOpponentRoutes(app);
+  registerCarpoolRoutes(app);
 
   return _httpServer;
 }

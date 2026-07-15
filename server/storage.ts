@@ -934,6 +934,24 @@ function init() {
       tactics TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS carpools (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER NOT NULL,
+      driver_id INTEGER NOT NULL,
+      departure_time TEXT NOT NULL,
+      departure_location TEXT NOT NULL,
+      available_seats INTEGER NOT NULL DEFAULT 4,
+      status TEXT NOT NULL DEFAULT 'open',
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS carpool_passengers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      carpool_id INTEGER NOT NULL,
+      passenger_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'confirmed',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS shop_products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -2769,6 +2787,19 @@ export class DatabaseStorage implements IStorage {
 
   async listCarpools(): Promise<Carpool[]> {
     return db.select().from(carpools).orderBy(desc(carpools.createdAt)).all();
+  }
+
+  async getCarpoolPassengers(carpoolId: number): Promise<CarpoolPassenger[]> {
+    return db.select().from(carpoolPassengers).where(eq(carpoolPassengers.carpoolId, carpoolId)).all();
+  }
+
+  async getCarpool(id: number): Promise<Carpool | undefined> {
+    return db.select().from(carpools).where(eq(carpools.id, id)).get();
+  }
+
+  async deleteCarpool(id: number): Promise<void> {
+    db.delete(carpoolPassengers).where(eq(carpoolPassengers.carpoolId, id)).run();
+    db.delete(carpools).where(eq(carpools.id, id)).run();
   }
 
   // ─── 2. REFEREES (Schiedsrichter) ─────────────────────────
