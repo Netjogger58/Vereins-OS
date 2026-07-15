@@ -110,6 +110,10 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
 **Trainings & Anwesenheit**
 - ✅ Trainingspläne
 - ✅ Anwesenheit
+  - ✅ Manuelle Erfassung mit Status (anwesend, entschuldigt, unentschuldigt, krank)
+  - ✅ Prouftraining / Probe-Training markieren
+  - ✅ Existente Mitglieder schnell als Prouftraining hinzufügen
+  - 🟡 Vereinfachter Eingabe-Fluss für neue/spontane Spieler (Name, Geburtsdatum, Handy, KV-Karte letzte 5 Ziffern) · *geplant*
 - ✅ Check-In / Karten-Scan (QR) · *neu*
 
 **Organisation**

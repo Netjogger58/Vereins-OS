@@ -4,6 +4,7 @@ Node/Express + Vite + SQLite App fir d'Verwaltung vum Mersch75 Handball Club.
 
 ## Wichteg Dokumenter
 
+- [`CHANGELOG.md`](CHANGELOG.md) — chronologesch Lëscht vun de leschten Ännerungen.
 - [`M75-Manager-Statusbericht.md`](M75-Manager-Statusbericht.md) — aktuellen Zoustand.
 - [`M75-Manager-Features.md`](M75-Manager-Features.md) — Features.
 - [`docs/saison-archivierung.md`](docs/saison-archivierung.md) — Saison-Archivierung.
