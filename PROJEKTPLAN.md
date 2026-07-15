@@ -116,6 +116,7 @@
 - Vereins-OS Backend stellt öffentliche REST-API bereit
 - Website (GitHub Pages / Jekyll) ruft Daten per `fetch()` ab
 - CORS korrekt konfiguriert für mersch75.lu
+- Landingpage-Konzept siehe `docs/website-landingpages-konzept.md`
 
 ---
 
