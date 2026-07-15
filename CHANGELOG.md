@@ -4,6 +4,11 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
+- **Vereins-OS-App – Raumreservierungen und Umfragen.**
+  - Neue Seite `/facility-bookings` zum Verwalten von Hallen/Plätzen und deren Buchungen inkl. Überschneidungsprüfung.
+  - Neue Seite `/polls` für Umfragen mit Mehrfach-Antworten, Live-Ergebnissen und Schließen-Funktion.
+  - API-Endpunkte unter `/api/facility-bookings` und `/api/polls`.
+
 - **Vereins-OS-App – Inventar-Modul.**
   - Neue Seite `/inventory` mit Inventarliste, Suche und Verwaltung.
   - Gegenstände anlegen/bearbeiten/löschen mit Name, Kategorie, Lagerort, Zustand, Menge und QR-Code.

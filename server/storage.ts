@@ -881,6 +881,33 @@ function init() {
       notes TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS polls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT,
+      type TEXT NOT NULL DEFAULT 'single',
+      anonymous INTEGER NOT NULL DEFAULT 0,
+      team_id INTEGER,
+      created_by INTEGER NOT NULL,
+      starts_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      ends_at TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS poll_options (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER NOT NULL,
+      option_text TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS poll_votes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      poll_id INTEGER NOT NULL,
+      option_id INTEGER NOT NULL,
+      user_id INTEGER,
+      voted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS shop_products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -2827,7 +2854,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // ─── 5. POLLS (Umfragen & Abstimmungen) ──────────────────
-  async createPoll(poll: InsertPoll, options: InsertPollOption[]): Promise<Poll> {
+  async createPoll(poll: InsertPoll, options: Omit<InsertPollOption, "pollId" | "createdAt">[]): Promise<Poll> {
     const createdPoll = db.insert(polls).values(poll).returning().get();
     for (const option of options) {
       db.insert(pollOptions).values({ ...option, pollId: createdPoll.id }).run();
@@ -2837,6 +2864,10 @@ export class DatabaseStorage implements IStorage {
 
   async getPoll(id: number): Promise<Poll | undefined> {
     return db.select().from(polls).where(eq(polls.id, id)).get();
+  }
+
+  async getPollOptions(pollId: number): Promise<PollOption[]> {
+    return db.select().from(pollOptions).where(eq(pollOptions.pollId, pollId)).orderBy(asc(pollOptions.sortOrder)).all();
   }
 
   async listPolls(teamId?: number, status?: string): Promise<Poll[]> {
