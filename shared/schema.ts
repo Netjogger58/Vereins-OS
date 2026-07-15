@@ -63,6 +63,7 @@ export const members = sqliteTable("members", {
   birthName: text("birth_name"), // Geburtsname (optional, nur manuell wo relevant)
   email: text("email"),
   phone: text("phone"),
+  phoneOwner: text("phone_owner"), // spieler | elternteil | unbekannt
   birthdate: text("birthdate"),
   address: text("address"),
   teamId: integer("team_id"),

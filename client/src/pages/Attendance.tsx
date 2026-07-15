@@ -74,7 +74,9 @@ export default function AttendancePage() {
   const [date, setDate] = useState<string>(isoToday());
   const [trialMemberId, setTrialMemberId] = useState<string>("");
   const [newOpen, setNewOpen] = useState(false);
-  const [newForm, setNewForm] = useState({ name: "", birthdate: "", licenseNumber: "" });
+  const [newForm, setNewForm] = useState({ firstName: "", lastName: "", birthdate: "", phone: "", phoneOwner: "elternteil", licenseNumber: "" });
+  const [phoneUnknown, setPhoneUnknown] = useState(false);
+  const [search, setSearch] = useState("");
   const canEdit = user && ["präsident", "admin", "trainer"].includes(user.role);
 
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
@@ -168,12 +170,18 @@ export default function AttendancePage() {
   });
 
   const createMemberAndTrialMut = useMutation({
-    mutationFn: async ({ name, birthdate, licenseNumber }: { name: string; birthdate: string; licenseNumber: string }) => {
+    mutationFn: async (payload: { firstName: string; lastName: string; birthdate: string; phone: string; phoneOwner: string; licenseNumber: string; phoneUnknown: boolean }) => {
+      const { firstName, lastName, birthdate, phone, phoneOwner, licenseNumber, phoneUnknown } = payload;
+      const name = `${firstName} ${lastName}`.trim();
       const created = await (await apiRequest("POST", "/api/members", {
         name,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
         birthdate: birthdate || undefined,
+        phone: phoneUnknown ? "unbekannt" : (phone || undefined),
+        phoneOwner: phoneUnknown ? "unbekannt" : phoneOwner,
         licenseNumber: licenseNumber || undefined,
-        membershipStatus: "active",
+        membershipStatus: "pending",
         teamId: selTeamId || undefined,
       })).json();
       if (!created?.id) throw new Error("Mitglied konnte nicht angelegt werden");
@@ -183,7 +191,8 @@ export default function AttendancePage() {
     },
     onSuccess: () => {
       setNewOpen(false);
-      setNewForm({ name: "", birthdate: "", licenseNumber: "" });
+      setNewForm({ firstName: "", lastName: "", birthdate: "", phone: "", phoneOwner: "elternteil", licenseNumber: "" });
+      setPhoneUnknown(false);
       queryClient.invalidateQueries({ queryKey: ["/api/members"] });
       invalidateAll();
       toast({ title: "Neuer Spieler als Prouftraining angelegt" });
@@ -288,30 +297,15 @@ export default function AttendancePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Manuell erfassen</CardTitle>
-              {(() => {
-                const available = members.filter(m =>
-                  isActiveClubMember(m) && !teamMembers.some(tm => tm.id === m.id)
-                );
-                return available.length > 0 ? (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Select value={trialMemberId} onValueChange={setTrialMemberId}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Spieler für Prouftraining auswählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {available.map(m => (
-                          <SelectItem key={m.id} value={String(m.id)}>{formatMemberName(m)}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={!trialMemberId || addTrialMut.isPending}
-                      onClick={() => trialMemberId && addTrialMut.mutate(Number(trialMemberId))}
-                    >
-                      <Plus className="size-4 mr-1" /> Prouftraining
-                    </Button>
+              {canEdit && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Vor- oder Nachname eingeben…"
+                      value={search}
+                      onChange={e => { setSearch(e.target.value); setTrialMemberId(""); }}
+                      className="flex-1"
+                    />
                     <Button
                       size="sm"
                       variant="default"
@@ -321,8 +315,56 @@ export default function AttendancePage() {
                       <Plus className="size-4 mr-1" /> Neu
                     </Button>
                   </div>
-                ) : null;
-              })()}
+                  {(() => {
+                    const q = search.trim().toLowerCase();
+                    if (!q) return null;
+                    const available = members.filter(m =>
+                      isActiveClubMember(m) && !teamMembers.some(tm => tm.id === m.id)
+                    );
+                    const matches = available
+                      .filter(m => {
+                        const hay = [m.firstName, m.lastName, m.name].filter(Boolean).join(" ").toLowerCase();
+                        return hay.includes(q);
+                      })
+                      .slice(0, 5);
+                    if (matches.length === 0) return null;
+                    return (
+                      <div className="border rounded-md divide-y divide-border bg-background">
+                        {matches.map(m => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => {
+                              setTrialMemberId(String(m.id));
+                              setSearch(formatMemberName(m));
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-muted ${trialMemberId === String(m.id) ? "bg-muted font-medium" : ""}`}
+                          >
+                            {formatMemberName(m)}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                  {search.trim() && trialMemberId && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={addTrialMut.isPending}
+                        onClick={() => addTrialMut.mutate(Number(trialMemberId))}
+                      >
+                        <Plus className="size-4 mr-1" /> Prouftraining
+                      </Button>
+                    </div>
+                  )}
+                  {search.trim() && !trialMemberId && (
+                    <p className="text-xs text-muted-foreground">
+                      Kein Treffer? Neuen Spieler über den «Neu»-Knopf anlegen.
+                    </p>
+                  )}
+                </div>
+              )}
             </CardHeader>
             <CardContent className="p-0 divide-y divide-border">
               {teamMembers.length === 0 && (
@@ -408,21 +450,62 @@ export default function AttendancePage() {
                 <DialogTitle>Neuen Spieler anlegen</DialogTitle>
               </DialogHeader>
               <div className="space-y-3 py-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Name *</Label>
-                  <Input
-                    value={newForm.name}
-                    onChange={e => setNewForm({ ...newForm, name: e.target.value })}
-                    placeholder="Vor- und Nachname"
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Vorname *</Label>
+                    <Input
+                      value={newForm.firstName}
+                      onChange={e => setNewForm({ ...newForm, firstName: e.target.value })}
+                      placeholder="Vorname"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Nachname *</Label>
+                    <Input
+                      value={newForm.lastName}
+                      onChange={e => setNewForm({ ...newForm, lastName: e.target.value })}
+                      placeholder="Nachname"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Geburtsdatum</Label>
+                  <Label className="text-xs">Geburtsdatum *</Label>
                   <Input
                     type="date"
                     value={newForm.birthdate}
                     onChange={e => setNewForm({ ...newForm, birthdate: e.target.value })}
                   />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Handynummer *</Label>
+                  <Input
+                    type="tel"
+                    value={newForm.phone}
+                    onChange={e => { setNewForm({ ...newForm, phone: e.target.value }); if (e.target.value) setPhoneUnknown(false); }}
+                    placeholder="vom Spieler oder einem Elternteil"
+                    disabled={phoneUnknown}
+                  />
+                  {!phoneUnknown && newForm.phone.trim() && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>Nummer gehört zu:</span>
+                      <select
+                        className="bg-background border rounded px-1 py-0.5"
+                        value={newForm.phoneOwner}
+                        onChange={e => setNewForm({ ...newForm, phoneOwner: e.target.value })}
+                      >
+                        <option value="spieler">Spieler</option>
+                        <option value="elternteil">Elternteil</option>
+                      </select>
+                    </div>
+                  )}
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={phoneUnknown}
+                      onChange={e => { setPhoneUnknown(e.target.checked); if (e.target.checked) setNewForm(f => ({ ...f, phone: "", phoneOwner: "unbekannt" })); }}
+                    />
+                    Telefonnummer momentan unbekannt – vermerken
+                  </label>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Lizenznummer</Label>
@@ -436,8 +519,8 @@ export default function AttendancePage() {
               <DialogFooter>
                 <Button variant="outline" onClick={() => setNewOpen(false)}>Abbrechen</Button>
                 <Button
-                  disabled={!newForm.name.trim() || createMemberAndTrialMut.isPending}
-                  onClick={() => createMemberAndTrialMut.mutate(newForm)}
+                  disabled={!newForm.firstName.trim() || !newForm.lastName.trim() || !newForm.birthdate || (!newForm.phone.trim() && !phoneUnknown) || createMemberAndTrialMut.isPending}
+                  onClick={() => createMemberAndTrialMut.mutate({ ...newForm, phoneOwner: phoneUnknown ? "unbekannt" : newForm.phoneOwner, phoneUnknown })}
                 >
                   Anlegen & Prouftraining
                 </Button>
