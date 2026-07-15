@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -70,6 +73,8 @@ export default function AttendancePage() {
   const [teamId, setTeamId] = useState<string>("");
   const [date, setDate] = useState<string>(isoToday());
   const [trialMemberId, setTrialMemberId] = useState<string>("");
+  const [newOpen, setNewOpen] = useState(false);
+  const [newForm, setNewForm] = useState({ name: "", birthdate: "", licenseNumber: "" });
   const canEdit = user && ["präsident", "admin", "trainer"].includes(user.role);
 
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
@@ -160,6 +165,31 @@ export default function AttendancePage() {
     },
     onError: (e: any) =>
       toast({ title: "Prouftraining hinzufügen fehlgeschlagen", description: String(e?.message || e), variant: "destructive" }),
+  });
+
+  const createMemberAndTrialMut = useMutation({
+    mutationFn: async ({ name, birthdate, licenseNumber }: { name: string; birthdate: string; licenseNumber: string }) => {
+      const created = await (await apiRequest("POST", "/api/members", {
+        name,
+        birthdate: birthdate || undefined,
+        licenseNumber: licenseNumber || undefined,
+        membershipStatus: "active",
+        teamId: selTeamId || undefined,
+      })).json();
+      if (!created?.id) throw new Error("Mitglied konnte nicht angelegt werden");
+      return apiRequest("POST", "/api/attendance/bulk", {
+        items: [{ memberId: created.id, teamId: selTeamId, date, present: true, status: "present", isTrial: true }],
+      }).then(() => created);
+    },
+    onSuccess: () => {
+      setNewOpen(false);
+      setNewForm({ name: "", birthdate: "", licenseNumber: "" });
+      queryClient.invalidateQueries({ queryKey: ["/api/members"] });
+      invalidateAll();
+      toast({ title: "Neuer Spieler als Prouftraining angelegt" });
+    },
+    onError: (e: any) =>
+      toast({ title: "Anlegen fehlgeschlagen", description: String(e?.message || e), variant: "destructive" }),
   });
 
   // Status ableiten (Altdaten ohne status aus present ableiten)
@@ -282,6 +312,14 @@ export default function AttendancePage() {
                     >
                       <Plus className="size-4 mr-1" /> Prouftraining
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      disabled={!canEdit}
+                      onClick={() => setNewOpen(true)}
+                    >
+                      <Plus className="size-4 mr-1" /> Neu
+                    </Button>
                   </div>
                 ) : null;
               })()}
@@ -363,6 +401,49 @@ export default function AttendancePage() {
               })}
             </CardContent>
           </Card>
+
+          <Dialog open={newOpen} onOpenChange={setNewOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Neuen Spieler anlegen</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 py-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Name *</Label>
+                  <Input
+                    value={newForm.name}
+                    onChange={e => setNewForm({ ...newForm, name: e.target.value })}
+                    placeholder="Vor- und Nachname"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Geburtsdatum</Label>
+                  <Input
+                    type="date"
+                    value={newForm.birthdate}
+                    onChange={e => setNewForm({ ...newForm, birthdate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Lizenznummer</Label>
+                  <Input
+                    value={newForm.licenseNumber}
+                    onChange={e => setNewForm({ ...newForm, licenseNumber: e.target.value })}
+                    placeholder="optional"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setNewOpen(false)}>Abbrechen</Button>
+                <Button
+                  disabled={!newForm.name.trim() || createMemberAndTrialMut.isPending}
+                  onClick={() => createMemberAndTrialMut.mutate(newForm)}
+                >
+                  Anlegen & Prouftraining
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="photo">
