@@ -24,9 +24,9 @@ export default function TrialRegistrations() {
           <Card key={r.id}>
             <CardContent className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div>
-                <div className="font-semibold">{r.childName} ({r.age ? r.age + " J." : "k.A."})</div>
+                <div className="font-semibold">{r.childName} {r.birthdate ? `(${r.birthdate})` : ""}</div>
                 <div className="text-sm text-muted-foreground">{r.parentName} · {r.email} · {r.phone || "-"}</div>
-                {r.teamCategory && <div className="text-sm">Kategorie: {r.teamCategory}</div>}
+                <div className="text-sm">{[r.teamCategory, r.gender].filter(Boolean).join(" · ") || "-"}</div>
                 {r.note && <div className="text-sm text-muted-foreground">{r.note}</div>}
                 <div className="text-xs text-muted-foreground mt-1">{new Date(r.createdAt).toLocaleString("de-LU")}</div>
               </div>
