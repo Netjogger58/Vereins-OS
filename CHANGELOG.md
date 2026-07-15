@@ -8,6 +8,7 @@ Neueste Änderungen zuerst.
   - Neue Seite `/invoices` für Rechnungen mit Zahlungserfassung, Mahnungen und offenen Posten.
   - Neue Seite `/donations` für Spendenmanagement inkl. Quittungsstatus.
   - iCal-Abonnement-Feed unter `/calendar/:token.ics` für Google/Apple/Outlook.
+  - Öffentliche Website-API unter `/api/public/*` (Events, Spiele, Sponsoren, Hallen, Umfragen, Spenden) mit CORS.
 
 - **Vereins-OS-App – Fahrgemeinschaften.**
   - Neue Seite `/carpools` für Mitfahrgelegenheiten zu Terminen.

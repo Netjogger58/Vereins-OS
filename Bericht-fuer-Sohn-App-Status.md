@@ -155,6 +155,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | Modul | Status | Was kann man damit machen? |
 |---|---|---|
 | **Website-Hub** | ✅ | Die öffentliche Website `mersch75.lu` direkt aus der App verwalten: Seiten auflisten, Live-Vorschau, im GitHub-Editor öffnen. |
+| **Öffentliche Website-API** | ✅ *(neu)* | CORS-fähige Endpunkte für Events, Spiele, Sponsoren, Hallen, Umfragen und Spenden — direkt für die Website nutzbar. |
 | **Willkommensmappe** | ✅ | Mehrsprachige Wëllkomm-Mapp für neue Mitglieder (LU/DE/FR/EN/PT), inkl. Druck/PDF. |
 | **Saison-Archiv 25/26** | ✅ *(neu)* | Die Website-Statistik-Seiten der Saison 2025/26 wurden importiert und sind nun in der App archiviert. |
 | **Galerie** | 🟡 | Basis vorhanden. |
@@ -223,6 +224,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 - ✅ **Rechnungen & offene Posten** mit Zahlungen und Mahnungen
 - ✅ **Spendenmanagement** mit Kampagnen und Quittungen
 - ✅ **iCal-Kalender-Feed** für externe Kalender
+- ✅ **Öffentliche Website-API** mit CORS für mersch75.lu
 
 ---
 
@@ -272,7 +274,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ## 7. Fazit
 
-Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail, Bankimport, Rechnungen, Spenden und iCal-Kalender-Feed hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
+Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail, Bankimport, Rechnungen, Spenden, iCal-Kalender-Feed und eine öffentliche Website-API hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
 
 Der Fokus für die nächsten Wochen sollte sein:
 - Test-Abdeckung erhöhen

@@ -19,6 +19,7 @@ import { registerBankImportRoutes } from "./routes/bankImport.routes";
 import { registerInvoiceRoutes } from "./routes/invoice.routes";
 import { registerDonationRoutes } from "./routes/donation.routes";
 import { registerIcalRoutes } from "./routes/ical.routes";
+import { registerPublicRoutes } from "./routes/public.routes";
 import {
   authMiddleware,
   requireAuth,
@@ -229,6 +230,9 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
 
   // Increase JSON body limit for photo uploads (base64)
   // Note: express.json middleware already configured in index.ts
+
+  // Öffentliche Endpunkte für die Website (kein Login erforderlich)
+  registerPublicRoutes(app);
 
   app.use(authMiddleware);
 
