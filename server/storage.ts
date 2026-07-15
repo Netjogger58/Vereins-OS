@@ -851,6 +851,36 @@ function init() {
       purpose TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS inventory_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      description TEXT,
+      qr_code TEXT UNIQUE,
+      purchase_date TEXT,
+      purchase_price INTEGER,
+      condition TEXT DEFAULT 'good',
+      location TEXT,
+      total_quantity INTEGER NOT NULL DEFAULT 1,
+      available_quantity INTEGER NOT NULL DEFAULT 1,
+      maintenance_interval INTEGER,
+      last_maintenance TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS inventory_loans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 1,
+      loaned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      due_date TEXT,
+      returned_at TEXT,
+      condition TEXT,
+      checked_out_by INTEGER,
+      checked_in_by INTEGER,
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
     CREATE TABLE IF NOT EXISTS shop_products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,

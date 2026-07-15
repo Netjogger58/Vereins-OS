@@ -4,6 +4,13 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
+- **Vereins-OS-App – Inventar-Modul.**
+  - Neue Seite `/inventory` mit Inventarliste, Suche und Verwaltung.
+  - Gegenstände anlegen/bearbeiten/löschen mit Name, Kategorie, Lagerort, Zustand, Menge und QR-Code.
+  - Ausleihen an Benutzer mit Mengenangabe und Rückgabedatum.
+  - Automatische Berechnung der verfügbaren Menge anhand offener Ausleihen.
+  - API-Endpunkte unter `/api/inventory` und Ausleihen unter `/api/inventory/loans`.
+
 - **Vereins-OS-App – Mitgliederselbstbedienung "Meine Termine".**
   - Neue Seite `/my-events` und mobiler Tab "Termine".
   - Jedes Mitglied sieht seine eigenen anstehenden Mannschafts-Termine und kann Verfügbarkeit setzen.

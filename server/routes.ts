@@ -8,6 +8,7 @@ import { storage, seedIfEmpty, seedTestCards, sqlite } from "./storage";
 import { registerWaitlistRoutes } from "./routes/waitlist.routes";
 import { registerGdprRoutes } from "./routes/gdpr.routes";
 import { registerArchiveRoutes } from "./routes/archive.routes";
+import { registerInventoryRoutes } from "./routes/inventory.routes";
 import {
   authMiddleware,
   requireAuth,
@@ -2738,6 +2739,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   registerWaitlistRoutes(app);
   registerGdprRoutes(app);
   registerArchiveRoutes(app);
+  registerInventoryRoutes(app);
 
   return _httpServer;
 }
