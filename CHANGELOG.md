@@ -4,6 +4,11 @@ Neueste Änderungen zuerst.
 
 ## 2026-07-15 (später)
 
+- **Vereins-OS-App – Rechnungen, Spenden und Kalender-Feed.**
+  - Neue Seite `/invoices` für Rechnungen mit Zahlungserfassung, Mahnungen und offenen Posten.
+  - Neue Seite `/donations` für Spendenmanagement inkl. Quittungsstatus.
+  - iCal-Abonnement-Feed unter `/calendar/:token.ics` für Google/Apple/Outlook.
+
 - **Vereins-OS-App – Fahrgemeinschaften.**
   - Neue Seite `/carpools` für Mitfahrgelegenheiten zu Terminen.
   - Fahrer können Plätze anbieten; Mitglieder können ein- und austeigen.

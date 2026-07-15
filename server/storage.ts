@@ -256,6 +256,15 @@ import {
   budgets,
   type Budget,
   type InsertBudget,
+  invoices,
+  invoicePayments,
+  type Invoice,
+  type InsertInvoice,
+  type InvoicePayment,
+  type InsertInvoicePayment,
+  donations,
+  type Donation,
+  type InsertDonation,
 } from "@shared/schema";
 import { isActiveClubMember } from "@shared/memberStatus";
 import "dotenv/config";
@@ -320,6 +329,7 @@ function init() {
       photo_url TEXT,
       qualifications TEXT,
       active INTEGER NOT NULL DEFAULT 1,
+      ical_token TEXT UNIQUE,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS teams (
@@ -950,6 +960,36 @@ function init() {
       carpool_id INTEGER NOT NULL,
       passenger_id INTEGER NOT NULL,
       status TEXT NOT NULL DEFAULT 'confirmed',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS invoices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      member_id INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      description TEXT NOT NULL,
+      season TEXT,
+      due_date TEXT,
+      status TEXT NOT NULL DEFAULT 'open',
+      paid_amount REAL NOT NULL DEFAULT 0,
+      paid_at TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS invoice_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      invoice_id INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      paid_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      note TEXT
+    );
+    CREATE TABLE IF NOT EXISTS donations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      donor_name TEXT NOT NULL,
+      donor_email TEXT,
+      amount REAL NOT NULL,
+      campaign TEXT,
+      note TEXT,
+      date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      receipt_sent INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS shop_products (
@@ -1814,6 +1854,30 @@ export class DatabaseStorage implements IStorage {
       db.delete(transactions).where(eq(transactions.id, id)).run();
     }
   }
+
+  // ─── Invoices & Payments ────────────────────────────────
+  async listInvoices(status?: string) {
+    if (status) return db.select().from(invoices).where(eq(invoices.status, status)).orderBy(desc(invoices.createdAt)).all();
+    return db.select().from(invoices).orderBy(desc(invoices.createdAt)).all();
+  }
+  async createInvoice(i: InsertInvoice) { return db.insert(invoices).values(i).returning().get(); }
+  async getInvoice(id: number) { return db.select().from(invoices).where(eq(invoices.id, id)).get(); }
+  async updateInvoice(id: number, data: Partial<InsertInvoice>) { return db.update(invoices).set(data).where(eq(invoices.id, id)).returning().get(); }
+  async deleteInvoice(id: number) { db.delete(invoicePayments).where(eq(invoicePayments.invoiceId, id)).run(); db.delete(invoices).where(eq(invoices.id, id)).run(); }
+  async addInvoicePayment(p: InsertInvoicePayment) { return db.insert(invoicePayments).values(p).returning().get(); }
+  async getInvoicePayments(invoiceId: number) { return db.select().from(invoicePayments).where(eq(invoicePayments.invoiceId, invoiceId)).orderBy(desc(invoicePayments.paidAt)).all(); }
+
+  // ─── Donations ──────────────────────────────────────────
+  async listDonations(campaign?: string) {
+    if (campaign) return db.select().from(donations).where(eq(donations.campaign, campaign)).orderBy(desc(donations.date)).all();
+    return db.select().from(donations).orderBy(desc(donations.date)).all();
+  }
+  async createDonation(d: InsertDonation) { return db.insert(donations).values(d).returning().get(); }
+  async updateDonation(id: number, data: Partial<InsertDonation>) { return db.update(donations).set(data).where(eq(donations.id, id)).returning().get(); }
+  async deleteDonation(id: number) { db.delete(donations).where(eq(donations.id, id)).run(); }
+
+  // ─── iCal lookup ────────────────────────────────────────
+  async getUserByIcalToken(token: string) { return db.select().from(users).where(eq(users.icalToken, token)).get(); }
 
   async listSeasonBudgets(season?: string) {
     if (season) return db.select().from(budgets).where(eq(budgets.season, season)).all();

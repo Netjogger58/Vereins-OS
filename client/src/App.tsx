@@ -24,6 +24,9 @@ import Carpools from "@/pages/Carpools";
 import BulkOperations from "@/pages/BulkOperations";
 import MassEmail from "@/pages/MassEmail";
 import BankImport from "@/pages/BankImport";
+import Invoices from "@/pages/Invoices";
+import Donations from "@/pages/Donations";
+import CalendarFeed from "@/pages/CalendarFeed";
 import Calendar from "@/pages/Calendar";
 import Attendance from "@/pages/Attendance";
 import Meetings from "@/pages/Meetings";
@@ -101,6 +104,9 @@ function AppRouter() {
         <Route path="/bulk-operations" component={BulkOperations} />
         <Route path="/mass-email" component={MassEmail} />
         <Route path="/finance/import" component={BankImport} />
+        <Route path="/invoices" component={canAccessFinance ? Invoices : NotFound} />
+        <Route path="/donations" component={canAccessFinance ? Donations : NotFound} />
+        <Route path="/calendar-feed" component={CalendarFeed} />
         <Route path="/nominations" component={Nominations} />
         <Route path="/chat" component={Chat} />
         <Route path="/import" component={ImportMembers} />

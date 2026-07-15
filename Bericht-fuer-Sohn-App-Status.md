@@ -106,6 +106,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | Modul | Status | Was kann man damit machen? |
 |---|---|---|
 | **Kalender & Events** | ✅ | Termine anlegen, bearbeiten, Teams zuordnen. |
+| **Kalender-Feed (iCal)** | ✅ *(neu)* | Persönlichen Termin-Feed für Google/Apple/Outlook abonnieren. |
 | **Sitzungen (Meetings)** | ✅ | Interne Sitzungen erfassen. |
 | **Dokumente** | ✅ | PDFs/Bilder hochladen, kategorisieren, herunterladen. |
 | **Anmeldungen (öffentlich + intern)** | ✅ | Externes Anmeldeformular für neue Mitglieder; interne Registrierungen genehmigen/ablehnen. |
@@ -129,6 +130,9 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 | **Finanzen (Konten/Buchungen)** | ✅ | Bankkonten anlegen, Einnahmen/Ausgaben buchen, nach Saison/Kategorie filtern. |
 | **Beiträge (Fees)** | ✅ | Mitgliedsbeiträge erfassen, Zahlungen verbuchen, Mahnungen versenden. |
 | **Budget** | ✅ | Saisonales Budget planen (Charges/Produits) und mit den realen Buchungen vergleichen. |
+| **Rechnungen & offene Posten** | ✅ *(neu)* | Rechnungen erstellen, Zahlungen erfassen, Mahnungen versenden, offene Beträge sehen. |
+| **Spendenmanagement** | ✅ *(neu)* | Spenden erfassen, Kampagnen zuordnen, Quittungsstatus verwalten. |
+| **Bankimport (CSV)** | ✅ *(neu)* | Bankumsätze importieren und automatisch als Einnahmen/Ausgaben buchen. |
 | **SEPA** | 🟡 / 📋 | Datenmodell vorhanden, vollständige Oberfläche folgt. |
 
 > Zugriff auf Finanzen ist auf **Präsident, Admin und Kassenwart** beschränkt.
@@ -216,6 +220,9 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 - ✅ **Massendatenänderungen** in der Mitgliederverwaltung
 - ✅ **Serien-E-Mail** mit Platzhaltern und optionalem PDF-Anhang
 - ✅ **Bankimport (CSV)** für automatische Buchungen
+- ✅ **Rechnungen & offene Posten** mit Zahlungen und Mahnungen
+- ✅ **Spendenmanagement** mit Kampagnen und Quittungen
+- ✅ **iCal-Kalender-Feed** für externe Kalender
 
 ---
 
@@ -265,7 +272,7 @@ Die folgende Übersicht nutzt eine einfache Ampel:
 
 ## 7. Fazit
 
-Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail und Bankimport hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
+Die App ist **funktionsfähig und wird intern bereits genutzt**. Kernbereiche wie Mitglieder, Teams, Anwesenheit, Spiele, Finanzen, Kalender, Kommunikation und Website-Hub stehen. Kürzlich kamen wichtige Module wie Warteliste, DSGVO-Tools, Saison-Archiv, Inventar, Mitgliederselbstbedienung, Umfragen, Raumreservierungen, Gegner-Scouting, Fahrgemeinschaften, Massendatenänderungen, Serien-E-Mail, Bankimport, Rechnungen, Spenden und iCal-Kalender-Feed hinzu. Die App ist jetzt auch als **mobile Web-App (PWA)** installierbar.
 
 Der Fokus für die nächsten Wochen sollte sein:
 - Test-Abdeckung erhöhen

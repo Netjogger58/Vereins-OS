@@ -16,6 +16,9 @@ import { registerCarpoolRoutes } from "./routes/carpool.routes";
 import { registerBulkRoutes } from "./routes/bulk.routes";
 import { registerMassEmailRoutes } from "./routes/massEmail.routes";
 import { registerBankImportRoutes } from "./routes/bankImport.routes";
+import { registerInvoiceRoutes } from "./routes/invoice.routes";
+import { registerDonationRoutes } from "./routes/donation.routes";
+import { registerIcalRoutes } from "./routes/ical.routes";
 import {
   authMiddleware,
   requireAuth,
@@ -2754,6 +2757,9 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   registerBulkRoutes(app);
   registerMassEmailRoutes(app);
   registerBankImportRoutes(app);
+  registerInvoiceRoutes(app);
+  registerDonationRoutes(app);
+  registerIcalRoutes(app);
 
   return _httpServer;
 }

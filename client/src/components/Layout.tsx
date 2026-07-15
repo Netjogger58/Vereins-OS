@@ -45,6 +45,8 @@ import {
   Archive,
   KeyRound,
   Upload,
+  Receipt,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -72,6 +74,7 @@ const NAV: NavItem[] = [
   { href: "/announcements", label: "Ankündigungen", icon: Megaphone, section: "Übersicht" },
   { href: "/my-events", label: "Meine Termine", icon: Calendar, section: "Übersicht" },
   { href: "/calendar", label: "Kalender", icon: CalendarDays, section: "Übersicht" },
+  { href: "/calendar-feed", label: "Kalender-Feed", icon: Calendar, section: "Übersicht" },
   { href: "/chat", label: "Team-Chat", icon: MessageCircle, section: "Übersicht" },
   { href: "/inventory", label: "Inventar", icon: Package, section: "Verwaltung" },
   { href: "/teams", label: "Teams", icon: Shield, section: "Sport" },
@@ -89,6 +92,8 @@ const NAV: NavItem[] = [
   { href: "/fees", label: "Beiträge", icon: Wallet, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },
   { href: "/documents", label: "Dokumente", icon: FileText, section: "Verwaltung", roles: ["präsident", "admin", "secretaire", "kassenwart"] },
   { href: "/statistics", label: "Berichte", icon: BarChart3, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart", "secretaire"] },
+  { href: "/invoices", label: "Rechnungen", icon: Receipt, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart", "secretaire"] },
+  { href: "/donations", label: "Spenden", icon: Heart, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart", "secretaire"] },
   { href: "/bulk-operations", label: "Massendaten", icon: Users, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
   { href: "/mass-email", label: "Serien-E-Mail", icon: Mail, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
   { href: "/finance/import", label: "Bankimport", icon: Upload, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },

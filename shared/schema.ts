@@ -15,6 +15,7 @@ export const users = sqliteTable("users", {
   photoUrl: text("photo_url"),
   qualifications: text("qualifications"), // Trainer-Lizenz (LUXQF3, LUXQF2Bis, etc.)
   active: integer("active", { mode: "boolean" }).notNull().default(true),
+  icalToken: text("ical_token").unique(), // Geheimer Token für Kalender-Feed
   createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
 });
 
@@ -215,6 +216,52 @@ export const budgets = sqliteTable("budgets", {
 export const insertBudgetSchema = createInsertSchema(budgets).omit({ id: true });
 export type InsertBudget = z.infer<typeof insertBudgetSchema>;
 export type Budget = typeof budgets.$inferSelect;
+
+// ─── Invoices & Payments ──────────────────────────────────
+export const invoices = sqliteTable("invoices", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  memberId: integer("member_id").notNull(),
+  amount: real("amount").notNull(),
+  description: text("description").notNull(),
+  season: text("season"),
+  dueDate: text("due_date"),
+  status: text("status").notNull().default("open"), // open | paid | cancelled
+  paidAmount: real("paid_amount").notNull().default(0),
+  paidAt: text("paid_at"),
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
+export const invoicePayments = sqliteTable("invoice_payments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  invoiceId: integer("invoice_id").notNull(),
+  amount: real("amount").notNull(),
+  paidAt: text("paid_at").notNull().default("CURRENT_TIMESTAMP"),
+  note: text("note"),
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true, createdAt: true });
+export const insertInvoicePaymentSchema = createInsertSchema(invoicePayments).omit({ id: true, paidAt: true });
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type InsertInvoicePayment = z.infer<typeof insertInvoicePaymentSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InvoicePayment = typeof invoicePayments.$inferSelect;
+
+// ─── Donations ────────────────────────────────────────────
+export const donations = sqliteTable("donations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  donorName: text("donor_name").notNull(),
+  donorEmail: text("donor_email"),
+  amount: real("amount").notNull(),
+  campaign: text("campaign"),
+  note: text("note"),
+  date: text("date").notNull().default("CURRENT_TIMESTAMP"),
+  receiptSent: integer("receipt_sent", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
+});
+
+export const insertDonationSchema = createInsertSchema(donations).omit({ id: true, createdAt: true });
+export type InsertDonation = z.infer<typeof insertDonationSchema>;
+export type Donation = typeof donations.$inferSelect;
 
 // ─── Finanz-Kategorien (aus Bilan/Compte de résultat) ────
 export const FINANCE_CATEGORIES = {
