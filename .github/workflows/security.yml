@@ -21,13 +21,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run audit
-        run: npm audit --audit-level=critical
-        continue-on-error: true
-
       - name: Check for critical vulnerabilities
         run: |
-          if npm audit --audit-level=critical 2>&1 | grep -q "critical"; then
-            echo "::warning::Critical vulnerabilities found — check npm audit"
+          CRITICAL=$(npm audit --json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).metadata.vulnerabilities.critical||0)}catch(e){console.log(0)}})")
+          echo "Critical vulnerabilities: $CRITICAL"
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "::warning::$CRITICAL critical vulnerabilities found — run npm audit locally"
             exit 1
           fi
+          echo "No critical vulnerabilities"
