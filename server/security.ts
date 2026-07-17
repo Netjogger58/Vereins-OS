@@ -169,7 +169,9 @@ export function rateLimitMiddleware(req: Request, res: Response, next: NextFunct
 }
 
 // Erzwinge HTTPS in Produktion (hinter Reverse-Proxy via x-forwarded-proto).
+// Kann mit DISABLE_HTTPS_REDIRECT=true deaktiviert werden (z.B. vor SSL-Einrichtung).
 export function enforceHttps(req: Request, res: Response, next: NextFunction) {
+  if (process.env.DISABLE_HTTPS_REDIRECT === "true") return next();
   if (process.env.NODE_ENV === "production" && req.headers["x-forwarded-proto"] === "http") {
     return res.redirect(301, `https://${req.headers.host}${req.url}`);
   }

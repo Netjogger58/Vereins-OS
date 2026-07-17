@@ -1193,6 +1193,16 @@ function init() {
       sepa_xml TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS api_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      token TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      scopes TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      last_used_at TEXT,
+      expires_at TEXT,
+      active INTEGER NOT NULL DEFAULT 1
+    );
   `);
 }
 
@@ -1211,6 +1221,17 @@ function safeAddColumn(table: string, column: string, definition: string) {
 }
 
 function runMigrations() {
+  // Kalender-Feed: geheimer iCal-Token pro User (Schema: users.ical_token UNIQUE)
+  safeAddColumn("users", "ical_token", "TEXT");
+  try {
+    sqlite.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_ical_token ON users(ical_token) WHERE ical_token IS NOT NULL`
+    );
+  } catch (e) {
+    console.error("[migrate] failed to create idx_users_ical_token:", e);
+  }
+  safeAddColumn("members", "phone_owner", "TEXT");
+  safeAddColumn("waitlist_entries", "birthdate", "TEXT");
   safeAddColumn("members", "card_id", "TEXT");
   safeAddColumn("members", "club_function", "TEXT");
   safeAddColumn("members", "nationality", "TEXT");
@@ -1232,6 +1253,11 @@ function runMigrations() {
   safeAddColumn("members", "first_name", "TEXT");
   safeAddColumn("members", "last_name", "TEXT");
   safeAddColumn("members", "birth_name", "TEXT");
+  safeAddColumn("members", "medico_list", "INTEGER");
+  safeAddColumn("members", "medico_comment", "TEXT");
+  safeAddColumn("members", "medico_result", "TEXT");
+  safeAddColumn("members", "medico_result_date", "TEXT");
+  safeAddColumn("members", "extra_team_ids", "TEXT");
   safeAddColumn("member_functions", "team_id", "INTEGER");
   // Anwesenheit: Status (present | absent | excused | unexcused); für Altdaten aus present ableiten
   safeAddColumn("attendance", "status", "TEXT");

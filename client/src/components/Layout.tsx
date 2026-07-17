@@ -61,6 +61,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { initials } from "@/lib/utils";
 import type { Role } from "@shared/schema";
+import { rolesForRoute } from "@/lib/permissions";
 
 interface NavItem {
   href: string;
@@ -70,55 +71,66 @@ interface NavItem {
   section?: string;
 }
 
-const NAV: NavItem[] = [
+// NAV-Definitioun ouni Rollen — déi kommen aus permissions.ts (eng eenzeg Quell)
+const NAV_DEFS: { href: string; label: string; icon: typeof LayoutDashboard; section: string }[] = [
+  // ─── Übersicht ───
   { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "Übersicht" },
   { href: "/announcements", label: "Ankündigungen", icon: Megaphone, section: "Übersicht" },
   { href: "/my-events", label: "Meine Termine", icon: Calendar, section: "Übersicht" },
   { href: "/calendar", label: "Kalender", icon: CalendarDays, section: "Übersicht" },
   { href: "/calendar-feed", label: "Kalender-Feed", icon: Calendar, section: "Übersicht" },
-  { href: "/chat", label: "Team-Chat", icon: MessageCircle, section: "Übersicht" },
-  { href: "/inventory", label: "Inventar", icon: Package, section: "Verwaltung" },
+  { href: "/chat", label: "Chat", icon: MessageCircle, section: "Übersicht" },
+  // ─── Sport ───
   { href: "/teams", label: "Teams", icon: Shield, section: "Sport" },
+  { href: "/checkin", label: "Ausweis & Check-in", icon: QrCode, section: "Sport" },
+  { href: "/training-schedules", label: "Trainingsplan", icon: CalendarClock, section: "Sport" },
+  { href: "/training-exercises", label: "Übungsdatenbank", icon: Dumbbell, section: "Sport" },
+  { href: "/trainer-codes", label: "Trainer-Codes", icon: KeyRound, section: "Sport" },
+  { href: "/live-match", label: "Live-Spielanalyse", icon: Target, section: "Sport" },
+  { href: "/attendance", label: "Anwesenheit", icon: ClipboardCheck, section: "Sport" },
+  { href: "/trial-registrations", label: "Probéieren-Ufroe", icon: Users, section: "Sport" },
+  { href: "/matches", label: "Spiele", icon: Trophy, section: "Sport" },
+  { href: "/carpools", label: "Fahrgemeinschaften", icon: Car, section: "Sport" },
+  { href: "/player-statistics", label: "Statistiken", icon: TrendingUp, section: "Sport" },
+  { href: "/nominations", label: "Nominierung", icon: Users, section: "Sport" },
+  { href: "/facility-bookings", label: "Raumreservierung", icon: Building, section: "Sport" },
+  { href: "/opponents", label: "Gegner", icon: Target, section: "Sport" },
+  { href: "/waitlist", label: "Warteliste", icon: List, section: "Sport" },
+  // ─── Verein ───
   { href: "/members", label: "Mitglieder", icon: Users, section: "Verein" },
-  { href: "/secretariat", label: "Sekretariat", icon: ClipboardList, section: "Verein", roles: ["präsident", "admin", "secretaire", "kassenwart"] },
-  { href: "/registrations", label: "Anmeldungen", icon: UserPlus, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
-  { href: "/trial-registrations", label: "Probéieren-Ufroe", icon: Users, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
-  { href: "/checkin", label: "Ausweis & Check-in", icon: QrCode, section: "Verein", roles: ["präsident", "admin", "secretaire", "trainer"] },
-  { href: "/training-schedules", label: "Trainingsplan", icon: CalendarClock, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
-  { href: "/training-exercises", label: "Übungsdatenbank", icon: Dumbbell, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
-  { href: "/trainer-codes", label: "Trainer-Codes", icon: KeyRound, section: "Sport", roles: ["präsident", "admin"] },
-  { href: "/live-match", label: "Live-Spielanalyse", icon: Target, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire", "spieler"] },
-  { href: "/attendance", label: "Anwesenheit", icon: ClipboardCheck, section: "Sport", roles: ["präsident", "admin", "trainer"] },
-  { href: "/matches", label: "Spiele", icon: Trophy, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire", "spieler"] },
-  { href: "/player-statistics", label: "Statistiken", icon: TrendingUp, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire", "spieler"] },
-  { href: "/nominations", label: "Nominierung", icon: Users, section: "Sport", roles: ["präsident", "admin", "trainer", "spieler"] },
-  { href: "/finance", label: "Finanzen", icon: Euro, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },
-  { href: "/fees", label: "Beiträge", icon: Wallet, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },
-  { href: "/documents", label: "Dokumente", icon: FileText, section: "Verwaltung", roles: ["präsident", "admin", "secretaire", "kassenwart"] },
-  { href: "/statistics", label: "Berichte", icon: BarChart3, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart", "secretaire"] },
-  { href: "/invoices", label: "Rechnungen", icon: Receipt, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart", "secretaire"] },
-  { href: "/donations", label: "Spenden", icon: Heart, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart", "secretaire"] },
-  { href: "/bulk-operations", label: "Massendaten", icon: Users, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
-  { href: "/mass-email", label: "Serien-E-Mail", icon: Mail, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
-  { href: "/finance/import", label: "Bankimport", icon: Upload, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },
-  { href: "/meetings", label: "Meetings", icon: Video, section: "Verwaltung" },
-  { href: "/email-settings", label: "E-Mail", icon: Mail, section: "Verwaltung", roles: ["präsident", "admin"] },
-  { href: "/sponsors", label: "Sponsoren", icon: Star, section: "Verein", roles: ["präsident", "admin", "secretaire"] },
-  { href: "/gallery", label: "Galerie", icon: Camera, section: "Verein" },
-  { href: "/duties", label: "Dienste", icon: ClipboardList, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
-  { href: "/facility-bookings", label: "Raumreservierung", icon: Building, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
-  { href: "/polls", label: "Umfragen", icon: BarChart3, section: "Verein" },
-  { href: "/opponents", label: "Gegner", icon: Target, section: "Sport", roles: ["präsident", "admin", "trainer", "secretaire"] },
-  { href: "/carpools", label: "Fahrgemeinschaften", icon: Car, section: "Verein" },
   { href: "/shop", label: "Fan-Shop", icon: ShoppingBag, section: "Verein" },
-  { href: "/waitlist", label: "Warteliste", icon: List, section: "Sport", roles: ["präsident", "admin", "trainer"] },
-  { href: "/budget", label: "Budget", icon: PiggyBank, section: "Verwaltung", roles: ["präsident", "admin", "kassenwart"] },
-  { href: "/newsletter", label: "Newsletter", icon: Send, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
-  { href: "/gdpr", label: "DSGVO", icon: ShieldCheck, section: "Verwaltung" },
-  { href: "/website", label: "Website", icon: Globe, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
-  { href: "/archive", label: "Saison-Archiv", icon: Archive, section: "Verwaltung", roles: ["präsident", "admin", "secretaire"] },
+  { href: "/secretariat", label: "Sekretariat", icon: ClipboardList, section: "Verein" },
+  { href: "/duties", label: "Dienste", icon: ClipboardList, section: "Verein" },
+  { href: "/registrations", label: "Anmeldungen", icon: UserPlus, section: "Verein" },
   { href: "/welcome-mappe", label: "Willkommensmappe", icon: BookOpen, section: "Verein" },
+  { href: "/sponsors", label: "Sponsoren", icon: Star, section: "Verein" },
+  { href: "/gallery", label: "Galerie", icon: Camera, section: "Verein" },
+  { href: "/polls", label: "Umfragen", icon: BarChart3, section: "Verein" },
+  // ─── Verwaltung ───
+  { href: "/inventory", label: "Inventar", icon: Package, section: "Verwaltung" },
+  { href: "/finance", label: "Finanzen", icon: Euro, section: "Verwaltung" },
+  { href: "/fees", label: "Beiträge", icon: Wallet, section: "Verwaltung" },
+  { href: "/documents", label: "Dokumente", icon: FileText, section: "Verwaltung" },
+  { href: "/statistics", label: "Berichte", icon: BarChart3, section: "Verwaltung" },
+  { href: "/invoices", label: "Rechnungen", icon: Receipt, section: "Verwaltung" },
+  { href: "/donations", label: "Spenden", icon: Heart, section: "Verwaltung" },
+  { href: "/bulk-operations", label: "Massendaten", icon: Users, section: "Verwaltung" },
+  { href: "/mass-email", label: "Serien-E-Mail", icon: Mail, section: "Verwaltung" },
+  { href: "/finance/import", label: "Bankimport", icon: Upload, section: "Verwaltung" },
+  { href: "/meetings", label: "Meetings", icon: Video, section: "Verwaltung" },
+  { href: "/email-settings", label: "E-Mail", icon: Mail, section: "Verwaltung" },
+  { href: "/budget", label: "Budget", icon: PiggyBank, section: "Verwaltung" },
+  { href: "/newsletter", label: "Newsletter", icon: Send, section: "Verwaltung" },
+  { href: "/gdpr", label: "DSGVO", icon: ShieldCheck, section: "Verwaltung" },
+  { href: "/website", label: "Website", icon: Globe, section: "Verwaltung" },
+  { href: "/archive", label: "Saison-Archiv", icon: Archive, section: "Verwaltung" },
 ];
+
+// Rollen aus permissions.ts mergen (eng eenzeg Quell)
+const NAV: NavItem[] = NAV_DEFS.map(d => ({
+  ...d,
+  roles: rolesForRoute(d.href),
+}));
 
 const MOBILE_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: LayoutDashboard },

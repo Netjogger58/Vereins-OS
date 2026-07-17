@@ -26,6 +26,7 @@ import { registerPublicRoutes } from "./routes/public.routes";
 import {
   authMiddleware,
   requireAuth,
+  requireApiToken,
   createSession,
   destroySession,
   setSessionCookie,
@@ -2750,6 +2751,101 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     }
     const xml = xmlHeader + '<PmtInf><PmtInfId>PMT' + Date.now() + '</PmtInfId><PmtMtd>DD</PmtMtd><NbOfTxs>' + transactions.length + '</NbOfTxs><CtrlSum>' + total.toFixed(2) + '</CtrlSum>' + xmlBody + '</PmtInf></CstmrDrctDbtInitn></Document>';
     res.json({ xml, total, count: transactions.length });
+  });
+
+  // ─── API-Token Verwaltung (Admin/Präsident) ─────────────
+  app.get("/api/admin/tokens", requireAuth(["präsident", "admin"]), async (_req, res) => {
+    try {
+      const tokens = sqlite.prepare("SELECT id, name, scopes, created_at, last_used_at, expires_at, active FROM api_tokens ORDER BY created_at DESC").all();
+      res.json(tokens);
+    } catch (e) {
+      res.status(500).json({ message: "Fehler beim Laden der Tokens" });
+    }
+  });
+
+  app.post("/api/admin/tokens", requireAuth(["präsident", "admin"]), async (req, res) => {
+    const name = String(req.body?.name || "").trim();
+    if (!name) return res.status(400).json({ message: "Name erforderlich" });
+    const scopes = Array.isArray(req.body?.scopes) ? req.body.scopes : [];
+    const expiresAt = req.body?.expiresAt || null;
+    const token = randomBytes(32).toString("hex");
+    try {
+      const info = sqlite.prepare(
+        "INSERT INTO api_tokens (token, name, scopes, expires_at, active) VALUES (?, ?, ?, ?, 1)"
+      ).run(token, name, JSON.stringify(scopes), expiresAt);
+      res.status(201).json({ id: info.lastInsertRowid, token, name, scopes, expires_at: expiresAt, active: 1 });
+    } catch (e) {
+      res.status(500).json({ message: "Fehler beim Erstellen des Tokens" });
+    }
+  });
+
+  app.patch("/api/admin/tokens/:id", requireAuth(["präsident", "admin"]), async (req, res) => {
+    const id = Number(req.params.id);
+    const updates: string[] = [];
+    const values: any[] = [];
+    if (req.body?.name !== undefined) { updates.push("name = ?"); values.push(String(req.body.name).trim()); }
+    if (req.body?.active !== undefined) { updates.push("active = ?"); values.push(req.body.active ? 1 : 0); }
+    if (req.body?.scopes !== undefined) { updates.push("scopes = ?"); values.push(JSON.stringify(req.body.scopes)); }
+    if (req.body?.expiresAt !== undefined) { updates.push("expires_at = ?"); values.push(req.body.expiresAt || null); }
+    if (!updates.length) return res.status(400).json({ message: "Keine Felder zum Aktualisieren" });
+    values.push(id);
+    try {
+      sqlite.prepare(`UPDATE api_tokens SET ${updates.join(", ")} WHERE id = ?`).run(...values);
+      const updated = sqlite.prepare("SELECT id, name, scopes, created_at, last_used_at, expires_at, active FROM api_tokens WHERE id = ?").get(id);
+      if (!updated) return res.status(404).json({ message: "Token nicht gefunden" });
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ message: "Fehler beim Aktualisieren" });
+    }
+  });
+
+  app.delete("/api/admin/tokens/:id", requireAuth(["präsident", "admin"]), async (req, res) => {
+    try {
+      sqlite.prepare("DELETE FROM api_tokens WHERE id = ?").run(Number(req.params.id));
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ message: "Fehler beim Löschen" });
+    }
+  });
+
+  // ─── Öffentliche API (mit API-Token, keine User-Session nötig) ───
+  // Für externe Programme: Website, Newsletter-Tools, etc.
+
+  // GET /api/public/events — Termine (read:events)
+  app.get("/api/public/events", requireApiToken(["read:events"]), async (_req, res) => {
+    const events = await storage.listEvents();
+    res.json(events.map((e: any) => ({
+      id: e.id, title: e.title, type: e.type, date: e.date,
+      time: e.time || null, location: e.location || null, teamId: e.teamId || null,
+    })));
+  });
+
+  // GET /api/public/teams — Teams (read:teams)
+  app.get("/api/public/teams", requireApiToken(["read:teams"]), async (_req, res) => {
+    const teams = await storage.listTeams();
+    res.json(teams.map((t: any) => ({ id: t.id, name: t.name, category: t.category })));
+  });
+
+  // GET /api/public/announcements — Ankündigungen (read:announcements)
+  app.get("/api/public/announcements", requireApiToken(["read:announcements"]), async (_req, res) => {
+    const announcements = await storage.listAnnouncements();
+    res.json(announcements.map((a: any) => ({
+      id: a.id, title: a.title, content: a.content, createdAt: a.createdAt, pinned: a.pinned,
+    })));
+  });
+
+  // GET /api/public/members — Mitglieder (read:members, ohne sensible Daten)
+  app.get("/api/public/members", requireApiToken(["read:members"]), async (_req, res) => {
+    const members = await storage.listMembers();
+    res.json(members.map((m: any) => ({
+      id: m.id, name: m.name, teamId: m.teamId || null, clubFunction: m.clubFunction || null,
+    })));
+  });
+
+  // GET /api/public/matches — Spiele (read:events)
+  app.get("/api/public/matches", requireApiToken(["read:events"]), async (_req, res) => {
+    const matches = sqlite.prepare("SELECT id, team_id, opponent, match_date, match_time, status, competition, home_away FROM matches ORDER BY match_date DESC LIMIT 100").all();
+    res.json(matches);
   });
 
   // Modulare Routen registrieren

@@ -21,15 +21,15 @@ type Challenge = {
 const challenges = new Map<string, Challenge>();
 
 // ─── Trusted Devices (persistiert, überleben Neustart) ───
-const stmtTrustInsert = sqlite.prepare(
-  "INSERT INTO trusted_devices (token, user_id, created_at, last_used) VALUES (?, ?, ?, ?)"
-);
-const stmtTrustGet = sqlite.prepare(
-  "SELECT user_id AS userId, created_at AS createdAt FROM trusted_devices WHERE token = ?"
-);
-const stmtTrustTouch = sqlite.prepare("UPDATE trusted_devices SET last_used = ? WHERE token = ?");
-const stmtTrustDelete = sqlite.prepare("DELETE FROM trusted_devices WHERE token = ?");
-const stmtTrustCleanup = sqlite.prepare("DELETE FROM trusted_devices WHERE created_at < ?");
+// Lazy vorbereitet, da `sqlite` erst nach initDatabase() verfügbar ist (Modul-Import passiert vorher).
+type Stmt = ReturnType<typeof sqlite.prepare>;
+let _stmtTrustInsert: Stmt, _stmtTrustGet: Stmt, _stmtTrustTouch: Stmt, _stmtTrustDelete: Stmt, _stmtTrustCleanup: Stmt;
+
+function stmtTrustInsert() { return (_stmtTrustInsert ??= sqlite.prepare("INSERT INTO trusted_devices (token, user_id, created_at, last_used) VALUES (?, ?, ?, ?)")); }
+function stmtTrustGet() { return (_stmtTrustGet ??= sqlite.prepare("SELECT user_id AS userId, created_at AS createdAt FROM trusted_devices WHERE token = ?")); }
+function stmtTrustTouch() { return (_stmtTrustTouch ??= sqlite.prepare("UPDATE trusted_devices SET last_used = ? WHERE token = ?")); }
+function stmtTrustDelete() { return (_stmtTrustDelete ??= sqlite.prepare("DELETE FROM trusted_devices WHERE token = ?")); }
+function stmtTrustCleanup() { return (_stmtTrustCleanup ??= sqlite.prepare("DELETE FROM trusted_devices WHERE created_at < ?")); }
 
 export function isPrivileged(role: string): boolean {
   return PRIVILEGED_ROLES.includes(role);
@@ -37,25 +37,25 @@ export function isPrivileged(role: string): boolean {
 
 export function isTrustedDevice(token: string | undefined, userId: number): boolean {
   if (!token) return false;
-  const row = stmtTrustGet.get(token) as { userId: number; createdAt: number } | undefined;
+  const row = stmtTrustGet().get(token) as { userId: number; createdAt: number } | undefined;
   if (!row || row.userId !== userId) return false;
   if (Date.now() - row.createdAt > TRUST_TTL_MS) {
-    stmtTrustDelete.run(token);
+    stmtTrustDelete().run(token);
     return false;
   }
-  stmtTrustTouch.run(Date.now(), token);
+  stmtTrustTouch().run(Date.now(), token);
   return true;
 }
 
 export function trustDevice(userId: number): string {
   const token = randomBytes(32).toString("hex");
   const now = Date.now();
-  stmtTrustInsert.run(token, userId, now, now);
+  stmtTrustInsert().run(token, userId, now, now);
   return token;
 }
 
 setInterval(() => {
-  try { stmtTrustCleanup.run(Date.now() - TRUST_TTL_MS); } catch { /* ignore */ }
+  try { stmtTrustCleanup().run(Date.now() - TRUST_TTL_MS); } catch { /* ignore */ }
 }, 24 * 60 * 60 * 1000).unref?.();
 
 // ─── Challenge-Flow ───

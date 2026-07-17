@@ -1,4 +1,4 @@
-import { Switch, Route, Router } from "wouter";
+import { Switch, Route, Router, Redirect } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
 import { Layout } from "@/components/Layout";
+import { canAccess } from "@/lib/permissions";
+import type { Role } from "@shared/schema";
 import "./lib/i18n";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
@@ -64,7 +66,15 @@ import Archive from "@/pages/Archive";
 import Secretariat from "@/pages/Secretariat";
 import { Logo } from "@/components/Logo";
 
-const FINANCE_ROLES = ["präsident", "admin", "kassenwart"];
+// Route-Guard: leet op Dashboard ëm wann d'Roll keen Accès huet
+function GuardedRoute({ path, component: Comp }: { path: string; component: React.ComponentType }) {
+  const { user } = useAuth();
+  const role = user?.role as Role;
+  if (role && !canAccess(path, role)) {
+    return <Route path={path}><Redirect to="/" /></Route>;
+  }
+  return <Route path={path} component={Comp} />;
+}
 
 function AppRouter() {
   const { user, loading } = useAuth();
@@ -81,64 +91,62 @@ function AppRouter() {
 
   if (!user) return <Login />;
 
-  const canAccessFinance = FINANCE_ROLES.includes(user.role);
-
   return (
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/announcements" component={Announcements} />
-        <Route path="/secretariat" component={Secretariat} />
+        <GuardedRoute path="/announcements" component={Announcements} />
+        <GuardedRoute path="/secretariat" component={Secretariat} />
         <Route path="/members/:id" component={MemberDetail} />
-        <Route path="/members" component={Members} />
-        <Route path="/my-events" component={MyEvents} />
+        <GuardedRoute path="/members" component={Members} />
+        <GuardedRoute path="/my-events" component={MyEvents} />
         <Route path="/teams/:id" component={Teams} />
-        <Route path="/teams" component={Teams} />
-        <Route path="/calendar" component={Calendar} />
-        <Route path="/attendance" component={Attendance} />
-        <Route path="/meetings" component={Meetings} />
-        <Route path="/finance" component={canAccessFinance ? Finance : NotFound} />
+        <GuardedRoute path="/teams" component={Teams} />
+        <GuardedRoute path="/calendar" component={Calendar} />
+        <GuardedRoute path="/attendance" component={Attendance} />
+        <GuardedRoute path="/meetings" component={Meetings} />
+        <GuardedRoute path="/finance" component={Finance} />
         <Route path="/profile" component={Profile} />
-        <Route path="/inventory" component={Inventory} />
-        <Route path="/polls" component={Polls} />
-        <Route path="/facility-bookings" component={FacilityBookings} />
-        <Route path="/opponents" component={Opponents} />
-        <Route path="/carpools" component={Carpools} />
-        <Route path="/bulk-operations" component={BulkOperations} />
-        <Route path="/mass-email" component={MassEmail} />
-        <Route path="/finance/import" component={BankImport} />
-        <Route path="/invoices" component={canAccessFinance ? Invoices : NotFound} />
-        <Route path="/donations" component={canAccessFinance ? Donations : NotFound} />
-        <Route path="/calendar-feed" component={CalendarFeed} />
-        <Route path="/training-exercises" component={TrainingExercises} />
-        <Route path="/live-match" component={LiveMatch} />
-        <Route path="/trial-registrations" component={TrialRegistrations} />
-        <Route path="/nominations" component={Nominations} />
-        <Route path="/chat" component={Chat} />
-        <Route path="/import" component={ImportMembers} />
-        <Route path="/fees" component={canAccessFinance ? Fees : NotFound} />
+        <GuardedRoute path="/inventory" component={Inventory} />
+        <GuardedRoute path="/polls" component={Polls} />
+        <GuardedRoute path="/facility-bookings" component={FacilityBookings} />
+        <GuardedRoute path="/opponents" component={Opponents} />
+        <GuardedRoute path="/carpools" component={Carpools} />
+        <GuardedRoute path="/bulk-operations" component={BulkOperations} />
+        <GuardedRoute path="/mass-email" component={MassEmail} />
+        <GuardedRoute path="/finance/import" component={BankImport} />
+        <GuardedRoute path="/invoices" component={Invoices} />
+        <GuardedRoute path="/donations" component={Donations} />
+        <GuardedRoute path="/calendar-feed" component={CalendarFeed} />
+        <GuardedRoute path="/training-exercises" component={TrainingExercises} />
+        <GuardedRoute path="/live-match" component={LiveMatch} />
+        <GuardedRoute path="/trial-registrations" component={TrialRegistrations} />
+        <GuardedRoute path="/nominations" component={Nominations} />
+        <GuardedRoute path="/chat" component={Chat} />
+        <GuardedRoute path="/import" component={ImportMembers} />
+        <GuardedRoute path="/fees" component={Fees} />
         <Route path="/registration" component={Registration} />
-        <Route path="/registrations" component={Registrations} />
-        <Route path="/documents" component={Documents} />
-        <Route path="/email-settings" component={EmailSettings} />
-        <Route path="/statistics" component={Statistics} />
-        <Route path="/training-schedules" component={TrainingSchedules} />
-        <Route path="/trainer-codes" component={TrainerCodes} />
-        <Route path="/matches" component={Matches} />
-        <Route path="/player-statistics" component={PlayerStatistics} />
-        <Route path="/sponsors" component={Sponsors} />
-        <Route path="/gallery" component={Gallery} />
-        <Route path="/duties" component={Duties} />
-        <Route path="/facilities" component={Facilities} />
-        <Route path="/shop" component={Shop} />
-        <Route path="/waitlist" component={Waitlist} />
-        <Route path="/budget" component={canAccessFinance ? Budget : NotFound} />
-        <Route path="/newsletter" component={Newsletter} />
-        <Route path="/gdpr" component={GdprTools} />
-        <Route path="/website" component={Website} />
-        <Route path="/welcome-mappe" component={WelcomeMappe} />
-        <Route path="/checkin" component={CheckIn} />
-        <Route path="/archive" component={Archive} />
+        <GuardedRoute path="/registrations" component={Registrations} />
+        <GuardedRoute path="/documents" component={Documents} />
+        <GuardedRoute path="/email-settings" component={EmailSettings} />
+        <GuardedRoute path="/statistics" component={Statistics} />
+        <GuardedRoute path="/training-schedules" component={TrainingSchedules} />
+        <GuardedRoute path="/trainer-codes" component={TrainerCodes} />
+        <GuardedRoute path="/matches" component={Matches} />
+        <GuardedRoute path="/player-statistics" component={PlayerStatistics} />
+        <GuardedRoute path="/sponsors" component={Sponsors} />
+        <GuardedRoute path="/gallery" component={Gallery} />
+        <GuardedRoute path="/duties" component={Duties} />
+        <GuardedRoute path="/facilities" component={Facilities} />
+        <GuardedRoute path="/shop" component={Shop} />
+        <GuardedRoute path="/waitlist" component={Waitlist} />
+        <GuardedRoute path="/budget" component={Budget} />
+        <GuardedRoute path="/newsletter" component={Newsletter} />
+        <GuardedRoute path="/gdpr" component={GdprTools} />
+        <GuardedRoute path="/website" component={Website} />
+        <GuardedRoute path="/welcome-mappe" component={WelcomeMappe} />
+        <GuardedRoute path="/checkin" component={CheckIn} />
+        <GuardedRoute path="/archive" component={Archive} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

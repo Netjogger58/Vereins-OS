@@ -6,41 +6,50 @@ import {
   fmtDate, fmtRdv, escHtml,
 } from "@shared/convocationText";
 
-// ── Tabelle (idempotent) ──
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS medico_convocations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    token TEXT NOT NULL UNIQUE,
-    member_id INTEGER,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    lang TEXT NOT NULL,
-    rdv TEXT,
-    created_at TEXT NOT NULL,
-    sent_at TEXT,
-    send_error TEXT,
-    confirmed_at TEXT,
-    confirmed_ip TEXT
-  );
-`);
-
 // Idempotente Spalten-Migrationen (bestehende DBs nachrüsten).
 function addColumn(table: string, col: string, def: string) {
   try { sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`); } catch { /* existiert bereits */ }
 }
-addColumn("medico_convocations", "status", "TEXT DEFAULT 'pending'");
-addColumn("medico_convocations", "declined_at", "TEXT");
-addColumn("members", "medico_result", "TEXT");
-addColumn("members", "medico_result_date", "TEXT");
 
-const stmtInsert = sqlite.prepare(
-  `INSERT INTO medico_convocations (token, member_id, name, email, lang, rdv, created_at)
-   VALUES (@token, @memberId, @name, @email, @lang, @rdv, @createdAt)`
-);
-const stmtByToken = sqlite.prepare("SELECT * FROM medico_convocations WHERE token = ?");
-const stmtMarkSent = sqlite.prepare("UPDATE medico_convocations SET sent_at = ?, send_error = ? WHERE token = ?");
-const stmtMarkConfirmed = sqlite.prepare("UPDATE medico_convocations SET confirmed_at = ?, confirmed_ip = ?, status = 'confirmed' WHERE token = ? AND confirmed_at IS NULL AND declined_at IS NULL");
-const stmtMarkDeclined = sqlite.prepare("UPDATE medico_convocations SET declined_at = ?, confirmed_ip = ?, status = 'declined' WHERE token = ? AND confirmed_at IS NULL AND declined_at IS NULL");
+// ── Lazy Setup: `sqlite` ist erst nach initDatabase() verfügbar (Modul-Import passiert vorher). ──
+type Stmt = ReturnType<typeof sqlite.prepare>;
+let _ready = false;
+let _stmtInsert: Stmt, _stmtByToken: Stmt, _stmtMarkSent: Stmt, _stmtMarkConfirmed: Stmt, _stmtMarkDeclined: Stmt;
+
+function ensure() {
+  if (_ready) return;
+  // Tabelle (idempotent)
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS medico_convocations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      token TEXT NOT NULL UNIQUE,
+      member_id INTEGER,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      lang TEXT NOT NULL,
+      rdv TEXT,
+      created_at TEXT NOT NULL,
+      sent_at TEXT,
+      send_error TEXT,
+      confirmed_at TEXT,
+      confirmed_ip TEXT
+    );
+  `);
+  addColumn("medico_convocations", "status", "TEXT DEFAULT 'pending'");
+  addColumn("medico_convocations", "declined_at", "TEXT");
+  addColumn("members", "medico_result", "TEXT");
+  addColumn("members", "medico_result_date", "TEXT");
+
+  _stmtInsert = sqlite.prepare(
+    `INSERT INTO medico_convocations (token, member_id, name, email, lang, rdv, created_at)
+     VALUES (@token, @memberId, @name, @email, @lang, @rdv, @createdAt)`
+  );
+  _stmtByToken = sqlite.prepare("SELECT * FROM medico_convocations WHERE token = ?");
+  _stmtMarkSent = sqlite.prepare("UPDATE medico_convocations SET sent_at = ?, send_error = ? WHERE token = ?");
+  _stmtMarkConfirmed = sqlite.prepare("UPDATE medico_convocations SET confirmed_at = ?, confirmed_ip = ?, status = 'confirmed' WHERE token = ? AND confirmed_at IS NULL AND declined_at IS NULL");
+  _stmtMarkDeclined = sqlite.prepare("UPDATE medico_convocations SET declined_at = ?, confirmed_ip = ?, status = 'declined' WHERE token = ? AND confirmed_at IS NULL AND declined_at IS NULL");
+  _ready = true;
+}
 
 export type ConvResponse = "confirm" | "decline";
 export interface ConvocationRecord {
@@ -56,8 +65,9 @@ export function normalizeLang(l: string | null | undefined): ConvLang {
 }
 
 export function createConvocation(input: { memberId?: number | null; name: string; email: string; lang: ConvLang; rdv: string | null }): string {
+  ensure();
   const token = randomBytes(24).toString("hex");
-  stmtInsert.run({
+  _stmtInsert.run({
     token, memberId: input.memberId ?? null, name: input.name, email: input.email,
     lang: input.lang, rdv: input.rdv ?? null, createdAt: new Date().toISOString(),
   });
@@ -65,15 +75,18 @@ export function createConvocation(input: { memberId?: number | null; name: strin
 }
 
 export function getConvocation(token: string): ConvocationRecord | undefined {
-  return stmtByToken.get(token) as ConvocationRecord | undefined;
+  ensure();
+  return _stmtByToken.get(token) as ConvocationRecord | undefined;
 }
-export function markSent(token: string, error?: string) { stmtMarkSent.run(new Date().toISOString(), error ?? null, token); }
+export function markSent(token: string, error?: string) { ensure(); _stmtMarkSent.run(new Date().toISOString(), error ?? null, token); }
 export function markConfirmed(token: string, ip: string): boolean {
-  const info = stmtMarkConfirmed.run(new Date().toISOString(), ip, token);
+  ensure();
+  const info = _stmtMarkConfirmed.run(new Date().toISOString(), ip, token);
   return info.changes > 0;
 }
 export function markDeclined(token: string, ip: string): boolean {
-  const info = stmtMarkDeclined.run(new Date().toISOString(), ip, token);
+  ensure();
+  const info = _stmtMarkDeclined.run(new Date().toISOString(), ip, token);
   return info.changes > 0;
 }
 
