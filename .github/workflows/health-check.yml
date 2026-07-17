@@ -1,0 +1,19 @@
+name: Health Check
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check app health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 http://178.105.40.239 || echo "000")
+          echo "HTTP Status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::App is not responding (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "App is healthy"

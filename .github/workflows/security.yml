@@ -1,0 +1,33 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 8 * * 1'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run audit
+        run: npm audit --audit-level=critical
+        continue-on-error: true
+
+      - name: Check for critical vulnerabilities
+        run: |
+          if npm audit --audit-level=critical 2>&1 | grep -q "critical"; then
+            echo "::warning::Critical vulnerabilities found — check npm audit"
+            exit 1
+          fi
