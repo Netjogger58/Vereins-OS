@@ -418,6 +418,12 @@ export const CATEGORIES = [
   "U4 KidsSports",
 ] as const;
 
+// Teams where parents get chat access (U11 and younger)
+const PARENT_CHAT_CATEGORIES = ["U11 Elite", "U11 Espoirs", "U9", "U7", "U4 KidsSports"];
+export function isParentChatTeam(category: string): boolean {
+  return PARENT_CHAT_CATEGORIES.includes(category);
+}
+
 // ─── Nominations (Spieler-Nominierung) ──────────────────
 export const nominations = sqliteTable("nominations", {
   id: integer("id").primaryKey({ autoIncrement: true }),

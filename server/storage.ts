@@ -1203,6 +1203,15 @@ function init() {
       expires_at TEXT,
       active INTEGER NOT NULL DEFAULT 1
     );
+    CREATE TABLE IF NOT EXISTS family_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      parent_id INTEGER NOT NULL,
+      child_id INTEGER NOT NULL,
+      relationship TEXT NOT NULL DEFAULT 'parent',
+      can_manage_profile INTEGER NOT NULL DEFAULT 1,
+      can_manage_payments INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 }
 

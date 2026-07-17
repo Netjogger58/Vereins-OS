@@ -30,7 +30,8 @@ export default function Chat() {
   const [msgText, setMsgText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
+  // Use /api/chat-teams which filters teams for elternteil users
+  const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/chat-teams"] });
 
   // Default to user's team
   useEffect(() => {
@@ -112,7 +113,10 @@ export default function Chat() {
           <MessageCircle className="size-5 text-primary" />
           Gruppen-Chat
         </h1>
-        <p className="text-sm text-muted-foreground">Echtzeit-Kommunikation im Team</p>
+        <p className="text-sm text-muted-foreground">
+          Echtzeit-Kommunikation im Team
+          {user?.role === "elternteil" && " — Eltern-Zugang (U11 & jünger)"}
+        </p>
       </div>
 
       {/* Team selector */}

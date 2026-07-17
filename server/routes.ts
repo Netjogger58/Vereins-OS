@@ -73,6 +73,7 @@ import {
   insertArchiveMatchSchema,
   insertArchiveEventSchema,
   insertArchiveExportSchema,
+  isParentChatTeam,
 } from "@shared/schema";
 import { initEmailTransporter, queueEmail, processPendingEmails, getWelcomeEmailTemplate, getFeeReminderTemplate, getSecurityAlertTemplate, getRegistrationConfirmationTemplate, sendEmail } from "./email";
 import { createConvocation, getConvocation, markSent, markConfirmed, markDeclined, buildConvocationEmailHtml, buildConfirmationPage, normalizeLang } from "./medicoConvocation";
@@ -940,12 +941,61 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   });
 
   // ─── Chat ─────────────────────────────────────────────
+  // Helper: check if a user can access a team's chat
+  async function canAccessTeamChat(user: any, teamId: number): Promise<boolean> {
+    if (["präsident", "admin", "secretaire", "trainer", "spieler"].includes(user.role)) {
+      return true;
+    }
+    if (user.role === "elternteil") {
+      const team = await storage.getTeam(teamId);
+      if (!team || !isParentChatTeam(team.category)) return false;
+      const children = await storage.getChildrenOfParent(user.id);
+      if (children.length === 0) return false;
+      const childUserIds = children.map(c => c.id);
+      const teamMembers = await storage.listMembersByTeam(teamId);
+      return teamMembers.some(m => m.userId && childUserIds.includes(m.userId));
+    }
+    return false;
+  }
+
+  // Get teams eligible for chat (filtered for elternteil)
+  app.get("/api/chat-teams", requireAuth(), async (req, res) => {
+    const authed = req as AuthedRequest;
+    const allTeams = await storage.listTeams();
+    if (authed.user!.role !== "elternteil") {
+      return res.json(allTeams);
+    }
+    const eligible: typeof allTeams = [];
+    for (const team of allTeams) {
+      if (isParentChatTeam(team.category)) {
+        const children = await storage.getChildrenOfParent(authed.user!.id);
+        if (children.length > 0) {
+          const childUserIds = children.map(c => c.id);
+          const teamMembers = await storage.listMembersByTeam(team.id);
+          if (teamMembers.some(m => m.userId && childUserIds.includes(m.userId))) {
+            eligible.push(team);
+          }
+        }
+      }
+    }
+    res.json(eligible);
+  });
+
   app.get("/api/chat/:teamId", requireAuth(), async (req, res) => {
+    const authed = req as AuthedRequest;
+    const teamId = Number(req.params.teamId);
+    if (!(await canAccessTeamChat(authed.user, teamId))) {
+      return res.status(403).json({ message: "Kein Zugriff auf diesen Team-Chat" });
+    }
     const limit = Number(req.query.limit) || 50;
-    res.json(await storage.listChatMessages(Number(req.params.teamId), limit));
+    res.json(await storage.listChatMessages(teamId, limit));
   });
   app.post("/api/chat", requireAuth(), async (req, res) => {
     const authed = req as AuthedRequest;
+    const teamId = Number(req.body.teamId);
+    if (!teamId || !(await canAccessTeamChat(authed.user, teamId))) {
+      return res.status(403).json({ message: "Kein Zugriff auf diesen Team-Chat" });
+    }
     const body = {
       ...req.body,
       authorId: authed.user!.id,
@@ -955,6 +1005,32 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
     const parsed = insertChatMessageSchema.safeParse(body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     res.json(await storage.createChatMessage(parsed.data));
+  });
+
+  // ─── Parent Account Management ───────────────────────
+  // Admin/Präsident can create elternteil accounts and link them to child users
+  app.post("/api/admin/parents", requireAuth(["präsident", "admin"]), async (req, res) => {
+    const { email, name, password, childUserId, phone } = req.body;
+    if (!email || !name || !password || !childUserId) {
+      return res.status(400).json({ message: "email, name, password, childUserId required" });
+    }
+    const existing = await storage.getUserByEmail(email);
+    if (existing) return res.status(409).json({ message: "E-Mail bereits registriert" });
+    const hash = await bcrypt.hash(password, 10);
+    const parent = await storage.createUser({
+      email, passwordHash: hash, name, role: "elternteil", phone, active: true,
+    } as any);
+    await storage.createFamilyLink({
+      parentId: parent.id, childId: Number(childUserId), relationship: "parent",
+      canManageProfile: true, canManagePayments: true,
+    } as any);
+    res.json({ ok: true, parentId: parent.id });
+  });
+
+  // List family links for a parent
+  app.get("/api/admin/parents/:parentId/children", requireAuth(["präsident", "admin"]), async (req, res) => {
+    const children = await storage.getChildrenOfParent(Number(req.params.parentId));
+    res.json(children);
   });
 
   // Import routes
