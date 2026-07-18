@@ -55,7 +55,7 @@ SQLite (data.db, WAL-Modus)
 - **State/Server-Cache:** TanStack React Query (93 Queries, zentrale `queryClient`).
 - **UI:** TailwindCSS + **shadcn/ui** (47 Komponenten) — modernes, konsistentes Design-System.
 - **i18n:** `i18next` + Browser-Detector, Sprachen **DE/FR/EN/LU**, Persistenz in `localStorage` (`m75_lang`), Fallback DE.
-- **Auth-Context:** `lib/auth.tsx` mit Passwort-, Karten- (Random-No) und Admin-Login; Bearer-Token im Speicher (für iframe-Fälle).
+- **Auth-Context:** `lib/auth.tsx` mit Passwort-, Karten- (Random-No), Admin-Login, Magic Link und **Member PIN-Login (SMS/Email-OTP)**; Bearer-Token im Speicher (für iframe-Fälle).
 - **Fehler-Robustheit:** **ErrorBoundary** (neu, 29.06.) umschließt den Seiteninhalt → kein Totalabsturz mehr, Navigation bleibt nutzbar.
 
 ### 2.3 Backend
@@ -100,7 +100,7 @@ Legende: ✅ **Fertig & nutzbar** · 🟦 **Funktioniert, ausbaufähig** · 🟡
 ### 4.1 ✅ Fertig & nutzbar (echter Funktionsumfang, große Seiten)
 | Modul | Datei | ~Zeilen |
 |---|---|---|
-| Login (3 Wege) | `Login.tsx` | 412 |
+| Login (4 Wege) | `Login.tsx` | 797 |
 | Spiele (inkl. FLH-Import) | `Matches.tsx` | 587 |
 | Beiträge | `Fees.tsx` | 529 |
 | Check-in / Karten-Scan (QR) | `CheckIn.tsx` | 493 |

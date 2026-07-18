@@ -2,6 +2,22 @@
 
 Neueste Änderungen zuerst.
 
+## 2026-07-18
+
+- **Vereins-OS-App – Member PIN-Login (Registratioun + Login mat SMS/Email-OTP).**
+  - Nei Login-Method: Memberer identifizéieren sech iwwert **Numm + Virnumm + Geburtsdatum** (verglach mat `members`-Tabelle), validéieren hir Identitéit via **SMS-Code** (Mixvoip) oder **Email-Code** (Fallback), a setzen en **6-stellige PIN** fir zukünfteg Logins.
+  - Registratioun (éischte Login): `POST /api/auth/identify-member` → `POST /api/auth/register-otp` → `POST /api/auth/register-complete`.
+  - Login (zukünfteg): `POST /api/auth/pin-login` — Numm + Virnumm + Geburtsdatum + PIN.
+  - PIN Reset: `POST /api/auth/pin-reset-request` + `POST /api/auth/pin-reset-complete` — neit OTP + nei PIN.
+  - **SMS Gateway** (`server/sms.ts`): Mixvoip/Voxbi Integratioun mat Fallback op Console-Logging (Dev-Modus) waarden `MIXVOIP_API_KEY` net gesat ass.
+  - **OTP Store**: In-memory mat 10-Minuten TTL, 5-Attempt-Limit.
+  - **Optioun D (Kombinatioun):** SMS waarden Telefonnummer disponibel, soss Email-Code.
+  - **Lockout-Schutz:** 5 Feelschläg → 15 Minutten gespaart (via bestoend `checkLockout`/`recordLoginFailure`).
+  - **2FA integréiert** fir erhéicht Rollen (Comité/Officiel/Trainer).
+  - Nei DB-Kolonn: `users.pin_hash` (gehasht mat bcrypt).
+  - Login-UI: neit Tab "PIN" mat Sub-Tabs "Einloggen" / "Registrieren" + PIN-Vergiessen-Flow.
+  - Auth-Context (`client/src/lib/auth.tsx`): `identifyMember`, `registerOtp`, `registerComplete`, `pinLogin`, `pinResetRequest`, `pinResetComplete`.
+
 ## 2026-07-15 (später)
 
 - **Vereins-OS-App – Rechnungen, Spenden, Kalender-Feed, Übungsdatenbank und Live-Spielanalyse.**

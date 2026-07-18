@@ -188,6 +188,39 @@ Login ohne Passwort über die **Random-No** (Karten-ID, z. B. `LNS6S2DM`) aus de
 - `POST /api/auth/magic-link` - Magic Link erstellen
 - `GET /api/auth/verify-magic-link?token=xxx` - Link validieren & einloggen
 
+### 1.5 Member PIN-Login (Neu — Juli 2026)
+Login fir Memberer ouni Passwort oder Karten-ID — iwwert **Numm + Virnumm + Geburtsdatum + PIN**.
+
+#### Registratioun (éischte Login)
+1. Member gëtt **Numm + Virnumm + Geburtsdatum** an → System sicht an `members`-Tabelle no engem Match (nëmmen aktiv Memberen).
+2. System schéckt en **6-stellige OTP-Code** per **SMS** un d'Handynummer aus der Member-Datebank (Mixvoip/Voxbi Gateway).
+3. Fallback op **Email-Code** waarden keng Handynummer disponibel ass.
+4. Member gëtt de Code an + setzt en **6-stellige PIN**.
+5. PIN gëtt mat bcrypt gehasht an `users.pin_hash` gespäichert → User-Account gëtt erstallt/mat Member verlinkt → Session start.
+
+#### Login (zukünfteg)
+- Member gëtt **Numm + Virnumm + Geburtsdatum + PIN** an.
+- System validéiert PIN géint `pin_hash` → Session → roll-spezifescht Dashboard.
+- **Lockout:** 5 Feelschläg → 15 Minutten gespaart (via `checkLockout`/`recordLoginFailure`).
+- **2FA** fir erhéicht Rollen (Comité/Officiel/Trainer) integréiert.
+
+#### PIN Reset
+- Member gëtt Numm + Virnumm + Geburtsdatum an → OTP per SMS/Email → nei PIN setzen.
+- Automatesch aloggen no erfollegräichem Reset.
+
+#### SMS Gateway (`server/sms.ts`)
+- **Mixvoip/Voxbi** Integratioun (Bearer Token, `MIXVOIP_API_KEY` env var).
+- **Dev-Modus Fallback:** SMS Code gëtt an der Console geloggt waarden keng API Key konfiguréiert ass.
+- **OTP Store:** In-memory, 10-Minuten TTL, 5-Attempt-Limit pro Code.
+
+**API Endpunkte:**
+- `POST /api/auth/identify-member` — Member sichen via Numm + Virnumm + Geburtsdatum
+- `POST /api/auth/register-otp` — OTP Code schécken (SMS oder Email)
+- `POST /api/auth/register-complete` — OTP verifizéieren + PIN setzen + User-Account erstellen
+- `POST /api/auth/pin-login` — Login mat Numm + Virnumm + Geburtsdatum + PIN
+- `POST /api/auth/pin-reset-request` — OTP fir PIN Reset schécken
+- `POST /api/auth/pin-reset-complete` — OTP verifizéieren + nei PIN setzen + aloggen
+
 ---
 
 ## 2. Spiel- & Ligastatistiken
@@ -457,7 +490,7 @@ Wöchentliche **Text-Zusammenfassung der Spielwoche** für alle Mannschaften von
 - **Sprache:** TypeScript
 - **ORM:** Drizzle ORM
 - **Datenbank:** SQLite (`data.db`, better-sqlite3)
-- **Auth:** Session-based (Cookie + Bearer-Token) · Passwort · Random-No/Karten-Login · Admin-Login · Magic Links
+- **Auth:** Session-based (Cookie + Bearer-Token) · Passwort · Random-No/Karten-Login · Admin-Login · Magic Links · **Member PIN-Login (SMS/Email-OTP)**
 - **Import/Scan:** xlsx (Mitglieder-Import) · jsQR (Karten-Scan)
 
 ### Frontend
@@ -481,6 +514,12 @@ PATCH  /api/auth/password
 PATCH  /api/auth/profile
 POST   /api/auth/magic-link
 GET    /api/auth/verify-magic-link
+POST   /api/auth/identify-member      # PIN-Login: Member sichen
+POST   /api/auth/register-otp        # PIN-Login: OTP schécken
+POST   /api/auth/register-complete   # PIN-Login: OTP + PIN setzen
+POST   /api/auth/pin-login           # PIN-Login: Login mat PIN
+POST   /api/auth/pin-reset-request   # PIN-Login: Reset OTP schécken
+POST   /api/auth/pin-reset-complete  # PIN-Login: Reset + nei PIN
 
 # Matches
 GET    /api/matches
@@ -532,7 +571,7 @@ Magic-Link-Login · Random-No-/Admin-Login · FLH-Import · Spieler-/Ligastatist
 
 ## Zugänge & Login-Wege
 
-Es gibt **drei** Wege, sich anzumelden (siehe Abschnitt 1):
+Es gibt **vier** Wege, sich anzumelden (siehe Abschnitt 1):
 
 **1. Admin-Login (Punkt im Logo)**
 - Passwort über Umgebungsvariable `ADMIN_PASSWORD` (Default `mersch75`).
@@ -541,7 +580,14 @@ Es gibt **drei** Wege, sich anzumelden (siehe Abschnitt 1):
 **2. Random-No / Karten-Login**
 - Login per Karten-ID (Random-No) aus der Mitgliederliste — kein Passwort nötig.
 
-**3. Passwort-Login (E-Mail + Passwort) — Demo-Zugänge:**
+**3. Member PIN-Login (Neu — Juli 2026)**
+- Login fir Memberer ouni Passwort oder Karten-ID.
+- Identifikatioun iwwert Numm + Virnumm + Geburtsdatum (verglach mat `members`-Tabelle).
+- Validatioun via SMS-Code (Mixvoip) oder Email-Code (Fallback).
+- 6-stellige PIN fir zukünfteg Logins.
+- PIN Reset via SMS/Email-OTP.
+
+**4. Passwort-Login (E-Mail + Passwort) — Demo-Zugänge:**
 - Präsident: praesident@mersch75.lu / demo123
 - Trainer: trainer@mersch75.lu / demo123
 - Spieler: spieler@mersch75.lu / demo123
@@ -551,4 +597,4 @@ Es gibt **drei** Wege, sich anzumelden (siehe Abschnitt 1):
 
 ---
 
-*Dokumentation erstellt: Mai 2026 · Aktualisiert: Juni 2026 (Random-No-/Admin-Login, Website-Hub, Mitglieder-Import 2025/26, Check-In, Willkommensmappe)*
+*Dokumentation erstellt: Mai 2026 · Aktualisiert: Juli 2026 (Member PIN-Login mit SMS/Email-OTP, Random-No-/Admin-Login, Website-Hub, Mitglieder-Import 2025/26, Check-In, Willkommensmappe)*
