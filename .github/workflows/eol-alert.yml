@@ -1,0 +1,41 @@
+name: EOL Alert
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+jobs:
+  eol:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check Node.js EOL
+        id: eol
+        uses: insectkorea/eol-alert@v1
+        with:
+          language: 'node'
+      - name: Create Issue if EOL approaching
+        if: steps.eol.outputs.eol-status != 'safe'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'eol-alert'
+            });
+            if (existing.data.length > 0) {
+              console.log('EOL issue already open, skipping');
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Node.js EOL approaching — upgrade needed`,
+              body: `The Node.js version used in this project is approaching or has reached End-of-Life. Please upgrade to a supported LTS version.\n\nSee: https://endoflife.date/nodejs`,
+              labels: ['eol-alert', 'maintenance']
+            });

@@ -1,0 +1,26 @@
+name: Mark Stale Issues & PRs
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'Dës Issue ass 60 Deeg ouni Aktivitéit. Si gëtt an 14 Deeg zougemaach falls näischt geschitt.'
+          stale-pr-message: 'Dëse PR ass 60 Deeg ouni Aktivitéit. Hie gëtt an 14 Deeg zougemaach falls näischt geschitt.'
+          close-issue-message: 'Issue gouf wéinst Inaktivitéit zougemaach.'
+          close-pr-message: 'PR gouf wéinst Inaktivitéit zougemaach.'
+          days-before-stale: 60
+          days-before-close: 14
+          stale-issue-label: 'stale'
+          stale-pr-label: 'stale'
+          exempt-issue-labels: 'pinned,security,enhancement'
+          exempt-pr-labels: 'pinned,security'
