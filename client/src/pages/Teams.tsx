@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, ArrowLeft, Shield } from "lucide-react";
+import { Users, ArrowLeft, Shield, ArrowRightLeft } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { initials, formatMemberName, getAge, memberExtraTeamIds } from "@/lib/utils";
@@ -57,7 +57,7 @@ export default function Teams() {
       const st = medicoState(m);
       return st === "inapte" || st === "overdue" || st === "none" ? 1 : 0;
     };
-    const roster = members
+    const allRoster = members
       .filter(m => isTeamMember(m) && isActiveClubMember(m))
       .sort((a, b) => {
         const na = nominatedIds.has(a.id) ? 0 : 1;
@@ -72,6 +72,17 @@ export default function Teams() {
         if (ageDiff !== 0 && Number.isFinite(ageDiff)) return ageDiff;
         return formatMemberName(a).localeCompare(formatMemberName(b));
       });
+    const roster = allRoster.filter(m => (m as any).squadStatus !== 'reserve');
+    const reserve = allRoster.filter(m => (m as any).squadStatus === 'reserve');
+    const squadMut = useMutation({
+      mutationFn: async ({ memberId, status }: { memberId: number; status: string }) => {
+        const res = await apiRequest("PATCH", `/api/members/${memberId}`, { squadStatus: status });
+        return res.json();
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/members"] });
+      },
+    });
     const trainer = users.find(u => u.id === team.trainerId);
 
     return (
@@ -92,14 +103,17 @@ export default function Teams() {
             </Badge>
             <h1 className="text-2xl font-extrabold mt-2">{team.name}</h1>
             <div className="flex items-center gap-4 mt-3 text-sm text-primary-foreground/80">
-              <span className="flex items-center gap-1"><Users className="size-4" /> {roster.length} Spieler</span>
+              <span className="flex items-center gap-1"><Users className="size-4" /> {roster.length} Aktiv{reserve.length > 0 && <span className="text-amber-300"> · {reserve.length} Reserve</span>}</span>
               {trainer && <span>Trainer: {trainer.name}</span>}
             </div>
           </div>
         </div>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Kader ({roster.length})</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Kader ({roster.length})</CardTitle>
+            <span className="text-xs text-muted-foreground">Aktiv — trainéiert & spillt</span>
+          </CardHeader>
           <CardContent className="p-0 divide-y divide-border">
             {roster.length === 0 && <p className="p-6 text-sm text-muted-foreground">Noch keine Spieler im Kader</p>}
             {roster.map(m => (
@@ -137,6 +151,19 @@ export default function Teams() {
                     })()}
                   </div>
                 </Link>
+                {canEdit && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0 text-xs gap-1"
+                    disabled={squadMut.isPending}
+                    onClick={() => squadMut.mutate({ memberId: m.id, status: "reserve" })}
+                    title="In Reserve versetzen"
+                  >
+                    <ArrowRightLeft className="size-3" />
+                    <span className="hidden sm:inline">Reserve</span>
+                  </Button>
+                )}
                 {isYouth && upgradeOptions.length > 0 && (
                   <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
                     {upgradeOptions.map(opt => {
@@ -158,6 +185,66 @@ export default function Teams() {
                       );
                     })}
                   </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="border-amber-200 dark:border-amber-900">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Reserve ({reserve.length})</CardTitle>
+            <span className="text-xs text-muted-foreground">Auf Abruf — kann in Kader gerufen werden</span>
+          </CardHeader>
+          <CardContent className="p-0 divide-y divide-border">
+            {reserve.length === 0 && <p className="p-6 text-sm text-muted-foreground">Keng Spiller an der Reserve</p>}
+            {reserve.map(m => (
+              <div key={m.id} className="flex items-center gap-3 p-3 hover-elevate">
+                <Link href={`/members/${m.id}`} className="flex flex-1 items-center gap-3 min-w-0">
+                  <Avatar className="size-10 opacity-70">
+                    <AvatarImage src={m.photoUrl || undefined} />
+                    <AvatarFallback className="bg-amber-500/10 text-amber-700 dark:text-amber-400 text-xs font-bold">
+                      {initials(m.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm">{formatMemberName(m)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {m.licenseNumber || "—"}
+                      {m.birthdate && <> · Jg. {new Date(m.birthdate).getFullYear()}</>}
+                    </div>
+                    {(() => {
+                      const st = medicoState(m);
+                      const label = medicoLabel(m);
+                      if (st === "due" || st === "overdue") {
+                        return (
+                          <span className="mt-1 inline-block rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                            {label}
+                          </span>
+                        );
+                      }
+                      if (st === "inapte") {
+                        return <span className="mt-1 inline-block rounded bg-purple-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">{label}</span>;
+                      }
+                      if (st === "valid") {
+                        return <span className="mt-1 inline-block text-[10px] text-emerald-600 dark:text-emerald-400">{label}</span>;
+                      }
+                      return <span className="mt-1 inline-block text-[10px] text-muted-foreground">{label}</span>;
+                    })()}
+                  </div>
+                </Link>
+                {canEdit && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="shrink-0 text-xs gap-1 bg-emerald-600 hover:bg-emerald-700"
+                    disabled={squadMut.isPending}
+                    onClick={() => squadMut.mutate({ memberId: m.id, status: "active" })}
+                    title="Aktivéieren — an de Kader versetzen"
+                  >
+                    <ArrowRightLeft className="size-3" />
+                    <span className="hidden sm:inline">Aktivéieren</span>
+                  </Button>
                 )}
               </div>
             ))}

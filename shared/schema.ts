@@ -113,6 +113,8 @@ export const members = sqliteTable("members", {
   birthPlace: text("birth_place"), // Lieu et pays de naissance
   phoneOffice: text("phone_office"), // Tél.-Bureau
   gsm: text("gsm"), // GSM
+  gender: text("gender"), // Sexe (M/F)
+  squadStatus: text("squad_status").default("active"), // active | reserve
 });
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true });
 export type InsertMember = z.infer<typeof insertMemberSchema>;
@@ -166,6 +168,27 @@ export const events = sqliteTable("events", {
 export const insertEventSchema = createInsertSchema(events).omit({ id: true });
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type Event = typeof events.$inferSelect;
+
+// ─── Event Groups (Spieler-Gruppen in Terminen, wie SpielerPlus) ───
+export const eventGroups = sqliteTable("event_groups", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  eventId: integer("event_id").notNull(),
+  name: text("name").notNull(), // z.B. "Rot", "Blau", "Gruppe A"
+  color: text("color").default("blue"), // blue | red | green | amber | purple
+  createdAt: text("created_at").notNull().default(new Date().toISOString()),
+});
+export const insertEventGroupSchema = createInsertSchema(eventGroups).omit({ id: true });
+export type InsertEventGroup = z.infer<typeof insertEventGroupSchema>;
+export type EventGroup = typeof eventGroups.$inferSelect;
+
+export const eventGroupMembers = sqliteTable("event_group_members", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  groupId: integer("group_id").notNull(),
+  memberId: integer("member_id").notNull(),
+});
+export const insertEventGroupMemberSchema = createInsertSchema(eventGroupMembers).omit({ id: true });
+export type InsertEventGroupMember = z.infer<typeof insertEventGroupMemberSchema>;
+export type EventGroupMember = typeof eventGroupMembers.$inferSelect;
 
 // ─── Availability ───────────────────────────────────────
 export const availability = sqliteTable("availability", {

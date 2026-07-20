@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Camera, Upload, Check, X, Sparkles, Info, Clock, Minus, Plus } from "lucide-react";
+import { Camera, Upload, Check, X, Sparkles, Info, Clock, Minus, Plus, LayoutGrid, List } from "lucide-react";
 import { apiRequest, queryClient, getAuthToken } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { initials, isoToday, formatMemberName, getAge, memberExtraTeamIds } from "@/lib/utils";
@@ -77,6 +77,7 @@ export default function AttendancePage() {
   const [newForm, setNewForm] = useState({ firstName: "", lastName: "", birthdate: "", phone: "", phoneOwner: "elternteil", licenseNumber: "" });
   const [phoneUnknown, setPhoneUnknown] = useState(false);
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "tiles">("list");
   const canEdit = user && ["präsident", "admin", "trainer"].includes(user.role);
 
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
@@ -296,7 +297,17 @@ export default function AttendancePage() {
         <TabsContent value="manual">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Manuell erfassen</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Manuell erfassen</CardTitle>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant={viewMode === "list" ? "default" : "outline"} onClick={() => setViewMode("list")} className="h-7 px-2">
+                    <List className="size-3.5" />
+                  </Button>
+                  <Button size="sm" variant={viewMode === "tiles" ? "default" : "outline"} onClick={() => setViewMode("tiles")} className="h-7 px-2">
+                    <LayoutGrid className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
               {canEdit && (
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center gap-2">
@@ -366,16 +377,88 @@ export default function AttendancePage() {
                 </div>
               )}
             </CardHeader>
-            <CardContent className="p-0 divide-y divide-border">
+            <CardContent className={viewMode === "list" ? "p-0 divide-y divide-border" : "p-4"}>
               {teamMembers.length === 0 && (
                 <p className="p-8 text-center text-sm text-muted-foreground">
                   Keine Mitglieder in diesem Team
                 </p>
               )}
-              {sortedMembers.map(m => {
+              {viewMode === "tiles" ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {sortedMembers.map(m => {
+                    const st = statusByMember(m.id);
+                    const rec = recordByMember(m.id);
+                    const s = summaryByMember(m.id);
+                    const pct = s.total > 0 ? Math.round((s.present / s.total) * 100) : null;
+                    const isReserve = (m as any).squadStatus === "reserve";
+                    const borderColor = st === "present" ? "border-emerald-500" : st === "excused" ? "border-amber-500" : st === "unexcused" ? "border-destructive" : st === "absent" ? "border-slate-400" : "border-border";
+                    return (
+                      <div key={m.id} className={`rounded-lg border-2 ${borderColor} p-3 flex flex-col items-center gap-2 transition-all ${st && st !== "present" ? "opacity-70" : ""}`}>
+                        <div className="relative">
+                          <Avatar className="size-14">
+                            <AvatarImage src={m.photoUrl || undefined} />
+                            <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
+                              {initials(m.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {st === "present" && (
+                            <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-emerald-500 flex items-center justify-center ring-2 ring-background">
+                              <Check className="size-3 text-white" />
+                            </div>
+                          )}
+                          {st === "excused" && (
+                            <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-amber-500 flex items-center justify-center ring-2 ring-background">
+                              <Clock className="size-3 text-white" />
+                            </div>
+                          )}
+                          {st === "unexcused" && (
+                            <div className="absolute -bottom-1 -right-1 size-5 rounded-full bg-destructive flex items-center justify-center ring-2 ring-background">
+                              <X className="size-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-center min-w-0 w-full">
+                          <div className="font-medium text-xs truncate">{formatMemberName(m)}</div>
+                          {isReserve && <Badge variant="outline" className="text-[9px] px-1 py-0 h-auto border-amber-500 text-amber-600 mt-0.5">Reserve</Badge>}
+                          {rec?.isTrial && <Badge variant="outline" className="text-[9px] px-1 py-0 h-auto border-amber-500 text-amber-600 mt-0.5">Prouf</Badge>}
+                          {pct !== null && (
+                            <div className="mt-1 flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                              <span className="tabular-nums font-semibold text-foreground/70">{s.present}/{s.total}</span>
+                              <span className={`font-bold ${pct >= 70 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-destructive"}`}>{pct}%</span>
+                            </div>
+                          )}
+                        </div>
+                        {canEdit && (
+                          <div className="flex items-center gap-0.5 flex-wrap justify-center">
+                            {STATUS_OPTS.map(opt => {
+                              const Icon = opt.icon;
+                              const active = st === opt.key;
+                              return (
+                                <Button
+                                  key={opt.key}
+                                  size="icon"
+                                  variant={active ? "default" : "outline"}
+                                  onClick={() => setStatus(m.id, opt.key)}
+                                  className={`size-6 ${active ? opt.active : "text-muted-foreground"}`}
+                                  title={opt.label}
+                                >
+                                  <Icon className="size-3" />
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                sortedMembers.map(m => {
                 const st = statusByMember(m.id);
                 const rec = recordByMember(m.id);
                 const s = summaryByMember(m.id);
+                const pct = s.total > 0 ? Math.round((s.present / s.total) * 100) : null;
+                const isReserve = (m as any).squadStatus === "reserve";
                 const parked = st === "absent" || st === "excused" || st === "unexcused";
                 return (
                   <div key={m.id} className={`flex items-center gap-3 p-3 transition-colors ${parked ? "opacity-60" : ""}`}>
@@ -386,10 +469,14 @@ export default function AttendancePage() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{formatMemberName(m)}</div>
+                      <div className="font-medium text-sm truncate flex items-center gap-1.5">
+                        {formatMemberName(m)}
+                        {isReserve && <Badge variant="outline" className="text-[9px] px-1 py-0 h-auto border-amber-500 text-amber-600">Reserve</Badge>}
+                      </div>
                       <div className="text-[11px] text-muted-foreground flex items-center gap-2">
                         <span className="tabular-nums font-semibold text-foreground/70" title="Anwesend / anwesend gezählte Einheiten">
                           {s.present}/{s.total}
+                          {pct !== null && <span className={`ml-1 ${pct >= 70 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-destructive"}`}>{pct}%</span>}
                         </span>
                         {m.licenseNumber && <span className="truncate">{m.licenseNumber}</span>}
                         {rec?.isTrial && (
@@ -440,7 +527,8 @@ export default function AttendancePage() {
                     </div>
                   </div>
                 );
-              })}
+                })
+              )}
             </CardContent>
           </Card>
 

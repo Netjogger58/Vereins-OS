@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, Upload, AlertCircle, User, Users, Shield, CreditCard, Pencil, Check, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { initials, formatDate, formatMemberName, memberExtraTeamIds } from "@/lib/utils";
@@ -85,6 +86,42 @@ function EditableField({ label, value, onSave, canEdit, type = "text" }: {
       ) : (
         <div className="flex items-center gap-1 group">
           <span className="text-sm">{value || <span className="text-muted-foreground italic">—</span>}</span>
+          {canEdit && (
+            <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100"
+              onClick={() => setEditing(true)}>
+              <Pencil className="size-3" />
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EditableSelect({ label, value, onSave, canEdit, options }: {
+  label: string; value: string | null | undefined; onSave: (v: string) => void;
+  canEdit: boolean; options: { value: string; label: string }[];
+}) {
+  const [editing, setEditing] = useState(false);
+  const current = options.find(o => o.value === value);
+  return (
+    <div className="space-y-0.5">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      {editing ? (
+        <div className="flex gap-1">
+          <Select value={value || ""} onValueChange={(v) => { onSave(v); setEditing(false); }}>
+            <SelectTrigger className="h-7 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              {options.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditing(false)}>
+            <X className="size-3.5 text-destructive" />
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 group">
+          <span className="text-sm">{current ? current.label : <span className="text-muted-foreground italic">—</span>}</span>
           {canEdit && (
             <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100"
               onClick={() => setEditing(true)}>
@@ -222,6 +259,7 @@ export default function MemberDetail() {
                 <EditableField label="Telefon / GSM" value={member.phone} onSave={save("phone")} canEdit={!!canEdit} />
                 <EditableField label="Geburtsdatum" value={member.birthdate} onSave={save("birthdate")} canEdit={!!canEdit} type="date" />
                 <EditableField label="Nationalität" value={(member as any).nationality} onSave={save("nationality")} canEdit={!!canEdit} />
+                <EditableSelect label="Sexe (M/F)" value={(member as any).gender} onSave={save("gender")} canEdit={!!canEdit} options={[{ value: "M", label: "M (Männlech)" }, { value: "F", label: "F (Weiblech)" }]} />
                 <EditableField label="Adresse" value={member.address} onSave={save("address")} canEdit={!!canEdit} />
               </div>
             </div>

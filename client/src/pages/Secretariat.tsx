@@ -101,6 +101,7 @@ interface RosterMember {
   name: string;
   firstName?: string | null;
   lastName?: string | null;
+  gender?: string | null;
   cardId?: string | null;
   email?: string | null;
   phone?: string | null;
@@ -385,8 +386,9 @@ function memberGroup(m: RosterMember): string {
 
 function getSortValue(m: RosterMember, key: string): string | number {
   switch (key) {
-    case "name": return (m.name || "").toLowerCase();
+    case "name": return (m.lastName || m.name || "").toLowerCase();
     case "firstName": return (m.firstName || "").toLowerCase();
+    case "gender": return (m.gender || "").toLowerCase();
     case "langue": return (langNat(m).lang || "").toLowerCase();
     case "nationalite": return (langNat(m).nat || "").toLowerCase();
     case "cardId": return (m.cardId || "").toLowerCase();
@@ -1018,9 +1020,10 @@ export default function Secretariat() {
                   <tr className="border-b bg-muted/50 text-left">
                     <HeadCell k="name" className="sticky left-0 bg-muted/50 z-10 min-w-[180px]">Nom</HeadCell>
                     <HeadCell k="firstName">Prénom</HeadCell>
+                    <HeadCell k="gender">Sexe</HeadCell>
+                    <HeadCell k="cardId">Card-ID</HeadCell>
                     <HeadCell k="langue">Langue</HeadCell>
                     <HeadCell k="nationalite">Nationalité</HeadCell>
-                    <HeadCell k="cardId">Card-ID</HeadCell>
                     <HeadCell k="oldCourrier">Alt. Courrier</HeadCell>
                     <HeadCell k="family">Neu. Courrier</HeadCell>
                     <HeadCell k="oldCode">AL Cat</HeadCell>
@@ -1049,23 +1052,17 @@ export default function Secretariat() {
                     <tr key={m.id} className="border-b hover:bg-muted/30">
                       <td className="sticky left-0 bg-background z-10 px-3 py-2 border-r">
                         <Link href={`/members/${m.id}`} className="flex items-center gap-1 hover:text-primary">
-                          <span className="font-normal">
-                            {m.lastName ? (
-                              <>
-                                {m.firstName ? `${formatFirstName(m.firstName)} ` : ""}
-                                <span className="font-bold">{formatLastName(m.lastName)}</span>
-                              </>
-                            ) : (
-                              m.name
-                            )}
+                          <span className="font-bold">
+                            {m.lastName ? formatLastName(m.lastName) : m.name}
                           </span>
                           <ChevronRight className="size-3 opacity-40 shrink-0" />
                         </Link>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{formatFirstName(m.firstName || "")}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-center">{m.gender || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.cardId || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{langNat(m).lang || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{langNat(m).nat || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.cardId || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "code courrier", "Alter Courrier-Code") || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.familyCode || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>

@@ -8,6 +8,8 @@ import {
   attendance,
   announcements,
   events,
+  eventGroups,
+  eventGroupMembers,
   availability,
   meetings,
   accounts,
@@ -433,6 +435,18 @@ function init() {
       location TEXT,
       description TEXT,
       jitsi_room TEXT
+    );
+    CREATE TABLE IF NOT EXISTS event_groups (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      color TEXT DEFAULT 'blue',
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS event_group_members (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      group_id INTEGER NOT NULL,
+      member_id INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS availability (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1283,6 +1297,39 @@ function runMigrations() {
   safeAddColumn("members", "birth_place", "TEXT");
   safeAddColumn("members", "phone_office", "TEXT");
   safeAddColumn("members", "gsm", "TEXT");
+  safeAddColumn("members", "gender", "TEXT");
+  safeAddColumn("members", "squad_status", "TEXT DEFAULT 'active'");
+  // Auto-fill gender from first name for existing members
+  try {
+    const MALE_NAMES = new Set([
+      "Adrien","Alain","Albert","Alessandro","Alex","Alexander","Alexandre","Alexis","Alfred","Ali","Alois","Andre","André","Andrea","Andrew","Antoine","Antonio","António","Armand","Arno","Arthur","Aurélien","Axel","Baptiste","Bastian","Benoît","Bernard","Bertrand","Bob","Björn","Brandon","Bruno","Camille","Carl","Carlos","Carlo","Cédric","Charles","Christian","Christophe","Claude","Clement","Clément","Colin","Cristiano","Damien","Dan","Daniel","Dario","David","Denis","Dennis","Dieter","Dominique","Edouard","Édouard","Eduardo","Elie","Élie","Emile","Émile","Emilio","Emmanuel","Emmanuel","Enrico","Eric","Éric","Ernest","Etienne","Étienne","Eugen","Fabio","Fabrice","Felix","Félix","Fernand","Fernando","Filip","Filipe","Florian","Francesco","Francis","Francisco","Frank","Franky","Frédéric","Frederic","Frederico","Fritz","Gabriel","Gaël","Georges","Gérald","Gerald","Gérard","Gerard","Gilles","Giuseppe","Gregor","Gregory","Grégoire","Guillaume","Gustav","Hans","Harald","Henri","Henry","Herbert","Hugo","Igor","Ivan","Jacky","Jacob","Jacques","Jan","Jang","Jari","Jason","Jean","Jeff","Jefferson","Jemp","Jeng","Jérôme","Jerome","Joël","Joel","Johan","Johann","Johannes","John","Johnny","Jonas","Jonathan","Jorge","Jos","José","Joseph","Joss","Juan","Julian","Julien","Jürgen","Justin","Kai","Karim","Karl","Kasper","Keo","Kevin","Klaus","Koen","Konstantin","Kotaro","Kris","Kristof","Kristoffer","Kurt","Kylian","Lars","Laurent","Lee","Leo","Léon","Leon","Liam","Linus","Lorenz","Loris","Louis","Luc","Lucas","Luka","Lukas","Manuel","Marc","Marco","Marcus","Marius","Martin","Mathieu","Mathis","Mats","Matteo","Matthias","Matthew","Matthieu","Maurice","Max","Maximilian","Mehdi","Michele","Michel","Miguel","Mihai","Mohamed","Morgan","Moritz","Nathan","Nic","Nicolas","Niels","Niklas","Niko","Noah","Norbert","Olivier","Oscar","Pascal","Patrice","Patrick","Paul","Pedro","Pierre","Pit","Rafael","Raphaël","Rasmus","Raymond","René","Rene","Ricardo","Richard","Robert","Roberto","Robin","Romain","Roman","Rüdiger","Rui","Ryan","Sacha","Sam","Sami","Samuel","Sander","Sébastien","Sebastian","Sergej","Sergio","Sven","Srecko","Stefan","Stéphane","Stephane","Steve","Steven","Sven","Théo","Theo","Theodor","Thierry","Thomas","Tim","Timo","Timour","Tobias","Tom","Toni","Tony","Torben","Ugo","Ulrich","Valentin","Victor","Viktor","Vincent","Xavier","Yann","Yannick","Yves","Yvo","Mikaël","Storm","Auguste","Maxime","Sanel","Finn","Andreas","Milo","Adrian","Ahmed","Aki","Alan","Alexandros","Alexëi","Anatoli","Andrei","Andy","Antony","Arlind","Arnaud","Arsène","Austin","Aymeric","Bas","Ben","Benjamin","Benny","Benoit","Bernardo","Berthold","Billy","Bo","Béla","Caio","Catalin","Cedric","Charel","Charly","Changfeng","Chris","Christophe","Clayton","Colyn","Cristian","Cyril","Darius","Dayne","Dean","Diego","Dimitri","Diogo","Dirk","Dylan","Edin","Elias","Elio","Eliott","Elyas","Enis","Eric","Ervin","Fabien","Filippo","Fionn","Frederik","Fränk","Fränz","Georgios","Gerardo","Gil","Grégory","Guilhem","Guy","Haci","Halldor","Harry","Hector","Helmut","Henrik","Holger","Hénok","Ilan","Jeffrey","Jeremy","Jim","Jo","Joao","Joe","Joran","Jordan","Jorges","Joscha","Joshua","Joé","Jules","Jérémie","Jeannot","Jian","Kenan","Keven","Kim","Konstantinos","Krzysztof","Leevi","Leonard","Levi","Lio","Logan","Loïc","Luan","Luca","Léo","Lévi","Manfred","Manu","Marcel","Marcos","Mark","Marios","Matheo","Matias","Matis","Matti","Mauro","Maxence","Michael","Mickaël","Mik","Mike","Mikkel","Mirko","Mirza","Nathanaël","Nick","Nils","Noel","Nolan","Noé","Nuno","Olaedo","Oleg","Pablo","Paolo","Paulo","Pavol","Peter","Petrus","Philip","Philipp","Philippe","Pol","Ralph","Raoul","Raphael","Renato","Reynald","Rhys","Riad","Ricky","Rik","Roald","Roby","Rodrigo","Roger","Roland","Ronaldo","Ruben","Rudi","Samu","Samson","Sascha","Sebastien","Serge","Sharif","Simon","Sinisa","Sonny","Soren","Spyridon","Stanislas","Stefaan","Stephan","Stergios","Teo","Tiago","Timothée","Tomislav","Tommy","Tomàs","Tun","Tunn","Veli","Vic","Vicente","Virginio","Vladimir","Wagner","Wassim","Wesley","Yanik","Yongxing","Grzegorz","Gilson","Bruce","Amer","Mahuwènan","Mihada","Georgian","Domingo","Jose"
+    ]);
+    const FEMALE_NAMES = new Set([
+      "Astrid","Agnes","Agnès","Aïcha","Albane","Alexandra","Alexia","Alice","Alicia","Aline","Amélie","Amelia","Amina","Ana","Anais","Anaïs","Anastasia","Andrea","Andrée","Angela","Angelina","Angélique","Anita","Ann","Anna","Anne","Annick","Annie","Anny","Antoinette","Ariane","Arlette","Astrid","Barbara","Béatrice","Beatrice","Benedicte","Bénédicte","Bérénice","Bettina","Betty","Bianca","Brigitte","Camille","Carla","Carlotta","Carmen","Carole","Caroline","Cassandra","Catalina","Catherine","Cathy","Cécile","Cecile","Céline","Celine","Chantal","Charlotte","Chiara","Christelle","Christelle","Christina","Christine","Cindy","Claire","Clara","Claudia","Claudine","Clémence","Clementine","Clémentine","Collette","Constance","Coralie","Cristina","Daniele","Daniela","Danielle","Danièle","Daphné","Daria","Deborah","Déborah","Delphine","Denise","Diana","Diane","Dora","Edith","Édith","Eleonore","Eléonore","Elena","Eléonore","Elisa","Elisabeth","Élisabeth","Elise","Élise","Eliza","Ella","Ellen","Eloise","Éloise","Elsa","Emilie","Émilie","Emily","Emma","Enora","Erica","Erika","Estelle","Esther","Eva","Evelyne","Evelyn","Fanny","Fatima","Fernanda","Fiona","Florence","Florine","Françoise","Francoise","Freya","Gabriela","Gabrielle","Gaëlle","Gaelle","Geneviève","Genevieve","Georgette","Geraldine","Géraldine","Gianna","Gina","Gisèle","Gisele","Grace","Greta","Hana","Hannah","Hayat","Hélène","Helene","Henriette","Holly","Ida","Ilona","Ines","Inès","Ingrid","Irena","Irene","Iris","Isabel","Isabelle","Jade","Janine","Jasmine","Jeanne","Jeannine","Jennifer","Jessica","Joana","Joanna","Joanne","Jocelyne","Josephine","Joséphine","Josette","Josiane","Julia","Julie","Juliette","Karen","Karine","Karoline","Kate","Katherina","Katherine","Kathleen","Kathrin","Kathryn","Katja","Katrien","Katrin","Kirstin","Kirsten","Kyra","Lara","Laura","Laure","Laureline","Laurence","Léa","Lea","Leah","Lena","Léna","Liana","Lidia","Liesbeth","Liliane","Lilian","Lilianne","Lina","Linda","Lisa","Lise","Liv","Livia","Lola","Loredana","Lorena","Lotte","Lotus","Lou","Louise","Lucie","Lucy","Luna","Lydia","Maelle","Maëlle","Magali","Maggy","Mai","Maiwenn","Maïwenn","Maja","Mandy","Manon","Manuela","Margaux","Margaret","Margarida","Margaux","Margot","Marguerite","Maria","Marianne","Marie","Marina","Marine","Marion","Marlène","Marlene","Marsha","Martina","Martine","Mary","Maryam","Marylise","Mathilde","Maud","Maude","Maxine","Mélanie","Melanie","Melissa","Mélissa","Mia","Michèle","Michele","Michelle","Mina","Minao","Minna","Morgane","Nadia","Nadège","Nadege","Nadine","Nancy","Nastasia","Natalia","Nathalie","Nicole","Nina","Noémie","Noemie","Nora","Océane","Oceane","Odette","Olga","Olivia","Patricia","Patrizia","Paula","Pauline","Peggy","Penelope","Pénélope","Petra","Pierrette","Rachelle","Rachel","Rafaella","Rania","Raquel","Rebecca","Rébecca","Regina","Reine","Renée","Renee","Rita","Rosa","Rosalie","Rose","Rosario","Ruth","Sabine","Sabrina","Sahra","Sally","Sandra","Sandrine","Sandy","Saniyé","Sara","Sarah","Saskia","Schéhérazade","Séverine","Severine","Shana","Sharon","Sienna","Sigrid","Silke","Silvia","Simone","Sofia","Sofija","Sonia","Sophie","Stefanie","Stéphanie","Stephanie","Sue","Suzanne","Suzy","Sylvia","Sylvie","Tamara","Tania","Tatiana","Teresa","Thérèse","Therese","Tina","Valentina","Valentine","Valérie","Valerie","Vanessa","Vera","Véronique","Veronique","Victoria","Victoire","Viktoria","Viviane","Vivienne","Wanda","Xenia","Yasmine","Yasmin","Yoko","Yolande","Yvonne","Zara","Zoé","Zoe","Myriam","Katarina","Fabiana","Taira","Belma","Vicky","Ionna","Amelie","Leonie","Léonie","Gaby","Ania","Isabella","Samantha","Catarina","Monika","Monia","Line","Flora","Nineta","Camila","Annemarioe","Alexise","Meva","Jill","Anouschka","Alberte","Aleksandra","Alina","Alissa","Aly","Amalia","Amara","Amy","Amélia","Anel","Angel","Annemarie","Annette","Anouchka","Anouck","Anouk","Antonia","Ariel","Armela","Augustine","Ava","Avid","Beyoncé","Birgitte","Cammille","Carine","Chayenne","Cherryl","Cheryl","Chloé","Khloé","Christiane","Cléo","Corinne","Cynthia","Daisy","Dalmi","Dana","Dani","Dena","Destiny","Dina","Dzenisa","Ekaterina","Electa","Eleonor","Eliane","Eléa","Emilia","Esma","Eugenia","Eunice","Fabienne","Filippa","Fivi","Francine","Hailey","Ilda","Irina","Irma","Jacqueline","Jaimy","Jamie","Janika","Jannina","Jeanette","Jenny","Jelse","Jo-Anne","Joelle","Joëlle","Joséane","Juna","Karla","Katarzyna","Katharina","Klaudia","Krisshelle","Kristina","Laurie","Leaticia","Lily","Lishia","Liva","Liz","Lucilia","Lynn","Mara","Margret","Marieme","Mariette","Marija","Marjorie","Marthe","Maureen","Maya","Mayla","Melodie","Mendy","Mireille","Mollie","Monique","Murielle","Nastasja","Natascha","Nazli","Nejla","Nicky","Nikolina","Oana","Odile","Olha","Olivera","Pascale","Patrycja","Piia","Rae","Rosaline","Sanja","Sibylle","Stella","Stefhanee","Susi","Suzana","Svenja","Tanja","Tessy","Thais","Thao","Thea","Wendi","Wohanne","Yara","Ysabelle","Zita","Aisling","Ajscla","Mie","Nicole"
+    ]);
+    const noGender = sqlite.prepare(`SELECT id, first_name, name FROM members WHERE (gender IS NULL OR gender = '') AND (first_name IS NOT NULL OR name IS NOT NULL)`).all() as { id: number; first_name: string | null; name: string | null }[];
+    let updated = 0;
+    for (const row of noGender) {
+      const raw = (row.first_name || row.name || "").trim();
+      if (!raw) continue;
+      const firstWord = raw.split(/[\s,\-]/)[0].toLowerCase().replace(/[^a-zà-ÿ]/g, "");
+      const cap = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+      let gender: string | null = null;
+      if (MALE_NAMES.has(cap)) gender = "M";
+      else if (FEMALE_NAMES.has(cap)) gender = "F";
+      else {
+        for (const n of MALE_NAMES) { if (n.toLowerCase() === firstWord) { gender = "M"; break; } }
+        if (!gender) for (const n of FEMALE_NAMES) { if (n.toLowerCase() === firstWord) { gender = "F"; break; } }
+      }
+      if (gender) {
+        sqlite.prepare(`UPDATE members SET gender = ? WHERE id = ?`).run(gender, row.id);
+        updated++;
+      }
+    }
+    if (updated > 0) console.log(`[migrate] auto-filled gender for ${updated} members`);
+  } catch (e) {
+    console.error("[migrate] failed to auto-fill gender:", e);
+  }
   // Card-ID: all existent 7-char values → 8 chars (pad with random char from alphabet)
   try {
     const CARD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

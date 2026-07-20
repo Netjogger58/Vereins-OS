@@ -31,6 +31,7 @@ import {
   Link2
 } from "lucide-react";
 import type { Match, Team } from "@shared/schema";
+import LineupEditor from "./LineupEditor";
 
 const COMPETITIONS = [
   { value: "H-PRO", label: "Herren PRO" },
@@ -555,16 +556,19 @@ function MatchCard({
             )}
           </div>
 
-          {canManage && (
-            <div className="flex items-center gap-1 ml-4">
+          <div className="flex items-center gap-1 ml-4">
+            {canManage && match.status === "scheduled" && <LineupEditor match={match} />}
+            {canManage && (
               <Button variant="ghost" size="icon" onClick={onEdit}>
                 <Edit2 className="w-4 h-4" />
               </Button>
+            )}
+            {canManage && (
               <Button variant="ghost" size="icon" onClick={onDelete}>
                 <Trash2 className="w-4 h-4 text-red-500" />
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

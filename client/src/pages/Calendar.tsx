@@ -12,12 +12,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Video, Check, X, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Video, Check, X, Trash2, Users, UserPlus } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import type { Event, Team } from "@shared/schema";
+import type { Event, Team, Member } from "@shared/schema";
 
 const EVENT_STYLES: Record<string, { bg: string; dot: string; label: string; text: string }> = {
   training: { bg: "bg-chart-1/15", dot: "bg-chart-1", label: "Training", text: "text-chart-1" },
@@ -42,6 +42,48 @@ export default function Calendar() {
 
   const { data: events = [] } = useQuery<Event[]>({ queryKey: ["/api/events"] });
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
+  const { data: members = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
+
+  const canEditGroups = user && ["präsident", "admin", "trainer"].includes(user.role);
+
+  const { data: groupData } = useQuery<{ groups: any[]; members: any[] }>({
+    queryKey: ["/api/events", selectedEvent?.id, "groups"],
+    queryFn: () => selectedEvent ? apiRequest("GET", `/api/events/${selectedEvent.id}/groups`).then(r => r.json()) : Promise.resolve({ groups: [], members: [] }),
+    enabled: !!selectedEvent,
+  });
+
+  const createGroupMut = useMutation({
+    mutationFn: async ({ eventId, name, color }: { eventId: number; name: string; color: string }) =>
+      (await apiRequest("POST", `/api/events/${eventId}/groups`, { name, color })).json(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events", selectedEvent?.id, "groups"] }),
+  });
+  const deleteGroupMut = useMutation({
+    mutationFn: async (groupId: number) => (await apiRequest("DELETE", `/api/event-groups/${groupId}`)).json(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events", selectedEvent?.id, "groups"] }),
+  });
+  const addMemberMut = useMutation({
+    mutationFn: async ({ groupId, memberId }: { groupId: number; memberId: number }) =>
+      (await apiRequest("POST", `/api/event-groups/${groupId}/members`, { memberId })).json(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events", selectedEvent?.id, "groups"] }),
+  });
+  const removeMemberMut = useMutation({
+    mutationFn: async ({ groupId, memberId }: { groupId: number; memberId: number }) =>
+      (await apiRequest("DELETE", `/api/event-groups/${groupId}/members/${memberId}`)).json(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/events", selectedEvent?.id, "groups"] }),
+  });
+
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupColor, setNewGroupColor] = useState("blue");
+  const [showGroupForm, setShowGroupForm] = useState(false);
+  const [assignMemberId, setAssignMemberId] = useState<string>("");
+
+  const GROUP_COLORS: Record<string, string> = {
+    blue: "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-400",
+    red: "border-red-500 bg-red-500/10 text-red-700 dark:text-red-400",
+    green: "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    amber: "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    purple: "border-purple-500 bg-purple-500/10 text-purple-700 dark:text-purple-400",
+  };
 
   const createMut = useMutation({
     mutationFn: async (data: any) => (await apiRequest("POST", "/api/events", {
@@ -340,6 +382,85 @@ export default function Calendar() {
                     >
                       <Video className="size-4" /> Jitsi-Meeting beitreten
                     </a>
+                  )}
+
+                  {canEditGroups && selectedEvent.teamId && (
+                    <div className="pt-3 border-t border-border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold flex items-center gap-1"><Users className="size-3.5" /> Gruppen</p>
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowGroupForm(s => !s)}>
+                          <Plus className="size-3 mr-1" /> Gruppe
+                        </Button>
+                      </div>
+                      {showGroupForm && (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Gruppenname (z.B. Rot, A, …)"
+                            value={newGroupName}
+                            onChange={e => setNewGroupName(e.target.value)}
+                            className="h-8 text-sm"
+                          />
+                          <Select value={newGroupColor} onValueChange={setNewGroupColor}>
+                            <SelectTrigger className="w-24 h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Object.keys(GROUP_COLORS).map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Button size="sm" className="h-8" disabled={!newGroupName.trim() || createGroupMut.isPending}
+                            onClick={() => {
+                              createGroupMut.mutate({ eventId: selectedEvent.id, name: newGroupName.trim(), color: newGroupColor });
+                              setNewGroupName("");
+                              setShowGroupForm(false);
+                            }}>OK</Button>
+                        </div>
+                      )}
+                      {(groupData?.groups || []).map(g => {
+                        const gMembers = (groupData?.members || []).filter(m => m.group_id === g.id);
+                        const teamMembers = members.filter(m => m.teamId === selectedEvent.teamId);
+                        const unassigned = teamMembers.filter(m => !gMembers.some(gm => gm.member_id === m.id));
+                        return (
+                          <div key={g.id} className={`rounded-lg border-2 p-3 ${GROUP_COLORS[g.color] || GROUP_COLORS.blue}`}>
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-semibold text-sm">{g.name} ({gMembers.length})</span>
+                              <Button size="icon" variant="ghost" className="size-6" onClick={() => deleteGroupMut.mutate(g.id)}>
+                                <Trash2 className="size-3" />
+                              </Button>
+                            </div>
+                            <div className="space-y-1">
+                              {gMembers.map(gm => {
+                                const m = members.find(mm => mm.id === gm.member_id);
+                                if (!m) return null;
+                                return (
+                                  <div key={gm.member_id} className="flex items-center gap-2 text-xs">
+                                    <span className="flex-1 truncate">{m.name}</span>
+                                    <Button size="icon" variant="ghost" className="size-5" onClick={() => removeMemberMut.mutate({ groupId: g.id, memberId: gm.member_id })}>
+                                      <X className="size-3" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                              {gMembers.length === 0 && <p className="text-xs italic opacity-60">Keng Spiller</p>}
+                            </div>
+                            {unassigned.length > 0 && (
+                              <div className="mt-2 flex items-center gap-1">
+                                <Select value={assignMemberId} onValueChange={v => {
+                                  setAssignMemberId("");
+                                  addMemberMut.mutate({ groupId: g.id, memberId: Number(v) });
+                                }}>
+                                  <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="+ Spiller bäisetzen" /></SelectTrigger>
+                                  <SelectContent>
+                                    {unassigned.map(m => <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {(groupData?.groups || []).length === 0 && !showGroupForm && (
+                        <p className="text-xs text-muted-foreground italic">Keng Gruppen ugeluecht. Klick "Gruppe" fir eng nei unzeleeën.</p>
+                      )}
+                    </div>
                   )}
 
                   {user?.role === "spieler" && (
