@@ -261,8 +261,15 @@ export default function Teams() {
         <p className="text-sm text-muted-foreground">{teams.length} Mannschaften</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {teams.map(team => {
+      {(() => {
+        const sortRank = (name: string) => {
+          if (name === "Seniors 1") return 0;
+          if (name === "Seniors 2") return 1;
+          if (name === "Frauen") return 2;
+          return 3;
+        };
+        const sortedTeams = [...teams].sort((a, b) => sortRank(a.name) - sortRank(b.name) || a.name.localeCompare(b.name));
+        return sortedTeams.map(team => {
           const count = members.filter(m => m.teamId === team.id && isActiveClubMember(m)).length;
           const trainer = users.find(u => u.id === team.trainerId);
           return (
@@ -304,8 +311,8 @@ export default function Teams() {
               </Card>
             </Link>
           );
-        })}
-      </div>
+        })
+      })()}
     </div>
   );
 }

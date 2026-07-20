@@ -5006,3 +5006,34 @@ export function ensureAdminUsers() {
   }
   console.log("[security] admin users ensured:", admins.map((a) => a.email).join(", "));
 }
+
+// ─── Seniors 2 Team + Reserve Migration ─────────────────
+// Idempotent: ensures Seniors 2 exists and moves all reserve players
+// from Seniors 1 into Seniors 2 (as active players).
+export function ensureSeniors2Team() {
+  const seniors1 = db.select().from(teams).where(eq(teams.name, "Seniors 1")).get();
+  if (!seniors1) return;
+
+  let seniors2 = db.select().from(teams).where(eq(teams.name, "Seniors 2")).get();
+  if (!seniors2) {
+    seniors2 = db.insert(teams).values({ name: "Seniors 2", category: "Seniors 2" }).returning().get()!;
+    console.log("[teams] Seniors 2 created:", seniors2.id);
+  }
+
+  const reserve = db
+    .select()
+    .from(members)
+    .where(and(eq(members.teamId, seniors1.id), eq(members.squadStatus, "reserve")))
+    .all();
+
+  for (const m of reserve) {
+    db.update(members)
+      .set({ teamId: seniors2.id, squadStatus: "active" })
+      .where(eq(members.id, m.id))
+      .run();
+  }
+
+  if (reserve.length) {
+    console.log(`[teams] migrated ${reserve.length} reserve players from Seniors 1 → Seniors 2`);
+  }
+}
