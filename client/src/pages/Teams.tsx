@@ -84,6 +84,16 @@ export default function Teams() {
       },
     });
     const trainer = users.find(u => u.id === team.trainerId);
+    const otherSeniorTeam = teams.find(t => t.name === (team.name === "Seniors 1" ? "Seniors 2" : team.name === "Seniors 2" ? "Seniors 1" : ""));
+    const teamMut = useMutation({
+      mutationFn: async ({ memberId, newTeamId }: { memberId: number; newTeamId: number }) => {
+        const res = await apiRequest("PATCH", `/api/members/${memberId}`, { teamId: newTeamId, squadStatus: "active" });
+        return res.json();
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/members"] });
+      },
+    });
 
     return (
       <div className="space-y-5 max-w-4xl">
@@ -162,6 +172,19 @@ export default function Teams() {
                   >
                     <ArrowRightLeft className="size-3" />
                     <span className="hidden sm:inline">Reserve</span>
+                  </Button>
+                )}
+                {canEdit && otherSeniorTeam && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0 text-xs gap-1 ml-2 border-blue-300 hover:bg-blue-50"
+                    disabled={teamMut.isPending}
+                    onClick={() => teamMut.mutate({ memberId: m.id, newTeamId: otherSeniorTeam.id })}
+                    title={`Zu ${otherSeniorTeam.name} versetzen`}
+                  >
+                    <ArrowRightLeft className="size-3" />
+                    <span className="hidden sm:inline">{otherSeniorTeam.name}</span>
                   </Button>
                 )}
                 {isYouth && upgradeOptions.length > 0 && (
@@ -244,6 +267,19 @@ export default function Teams() {
                   >
                     <ArrowRightLeft className="size-3" />
                     <span className="hidden sm:inline">Aktivéieren</span>
+                  </Button>
+                )}
+                {canEdit && otherSeniorTeam && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0 text-xs gap-1 ml-2 border-blue-300 hover:bg-blue-50"
+                    disabled={teamMut.isPending}
+                    onClick={() => teamMut.mutate({ memberId: m.id, newTeamId: otherSeniorTeam.id })}
+                    title={`Zu ${otherSeniorTeam.name} versetzen`}
+                  >
+                    <ArrowRightLeft className="size-3" />
+                    <span className="hidden sm:inline">{otherSeniorTeam.name}</span>
                   </Button>
                 )}
               </div>
