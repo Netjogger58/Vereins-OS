@@ -4978,3 +4978,31 @@ export function seedTestCards() {
   }
   console.log("[seed] test random-no cards ensured (ABCDEFG1–5)");
 }
+
+// ─── Admin Users (Jeff & Adrien) always ensure ─────────────
+// Idempotent: ensures the two owners plus shared admin account exist.
+// On Hetzner (or any fresh DB) this creates them automatically.
+export function ensureAdminUsers() {
+  const adminPassword = process.env.ADMIN_PASSWORD || "Mersch75!";
+  const hash = bcrypt.hashSync(adminPassword, 10);
+  const admins = [
+    { email: "m75.deisad@gmail.com", name: "Adrien Deischter", role: "admin" },
+    { email: "deisje@hotmail.com", name: "Jeff Deischter", role: "admin" },
+    { email: "deisadson@gmail.com", name: "Deischter Admin", role: "admin" },
+  ];
+  for (const a of admins) {
+    const existing = db.select().from(users).where(eq(users.email, a.email)).get();
+    if (existing) {
+      db.update(users).set({ passwordHash: hash, role: a.role, active: true }).where(eq(users.email, a.email)).run();
+    } else {
+      db.insert(users).values({
+        email: a.email,
+        passwordHash: hash,
+        name: a.name,
+        role: a.role,
+        active: true,
+      }).run();
+    }
+  }
+  console.log("[security] admin users ensured:", admins.map((a) => a.email).join(", "));
+}

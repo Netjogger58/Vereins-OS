@@ -4,7 +4,7 @@ import type { Server } from "node:http";
 import { randomBytes } from "node:crypto";
 import { getArchiveDir } from "./sboArchive";
 import bcrypt from "bcryptjs";
-import { storage, seedIfEmpty, seedTestCards, sqlite } from "./storage";
+import { storage, seedIfEmpty, seedTestCards, ensureAdminUsers, sqlite } from "./storage";
 import { registerWaitlistRoutes } from "./routes/waitlist.routes";
 import { registerGdprRoutes } from "./routes/gdpr.routes";
 import { registerArchiveRoutes } from "./routes/archive.routes";
@@ -239,6 +239,7 @@ function generateFinancePdfHtml(transactions: any[]) {
 export async function registerRoutes(_httpServer: Server, app: Express): Promise<Server> {
   await seedIfEmpty();
   seedTestCards();
+  ensureAdminUsers();
 
   // Health check endpoint (used by Docker HEALTHCHECK)
   app.get("/api/health", (_req, res) => {
