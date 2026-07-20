@@ -2,6 +2,31 @@
 
 Neueste Änderungen zuerst.
 
+## 2026-07-19/20
+
+- **Vereins-OS-App – Comprehensive Sekretärs-Member-Form.**
+  - Nei Member-Form am `/members` Dialog mat alle Sekretärs-Felder (Identitéit, Adress, Kategorien, Lizenzen, Daten, Kontakt, Zouordnung).
+  - **Auto-Fill:** Gebuertsdag → Cat (Code), Cat. interne, Cat. FLH (bis U13 Mixte, vun U15 un no Geschlecht M/F); Kategorie → Team-Match; Pass Nummer → Status Aktiv; Random-No J/N Generatioun (8 Zeechen).
+  - **Dual-Button:** "Weiteres Familienmitglied" (späichert + behält Famill-Felder) a "Speichern" (späichert + schléisst).
+  - **Geschlecht Dropdown** (M/F) dobäi fir Kategorien-Auto-Fill.
+  - Member-Typ "loisir" (Kidssport & Loisir) am Form, Members, Sekretariat, Member-Detail.
+  - Nei Schema-Felder: `lastName`, `firstName`, `gender`, `language`, `nationality`, `postalCode`, `locality`, `courrier`, `internalCategory`, `flhCategory`, `isStudent`, `passNumber`, `licenceOff/ZS/SR/CL`, `comments`, `transferEndSeason`, `licenseStartDate`, `joinDate`, `medicoNext`, `matricule`, `birthPlace`, `phoneOffice`, `gsm`, `familyCode`, `membershipStatus`.
+
+- **Vereins-OS-App – Fee-Analyse & Beitrags-Generéierung.**
+  - `GET /api/fees/analysis` — berechent recommandéiert Tariffer pro Member (Alter, Member-Typ, Präsenz, Famill-Gruppéierung).
+  - `POST /api/fees/generate` — erstellt/aktualiséiert Member-Beiträg baséiert op Analyse.
+  - Fees.tsx: Analyse-Tab mat Zesumefaassung, Famill-Empfeelungen, Member-Tabelle, Generéierungs-Dialog.
+  - Fee Rules Seed: Youth (≤25) 210€, Adulte 300€, Kidssport & Loisir 10€/Training (Cap 210€), Family 384€, Officiels 50€.
+
+- **Vereins-OS-App – Online-Anmeldung → Member Konvertéierung.**
+  - `POST /api/registrations/:id/convert` — konvertéiert approved Registratioun automatesch an Member.
+  - Registrations.tsx: "Autom. als Mitglied anlegen" Button bei approved Registratioune.
+
+- **Vereins-OS-App – Card-ID (Random-No) Standardiséierung op 8 Zeechen.**
+  - Migratioun: all existent 7-Zeechen Card-IDs an `members` an `member_cards` ginn op 8 Zeeche gepaddt.
+  - Import-Skript `import-members-2026.cjs` vun 7 op 8 Zeeche korrigéiert.
+  - Alphabet: `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (ouni 0/O/I/1).
+
 ## 2026-07-18
 
 - **Vereins-OS-App – Member PIN-Login (Registratioun + Login mat SMS/Email-OTP).**

@@ -32,7 +32,11 @@ import {
   AlertCircle,
   ArrowLeft,
   Search,
-  Wallet
+  Wallet,
+  BarChart3,
+  Users,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatMemberName } from "@/lib/utils";
@@ -53,6 +57,8 @@ export default function Fees() {
   const [openAssignFee, setOpenAssignFee] = useState(false);
   const [openPayment, setOpenPayment] = useState(false);
   const [selectedMemberFee, setSelectedMemberFee] = useState<MemberFee | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [openGenerate, setOpenGenerate] = useState(false);
   
   const canEdit = user && ["präsident", "admin", "kassenwart"].includes(user.role);
 
@@ -115,6 +121,29 @@ export default function Fees() {
     },
   });
 
+  const { data: analysis, isLoading: analysisLoading } = useQuery<any>({
+    queryKey: ["/api/fees/analysis", selectedYear],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/fees/analysis?year=${selectedYear}`);
+      return res.json();
+    },
+    enabled: showAnalysis,
+  });
+
+  const generateFeesMut = useMutation({
+    mutationFn: async () => {
+      return (await apiRequest("POST", `/api/fees/generate?year=${selectedYear}`)).json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/member-fees"] });
+      setOpenGenerate(false);
+      toast({ 
+        title: "Beiträge generiert", 
+        description: `${data.created} erstellt, ${data.updated} aktualisiert, ${data.skipped} übersprungen` 
+      });
+    },
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -143,6 +172,12 @@ export default function Fees() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            variant={showAnalysis ? "default" : "outline"}
+            onClick={() => setShowAnalysis(!showAnalysis)}
+          >
+            <BarChart3 className="h-4 w-4 mr-1" /> Analyse
+          </Button>
           {canEdit && (
             <>
               <Button variant="outline" onClick={() => setOpenNewRule(true)}>
@@ -207,6 +242,168 @@ export default function Fees() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Analysis Section */}
+      {showAnalysis && (
+        <div className="space-y-4">
+          {/* Analysis Summary Stats */}
+          {analysisLoading && <p className="text-sm text-muted-foreground">Analyse wird geladen…</p>}
+          {analysis && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase">Gesamt erwartet</p>
+                        <p className="text-2xl font-bold">{analysis.summary.totalExpected.toFixed(2)} €</p>
+                      </div>
+                      <Wallet className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase">Famill-Ersparnis</p>
+                        <p className="text-2xl font-bold text-green-600">{analysis.summary.potentialSavings.toFixed(2)} €</p>
+                      </div>
+                      <Sparkles className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase">Famillen</p>
+                        <p className="text-2xl font-bold">{analysis.summary.familyCount}</p>
+                      </div>
+                      <Users className="h-8 w-8 text-purple-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase">Loisir-Member</p>
+                        <p className="text-2xl font-bold">{analysis.summary.loisirCount}</p>
+                      </div>
+                      <Zap className="h-8 w-8 text-orange-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Generate Button */}
+              {canEdit && (
+                <div className="flex justify-end">
+                  <Button onClick={() => setOpenGenerate(true)}>
+                    <Zap className="h-4 w-4 mr-1" /> Beiträge für {selectedYear} generieren
+                  </Button>
+                </div>
+              )}
+
+              {/* Family Cards */}
+              {analysis.families.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Famill-Empfehlungen</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {analysis.families.map((fam: any) => (
+                        <div
+                          key={fam.familyCode}
+                          className={`p-4 rounded-lg border-2 ${fam.recommendation === "family" ? "border-green-500 bg-green-50" : "border-gray-200"}`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-bold">{fam.familyCode}</span>
+                            {fam.recommendation === "family" ? (
+                              <Badge className="bg-green-500">€{fam.savings.toFixed(2)} spueren</Badge>
+                            ) : (
+                              <Badge variant="outline">Eenzel</Badge>
+                            )}
+                          </div>
+                          <div className="text-sm space-y-1">
+                            {fam.members.map((m: any) => (
+                              <div key={m.memberId} className="flex justify-between">
+                                <span>{m.name}</span>
+                                <span>{m.amount.toFixed(2)} €</span>
+                              </div>
+                            ))}
+                            <div className="border-t pt-1 mt-1 flex justify-between font-bold">
+                              <span>Eenzel:</span>
+                              <span>{fam.individualTotal.toFixed(2)} €</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-green-600">
+                              <span>Family Tarif:</span>
+                              <span>{fam.familyTarif.toFixed(2)} €</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Analysis Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tarif-Analyse pro Member</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Member</TableHead>
+                        <TableHead>Alter</TableHead>
+                        <TableHead>Tarif</TableHead>
+                        <TableHead>Betrag</TableHead>
+                        <TableHead>Trainings</TableHead>
+                        <TableHead>Famill</TableHead>
+                        <TableHead>Info</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {analysis.members.map((m: any) => (
+                        <TableRow key={m.memberId}>
+                          <TableCell className="font-medium">
+                            {m.lastName || m.name}
+                          </TableCell>
+                          <TableCell>{m.age ?? "—"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{m.recommendedTarif}</Badge>
+                          </TableCell>
+                          <TableCell>{m.amount.toFixed(2)} €</TableCell>
+                          <TableCell>{m.attendanceCount ?? "—"}</TableCell>
+                          <TableCell>{m.familyCode || "—"}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {m.loisirSuggested && (
+                                <Badge className="bg-orange-500">Virschloog: Loisir</Badge>
+                              )}
+                              {m.loisirCapApplied && (
+                                <Badge className="bg-blue-500">Cap aktivéiert</Badge>
+                              )}
+                              {m.warnings.map((w: string, i: number) => (
+                                <Badge key={i} className="bg-yellow-500">{w}</Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Fee Rules */}
       <Card>
@@ -523,6 +720,41 @@ export default function Fees() {
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Generate Fees */}
+      <Dialog open={openGenerate} onOpenChange={setOpenGenerate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Beiträge für {selectedYear} generieren</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Dies erstellt oder aktualisiert alle Mitgliedsbeiträge für {selectedYear} basierend auf:
+            </p>
+            <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
+              <li>Alter (Youth ≤25: 210€, Adulte: 300€)</li>
+              <li>Kidssport & Loisir: 10€ pro Training (Cap 210€)</li>
+              <li>Officiels: 50€</li>
+              <li>Famill-Tarif (384€) wenn günstiger als Einzelbeiträge</li>
+            </ul>
+            <p className="text-sm font-medium text-yellow-600">
+              ⚠ Bereits bezahlte Beiträge bleiben unverändert.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setOpenGenerate(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              type="button"
+              disabled={generateFeesMut.isPending}
+              onClick={() => generateFeesMut.mutate()}
+            >
+              {generateFeesMut.isPending ? "Generiere…" : "Generieren"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -68,7 +68,7 @@ const usedCards = new Set();
 function genCardId() {
   for (let tries = 0; tries < 10000; tries++) {
     let s = "";
-    for (let i = 0; i < 7; i++) s += CARD_ALPHABET[Math.floor(Math.random() * CARD_ALPHABET.length)];
+    for (let i = 0; i < 8; i++) s += CARD_ALPHABET[Math.floor(Math.random() * CARD_ALPHABET.length)];
     if (!usedCards.has(s)) { usedCards.add(s); return s; }
   }
   throw new Error("Konnte keine eindeutige Random-No erzeugen");

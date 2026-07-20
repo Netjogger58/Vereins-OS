@@ -21,6 +21,12 @@ interface AuthCtx {
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   setUser: (u: PublicUser | null) => void;
+  identifyMember: (firstName: string, lastName: string, birthdate: string) => Promise<{ found: boolean; memberId?: number; name?: string; hasPhone?: boolean; hasEmail?: boolean; phoneOwner?: string | null; reason?: string }>;
+  registerOtp: (memberId: number, countryCode?: string) => Promise<{ success: boolean; method: string; masked: string; fallback?: boolean }>;
+  registerComplete: (memberId: number, otpCode: string, pin: string, method?: string, countryCode?: string) => Promise<TwoFaChallenge | { name: string; clubFunction?: string }>;
+  pinLogin: (firstName: string, lastName: string, birthdate: string, pin: string) => Promise<TwoFaChallenge | { name: string; clubFunction?: string }>;
+  pinResetRequest: (firstName: string, lastName: string, birthdate: string, countryCode?: string) => Promise<{ success: boolean; method: string; masked: string; memberId: number; fallback?: boolean }>;
+  pinResetComplete: (memberId: number, otpCode: string, pin: string, method?: string, countryCode?: string) => Promise<TwoFaChallenge | { name: string; clubFunction?: string }>;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -102,8 +108,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.clear();
   };
 
+  const identifyMember = async (firstName: string, lastName: string, birthdate: string) => {
+    const res = await apiRequest("POST", "/api/auth/identify-member", { firstName, lastName, birthdate });
+    return await res.json();
+  };
+
+  const registerOtp = async (memberId: number, countryCode = "+352") => {
+    const res = await apiRequest("POST", "/api/auth/register-otp", { memberId, countryCode });
+    return await res.json();
+  };
+
+  const registerComplete = async (memberId: number, otpCode: string, pin: string, method = "sms", countryCode = "+352") => {
+    const res = await apiRequest("POST", "/api/auth/register-complete", { memberId, otpCode, pin, method, countryCode });
+    const data = await res.json();
+    if (data.twoFactorRequired) return data as TwoFaChallenge;
+    if (data._token) setAuthToken(data._token);
+    const { _token, memberName, clubFunction, ...userdata } = data;
+    setUser(userdata as PublicUser);
+    return { name: memberName as string, clubFunction: clubFunction as string | undefined };
+  };
+
+  const pinLogin = async (firstName: string, lastName: string, birthdate: string, pin: string) => {
+    const res = await apiRequest("POST", "/api/auth/pin-login", { firstName, lastName, birthdate, pin, deviceToken: getDeviceToken() });
+    const data = await res.json();
+    if (data.twoFactorRequired) return data as TwoFaChallenge;
+    if (data._token) setAuthToken(data._token);
+    const { _token, memberName, clubFunction, ...userdata } = data;
+    setUser(userdata as PublicUser);
+    return { name: memberName as string, clubFunction: clubFunction as string | undefined };
+  };
+
+  const pinResetRequest = async (firstName: string, lastName: string, birthdate: string, countryCode = "+352") => {
+    const res = await apiRequest("POST", "/api/auth/pin-reset-request", { firstName, lastName, birthdate, countryCode });
+    return await res.json();
+  };
+
+  const pinResetComplete = async (memberId: number, otpCode: string, pin: string, method = "sms", countryCode = "+352") => {
+    const res = await apiRequest("POST", "/api/auth/pin-reset-complete", { memberId, otpCode, pin, method, countryCode });
+    const data = await res.json();
+    if (data.twoFactorRequired) return data as TwoFaChallenge;
+    if (data._token) setAuthToken(data._token);
+    const { _token, memberName, clubFunction, ...userdata } = data;
+    setUser(userdata as PublicUser);
+    return { name: memberName as string, clubFunction: clubFunction as string | undefined };
+  };
+
   return (
-    <Ctx.Provider value={{ user, loading, login, cardLogin, adminLogin, verifyTwoFactor, logout, refresh, setUser }}>
+    <Ctx.Provider value={{ user, loading, login, cardLogin, adminLogin, verifyTwoFactor, logout, refresh, setUser, identifyMember, registerOtp, registerComplete, pinLogin, pinResetRequest, pinResetComplete }}>
       {children}
     </Ctx.Provider>
   );

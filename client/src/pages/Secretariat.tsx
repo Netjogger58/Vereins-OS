@@ -27,6 +27,7 @@ const TYPE_LABELS: Record<string, string> = {
   spieler: "Spieler", donateur: "Donateur", donateur_lizenz: "Donateur (Lizenz)",
   donateur_licence: "Donateur (Lizenz)", ehrenmitglied: "Ehrenmitglied",
   honoraire: "Ehrenmitglied", sponsor: "Sponsor", contact: "Kontakt",
+  loisir: "Kidssport & Loisir",
 };
 const STATUS_LABELS: Record<string, string> = {
   active: "Aktiv", aktiv: "Aktiv", inaktiv: "Inaktiv", arret_temporaire: "Temporär pausiert",

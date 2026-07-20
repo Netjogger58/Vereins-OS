@@ -26,7 +26,8 @@ import {
   MapPin,
   Calendar,
   Users,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 import { Link } from "wouter";
 import type { Registration, Team } from "@shared/schema";
@@ -77,6 +78,17 @@ export default function Registrations() {
       setRejectDialog(false);
       setSelectedReg(null);
       setRejectReason("");
+    },
+  });
+
+  const convertMut = useMutation({
+    mutationFn: async (id: number) => {
+      return (await apiRequest("POST", `/api/registrations/${id}/convert`)).json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/members"] });
+      toast({ title: "In Mitglied umgewandelt", description: `${data.firstName} ${data.lastName} wurde zur Mitgliederliste hinzugefügt.` });
     },
   });
 
@@ -179,11 +191,35 @@ export default function Registrations() {
           )}
 
           {reg.status === "approved" && !reg.memberId && (
+            <div className="mt-4 flex gap-2">
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => convertMut.mutate(reg.id)}
+                disabled={convertMut.isPending}
+              >
+                {convertMut.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <UserPlus className="w-4 h-4 mr-1" />
+                )}
+                Autom. als Mitglied anlegen
+              </Button>
+              <Link href={`/members/${reg.memberId || ""}`}>
+                <Button size="sm" variant="outline">
+                  <ArrowRight className="w-4 h-4 mr-1" />
+                  Detail
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {reg.status === "converted" && reg.memberId && (
             <div className="mt-4">
-              <Link href={`/members/new?registration=${reg.id}`}>
+              <Link href={`/members/${reg.memberId}`}>
                 <Button size="sm" variant="outline" className="w-full">
                   <ArrowRight className="w-4 h-4 mr-1" />
-                  In Mitglied umwandeln
+                  Mitglied ansehen / bearbeiten
                 </Button>
               </Link>
             </div>

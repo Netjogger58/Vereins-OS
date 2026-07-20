@@ -20,6 +20,7 @@ import type { Member, Team, Attendance, PlayerFlag } from "@shared/schema";
 const MEMBER_TYPE_LABELS: Record<string, string> = {
   honoraire: "Ehrenmitglied", ehrenmitglied: "Ehrenmitglied", sponsor: "Sponsor",
   donateur: "Donateur", donateur_licence: "Donateur (Lizenz)", donateur_lizenz: "Donateur (Lizenz)", contact: "Kontakt",
+  loisir: "Kidssport & Loisir",
 };
 function memberCategoryLabel(m: Member, teamName?: string): string | null {
   if (teamName) return teamName;

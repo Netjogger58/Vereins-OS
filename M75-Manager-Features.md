@@ -4,6 +4,61 @@
 
 ---
 
+## Änderungen 19.–20. Juli 2026 — Sekretärs-Form, Fee-Analyse, Registratioun-Konvertéierung, Card-ID ✅
+
+> Umgesetzt am 19.–20. Juli 2026. **Status: funktioniert** — Typescript-konform, Migratiounen idempotent.
+
+### Sekretärs-Member-Form (comprehensive entry form)
+- **Nei comprehensive Member-Form** fir de Sekretär am `/members` Dialog mat alle Felder:
+  - **Identitéit:** Nom(s), Prénom(s), Random-No (J/N → auto-generéiert 8-Zeechen), Langue, Nationalité, Geschlecht (M/F)
+  - **Adress:** Adresse, Code postale, Localité, Code courrier
+  - **Kategorien:** Cat (Code 1-30 / 31-), Cat. interne M75, Cat. FLH, Etudiant (J/N)
+  - **Lizenzen:** Pass Nummer, Licence Off/ZS/SR/CL
+  - **Sekretariat:** Commentaires, Transfer à faire en fin de saison
+  - **Daten:** Date début licence, Date début membre, Prochain Médico, Naissance, Matricule, Lieu et pays de naissance
+  - **Kontakt:** Tél, Tél-Bureau, GSM, Email
+  - **Zouordnung:** Member-Typ, Famillencode, Status
+- **Auto-Fill Featuren:**
+  - **Gebuertsdag → Kategorien:** Wann d'Gebuertsdag agi gëtt, ginn Cat (Code), Cat. interne, Cat. FLH automatesch berechent. Bis U13 = Mixte, vun U15 un baséiert op Geschlecht (M→H, F→F).
+  - **Geschlecht → Kategorien:** Wann een M/F auswielt, ginn d'Kategorien (vun U15 un) automatesch aktualiséiert.
+  - **Kategorie → Team:** Wann een an Cat. interne oder Cat. FLH eng Kategorie angëtt (z.B. U13H), gëtt automatesch dat passend Team gesicht a selektéiert.
+  - **Pass Nummer → Status:** Soubal eng Pass Nummer agi gëtt, gëtt de Status automatesch op "Aktiv" geännert. Default ass "Wartend" (pending).
+  - **Random-No Generatioun:** J/N Auswiel — bei "Jo" gëtt en 8-Zeechen alphanumeresche Code generéiert (A-Z, 2-9, ouni verwechselbar Zeechen).
+- **Dual-Button Form Behavior:**
+  - **"Weiteres Familienmitglied"** — späichert d'Member, reset d'Form mee behält Famill-Felder (Adresse, Code postale, Localité, Code courrier, Famillencode). Den Titel weist un wéi vill Member scho ugeluecht goufen.
+  - **"Speichern"** — späichert d'Member a schléisst den Dialog.
+- **Member-Typ "loisir"** (Kidssport & Loisir) dobäi am Form, Members-Lëscht, Sekretariat an Member-Detail.
+
+### Fee-Analyse & Beitrags-Generéierung
+- **`GET /api/fees/analysis`** — berechent recommandéiert Tariffer pro Member baséiert op Alter, Member-Typ, Präsenz an Famill-Gruppéierung.
+- **`POST /api/fees/generate`** — erstellt/aktualiséiert Member-Beiträg baséiert op der Analyse, iwwerspréngt scho bezuelte Beiträg.
+- **Fees.tsx UI:** Analyse-Tab mat Zesumefaassung, Famill-Empfeelungen mat Spuerpotentiel, detailéiert Member-Tabelle, a "Beiträge generieren" Dialog.
+- **Fee Rules Seed:** Default-Tariffer fir Youth (≤25), Adulte, Kidssport & Loisir, Family, Officiels.
+
+### Online-Anmeldung → Member Konvertéierung
+- **`POST /api/registrations/:id/convert`** — konvertéiert eng approved Registratioun automatesch an en neie Member.
+  - Iwwerhëlt: firstName, lastName, email, phone, birthdate, address, teamId.
+  - Setzt: membershipStatus = "pending", memberType = "spieler".
+  - Markéiert d'Registratioun als "converted" mat memberId Link.
+- **Registrations.tsx UI:** "Autom. als Mitglied anlegen" Button bei approved Registratioune (mat Loading-Spinner). De Sekretär kann dono am Member-Detail weider Felder ergänzen.
+
+### Card-ID (Random-No) Standardiséierung
+- **All Card-IDs sinn elo 8 Zeechen** (A-Z, 2-9, ouni verwechselbar Zeechen wéi 0/O/I/1).
+- **Migratioun:** All existent 7-Zeechen Card-IDs an `members` an `member_cards` ginn automatesch op 8 Zeeche gepaddt.
+- **Import-Skript** `import-members-2026.cjs` vun 7 op 8 Zeeche korrigéiert.
+- **Display-Format:** `M75-XXXX-XXXX` (mat Bindestrichen nëmme fir Uweisung).
+
+### Schema-Erweiderungen (Members)
+- Nei Felder an `shared/schema.ts` an `members` Tabelle:
+  - `lastName`, `firstName`, `cardId`, `language`, `nationality`, `gender`, `address`, `postalCode`, `locality`, `courrier`
+  - `catCode`, `internalCategory`, `flhCategory`, `isStudent`, `passNumber`
+  - `licenceOff`, `licenceZS`, `licenceSR`, `licenceCL`, `comments`, `transferEndSeason`
+  - `licenseStartDate`, `joinDate`, `medicoNext`, `birthdate`, `matricule`, `birthPlace`
+  - `phone`, `phoneOffice`, `gsm`, `email`, `familyCode`, `membershipStatus`
+- `safeAddColumn` Migratiounen fir all nei Felder.
+
+---
+
 ## Änderungen 13.–14. Juli 2026 — Finanzen, Budget & Mitgliederzahlen ✅
 
 > Umgesetzt am 13.–14. Juli 2026. **Status: funktioniert** — Typecheck grün, Summen gegen die Vereinsberichte (Charges/Produits, Bilan) geprüft, DB-Zahlen bestätigt (**555 aktiv**).
@@ -96,7 +151,7 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
 
 **Mitglieder & Teams**
 - ✅ Dashboard — Übersicht & Schnellzugriffe
-- ✅ Mitglieder (+ Mitglieder-Detail)
+- ✅ Mitglieder (+ Mitglieder-Detail) · *comprehensive Sekretärs-Form mat Auto-Fill (Gebuertsdag→Kategori, Geschlecht, Team-Match, Pass→Status), Dual-Button (Famill/Späicheren)*
 - ✅ Mitglieder-Import (Excel 2025/26) · *neu*
 - ✅ Teams
 - ✅ Profil (eigene Daten, Passwort)
@@ -120,7 +175,7 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
 - ✅ Kalender & Events
 - ✅ Sitzungen (Meetings)
 - ✅ Dokumente
-- ✅ Anmeldungen (intern) + öffentliches Anmeldeformular
+- ✅ Anmeldungen (intern) + öffentliches Anmeldeformular · *Autom. Konvertéierung an Member*
 - 🟡 Dienste (Duties)
 - 🟡 Hallen / Facilities
 - 🟡 Warteliste
@@ -128,7 +183,7 @@ Alle folgenden Module sind in der App aufrufbar (Menü/Route). Die Detailabschni
 
 **Finanzen**
 - ✅ Finanzen (Konten/Buchungen)
-- ✅ Beiträge (Fees)
+- ✅ Beiträge (Fees) · *Analyse & Generéierung automatiséiert*
 - ✅ Budget ( saisonale Charges/Produits + Ist-Vergleich in Finanzen)
 
 **Kommunikation**
@@ -535,6 +590,17 @@ GET    /api/top-scorers?competition=League&limit=20
 
 # Standings
 GET    /api/standings?competition=League&season=2025/26
+
+# Fees (Beiträge)
+GET    /api/fees/analysis?year=2026           # Beitrags-Analyse
+POST   /api/fees/generate                      # Beiträg generéieren
+
+# Registrations (Online-Anmeldung)
+POST   /api/registrations                      # Public: Registratioun erstellen
+GET    /api/registrations                      # Lëscht (auth)
+POST   /api/registrations/:id/approve          # Approve (auth)
+POST   /api/registrations/:id/reject           # Reject (auth)
+POST   /api/registrations/:id/convert          # → Member konvertéieren (auth)
 ```
 
 ---
@@ -597,4 +663,4 @@ Es gibt **vier** Wege, sich anzumelden (siehe Abschnitt 1):
 
 ---
 
-*Dokumentation erstellt: Mai 2026 · Aktualisiert: Juli 2026 (Member PIN-Login mit SMS/Email-OTP, Random-No-/Admin-Login, Website-Hub, Mitglieder-Import 2025/26, Check-In, Willkommensmappe)*
+*Dokumentation erstellt: Mai 2026 · Aktualisiert: Juli 2026 (Member PIN-Login, Random-No-/Admin-Login, Website-Hub, Mitglieder-Import, Check-In, Willkommensmappe, Sekretärs-Form, Fee-Analyse, Registratioun-Konvertéierung, Card-ID 8-Zeechen)*

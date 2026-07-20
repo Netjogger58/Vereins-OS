@@ -1267,6 +1267,43 @@ function runMigrations() {
   safeAddColumn("members", "medico_result", "TEXT");
   safeAddColumn("members", "medico_result_date", "TEXT");
   safeAddColumn("members", "extra_team_ids", "TEXT");
+  // Erweiterte Sekretariats-Felder
+  safeAddColumn("members", "language", "TEXT");
+  safeAddColumn("members", "postal_code", "TEXT");
+  safeAddColumn("members", "locality", "TEXT");
+  safeAddColumn("members", "courrier", "TEXT");
+  safeAddColumn("members", "is_student", "INTEGER DEFAULT 0");
+  safeAddColumn("members", "licence_off", "TEXT");
+  safeAddColumn("members", "licence_zs", "TEXT");
+  safeAddColumn("members", "licence_sr", "TEXT");
+  safeAddColumn("members", "licence_cl", "TEXT");
+  safeAddColumn("members", "comments", "TEXT");
+  safeAddColumn("members", "transfer_end_season", "TEXT");
+  safeAddColumn("members", "license_start_date", "TEXT");
+  safeAddColumn("members", "birth_place", "TEXT");
+  safeAddColumn("members", "phone_office", "TEXT");
+  safeAddColumn("members", "gsm", "TEXT");
+  // Card-ID: all existent 7-char values → 8 chars (pad with random char from alphabet)
+  try {
+    const CARD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const shortCards = sqlite.prepare(`SELECT id, card_id FROM members WHERE card_id IS NOT NULL AND LENGTH(card_id) = 7`).all() as { id: number; card_id: string }[];
+    for (const row of shortCards) {
+      const pad = CARD_ALPHABET[Math.floor(Math.random() * CARD_ALPHABET.length)];
+      const newCardId = row.card_id + pad;
+      sqlite.prepare(`UPDATE members SET card_id = ? WHERE id = ?`).run(newCardId, row.id);
+    }
+    if (shortCards.length > 0) console.log(`[migrate] padded ${shortCards.length} card_id(s) from 7 to 8 chars`);
+    // Also fix member_cards table if it exists
+    const shortMemberCards = sqlite.prepare(`SELECT id, card_number FROM member_cards WHERE card_number IS NOT NULL AND LENGTH(card_number) = 7`).all() as { id: number; card_number: string }[];
+    for (const row of shortMemberCards) {
+      const pad = CARD_ALPHABET[Math.floor(Math.random() * CARD_ALPHABET.length)];
+      const newCardId = row.card_number + pad;
+      sqlite.prepare(`UPDATE member_cards SET card_number = ? WHERE id = ?`).run(newCardId, row.id);
+    }
+    if (shortMemberCards.length > 0) console.log(`[migrate] padded ${shortMemberCards.length} member_cards.card_number(s) from 7 to 8 chars`);
+  } catch (e) {
+    console.error("[migrate] failed to pad 7-char card_ids:", e);
+  }
   safeAddColumn("member_functions", "team_id", "INTEGER");
   // Anwesenheit: Status (present | absent | excused | unexcused); für Altdaten aus present ableiten
   safeAddColumn("attendance", "status", "TEXT");
@@ -1301,6 +1338,8 @@ function runMigrations() {
   // Finanzen: Kategorien + Saison (siehe FINANCE_CATEGORIES)
   safeAddColumn("transactions", "category", "TEXT");
   safeAddColumn("transactions", "season", "TEXT");
+  // PIN-Login: gehashter PIN pro User
+  safeAddColumn("users", "pin_hash", "TEXT");
   try {
     sqlite.exec(`CREATE TABLE IF NOT EXISTS budgets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1311,6 +1350,29 @@ function runMigrations() {
     )`);
   } catch (e) {
     console.error("[migrate] failed to create budgets:", e);
+  }
+
+  // ── Seed default fee rules (idempotent) ──────────────────
+  try {
+    const existingRules = sqlite.prepare("SELECT COUNT(*) as cnt FROM fee_rules").get() as { cnt: number };
+    if (existingRules.cnt === 0) {
+      const nowIso = new Date().toISOString();
+      const defaults = [
+        { name: "Youth Tarif (≤25)", category: "age_group", amount: 210, description: "Jugend / Jonk Spiller (≤25 Joer)", minAge: null, maxAge: 25 },
+        { name: "Adulte Tarif", category: "age_group", amount: 300, description: "Erwuessen (>25 Joer)", minAge: 26, maxAge: null },
+        { name: "Kidssport & Loisir", category: "custom", amount: 10, description: "10€ pro Training, Cap 210€", minAge: null, maxAge: null },
+        { name: "Family Tarif", category: "family", amount: 384, description: "Famill-Memberskaart (2+ Persounen)", minAge: null, maxAge: null },
+        { name: "Officiels", category: "custom", amount: 50, description: "Min. 50€ fir Stëmmrecht AG", minAge: null, maxAge: null },
+      ];
+      for (const r of defaults) {
+        sqlite.prepare(
+          "INSERT INTO fee_rules (name, category, amount, description, min_age, max_age, active, created_at) VALUES (?,?,?,?,?,?,1,?)"
+        ).run(r.name, r.category, r.amount, r.description, r.minAge, r.maxAge, nowIso);
+      }
+      console.log("[seed] default fee_rules inserted (5 rules)");
+    }
+  } catch (e) {
+    console.error("[migrate] failed to seed fee_rules:", e);
   }
 }
 
@@ -1345,6 +1407,7 @@ export interface IStorage {
   getMember(id: number): Promise<Member | undefined>;
   getMemberByUserId(userId: number): Promise<Member | undefined>;
   getMemberByCardId(cardId: string): Promise<Member | undefined>;
+  getMemberByNameAndBirthdate(firstName: string, lastName: string, birthdate: string): Promise<Member[]>;
   createMember(member: InsertMember): Promise<Member>;
   updateMember(id: number, data: Partial<InsertMember>): Promise<Member | undefined>;
   deleteMember(id: number): Promise<void>;
@@ -1438,6 +1501,10 @@ export interface IStorage {
   createFeePayment(payment: InsertFeePayment): Promise<FeePayment>;
   deleteFeePayment(id: number): Promise<void>;
 
+  // Fee Analysis (Beitragsanalyse & Generéierung)
+  getFeeAnalysis(year: number): Promise<any>;
+  generateFees(year: number, createdBy: number): Promise<any>;
+
   // Email Settings
   getEmailSettings(): Promise<EmailSettings | undefined>;
   saveEmailSettings(settings: InsertEmailSettings): Promise<EmailSettings>;
@@ -1463,6 +1530,7 @@ export interface IStorage {
   updateRegistration(id: number, data: Partial<InsertRegistration>): Promise<Registration | undefined>;
   approveRegistration(id: number, processedById: number, notes?: string): Promise<Registration | undefined>;
   rejectRegistration(id: number, processedById: number, reason: string): Promise<Registration | undefined>;
+  convertRegistration(id: number, processedById: number): Promise<Member | null>;
 
   // Statistics
   getMemberStatistics(): Promise<{ total: number; byCategory: Record<string, number>; byTeam: Record<string, number> }>;
@@ -1843,6 +1911,19 @@ export class DatabaseStorage implements IStorage {
   async getMember(id: number) { return db.select().from(members).where(eq(members.id, id)).get(); }
   async getMemberByUserId(userId: number) { return db.select().from(members).where(eq(members.userId, userId)).get(); }
   async getMemberByCardId(cardId: string) { return db.select().from(members).where(eq(members.cardId, cardId)).get(); }
+  async getMemberByNameAndBirthdate(firstName: string, lastName: string, birthdate: string) {
+    const results = db.select().from(members).where(and(
+      eq(members.firstName, firstName),
+      eq(members.birthdate, birthdate)
+    )).all();
+    if (!results.length) return [];
+    // Filter by lastName: check both lastName field and name field
+    const lowerLast = lastName.toLowerCase();
+    return results.filter(m =>
+      (m.lastName && m.lastName.toLowerCase() === lowerLast) ||
+      (m.name && m.name.toLowerCase().includes(lowerLast))
+    );
+  }
   async createMember(m: InsertMember) { return db.insert(members).values(m).returning().get(); }
   async updateMember(id: number, data: Partial<InsertMember>) {
     return db.update(members).set(data).where(eq(members.id, id)).returning().get();
@@ -2168,6 +2249,276 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // ── Fee Analysis (Beitragsanalyse & Generéierung) ───────
+  async getFeeAnalysis(year: number) {
+    const allMembers = await db.select().from(members).where(eq(members.membershipStatus, "active")).all();
+    const allRules = await db.select().from(feeRules).where(eq(feeRules.active, true)).all();
+    const seasonStartYear = year;
+    const refDate = new Date(`${seasonStartYear}-01-01`);
+
+    const ruleByName = (name: string) => allRules.find(r => r.name === name);
+    const youthRule = ruleByName("Youth Tarif (≤25)");
+    const adulteRule = ruleByName("Adulte Tarif");
+    const loisirRule = ruleByName("Kidssport & Loisir");
+    const familyRule = ruleByName("Family Tarif");
+    const officielsRule = ruleByName("Officiels");
+
+    function calcAge(birthdate: string | null, ref: Date): number | null {
+      if (!birthdate) return null;
+      const b = new Date(birthdate);
+      if (isNaN(b.getTime())) return null;
+      let age = ref.getFullYear() - b.getFullYear();
+      const m = ref.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && ref.getDate() < b.getDate())) age--;
+      return age;
+    }
+
+    function isLoisirCandidate(m: typeof allMembers[0], age: number | null): boolean {
+      if (m.memberType === "loisir") return true;
+      if (m.catCode === 19) return true;
+      if (age !== null && age <= 15 && (!m.catCode || m.catCode === 0) && m.memberType !== "spieler") return true;
+      return false;
+    }
+
+    function isOfficial(m: typeof allMembers[0]): boolean {
+      const fn = (m.clubFunction || "").toLowerCase();
+      return fn.includes("officiel") || fn.includes("comite") || fn.includes("coach") || fn.includes("teamchef") || fn.includes("supervisor");
+    }
+
+    // Attendance counts per member for the season
+    const attendanceCounts = new Map<number, number>();
+    try {
+      const rows = sqlite.prepare(
+        `SELECT member_id, COUNT(*) as cnt FROM attendance WHERE present = 1 AND date >= ? AND date < ? GROUP BY member_id`
+      ).all(`${seasonStartYear}-01-01`, `${seasonStartYear + 1}-01-01`) as { member_id: number; cnt: number }[];
+      for (const r of rows) attendanceCounts.set(r.member_id, r.cnt);
+    } catch (e) {
+      // attendance table might not have data
+    }
+
+    interface MemberAnalysis {
+      memberId: number;
+      name: string;
+      firstName: string | null;
+      lastName: string | null;
+      age: number | null;
+      memberType: string | null;
+      catCode: number | null;
+      familyCode: string | null;
+      address: string | null;
+      recommendedTarif: string;
+      feeRuleId: number | null;
+      amount: number;
+      attendanceCount: number | null;
+      loisirCapApplied: boolean;
+      loisirSuggested: boolean;
+      warnings: string[];
+    }
+
+    const memberResults: MemberAnalysis[] = [];
+
+    for (const m of allMembers) {
+      const age = calcAge(m.birthdate, refDate);
+      const warnings: string[] = [];
+      let recommendedTarif = "";
+      let feeRuleId: number | null = null;
+      let amount = 0;
+      let attendanceCount: number | null = null;
+      let loisirCapApplied = false;
+      let loisirSuggested = false;
+
+      if (m.memberType === "donateur" || m.memberType === "donateur_lizenz") {
+        recommendedTarif = "Donateur (keine Cotisation)";
+        amount = 0;
+      } else if (m.memberType === "ehrenmitglied") {
+        recommendedTarif = "Ehrenmitglied (erlassen)";
+        amount = 0;
+      } else if (m.memberType === "sponsor") {
+        recommendedTarif = "Sponsor";
+        amount = 0;
+      } else if (isLoisirCandidate(m, age)) {
+        recommendedTarif = "Kidssport & Loisir";
+        feeRuleId = loisirRule?.id ?? null;
+        attendanceCount = attendanceCounts.get(m.id) || 0;
+        const calculated = attendanceCount * 10;
+        if (calculated > 210) {
+          amount = 210;
+          loisirCapApplied = true;
+        } else {
+          amount = calculated;
+        }
+        if (attendanceCount === 0) warnings.push("keng Trainings attendéiert");
+        // Suggest loisir if not yet marked
+        if (m.memberType !== "loisir" && m.catCode !== 19) {
+          loisirSuggested = true;
+        }
+      } else if (isOfficial(m)) {
+        recommendedTarif = "Officiels";
+        feeRuleId = officielsRule?.id ?? null;
+        amount = officielsRule?.amount ?? 50;
+      } else if (age === null) {
+        recommendedTarif = "Adulte Tarif";
+        feeRuleId = adulteRule?.id ?? null;
+        amount = adulteRule?.amount ?? 300;
+        warnings.push("keng Geburtsdatum — Default Adulte Tarif");
+      } else if (age <= 25) {
+        recommendedTarif = "Youth Tarif (≤25)";
+        feeRuleId = youthRule?.id ?? null;
+        amount = youthRule?.amount ?? 210;
+      } else {
+        recommendedTarif = "Adulte Tarif";
+        feeRuleId = adulteRule?.id ?? null;
+        amount = adulteRule?.amount ?? 300;
+      }
+
+      memberResults.push({
+        memberId: m.id,
+        name: m.name,
+        firstName: m.firstName,
+        lastName: m.lastName,
+        age,
+        memberType: m.memberType,
+        catCode: m.catCode,
+        familyCode: m.familyCode,
+        address: m.address,
+        recommendedTarif,
+        feeRuleId,
+        amount,
+        attendanceCount,
+        loisirCapApplied,
+        loisirSuggested,
+        warnings,
+      });
+    }
+
+    // Group families by familyCode (F-codes) or same address
+    const familyGroups = new Map<string, typeof memberResults>();
+    for (const mr of memberResults) {
+      let key: string | null = null;
+      if (mr.familyCode && mr.familyCode.startsWith("F")) {
+        key = mr.familyCode;
+      } else if (mr.familyCode === "S" || mr.familyCode === "D") {
+        continue; // Einzel / Donateur — no family grouping
+      } else if (mr.address) {
+        // Group by address as fallback
+        key = `ADDR:${mr.address}`;
+      }
+      if (key) {
+        if (!familyGroups.has(key)) familyGroups.set(key, []);
+        familyGroups.get(key)!.push(mr);
+      }
+    }
+
+    const families: any[] = [];
+    let potentialSavings = 0;
+    for (const [code, members] of familyGroups) {
+      if (members.length < 2) continue; // Family needs 2+
+      const individualTotal = members.reduce((sum, m) => sum + m.amount, 0);
+      const familyTarif = familyRule?.amount ?? 384;
+      const savings = individualTotal - familyTarif;
+      const recommendation = savings > 0 ? "family" : "individual";
+      if (savings > 0) potentialSavings += savings;
+      families.push({
+        familyCode: code,
+        members: members.map(m => ({ memberId: m.memberId, name: m.name, amount: m.amount })),
+        individualTotal,
+        familyTarif,
+        savings,
+        recommendation,
+      });
+    }
+
+    const totalExpected = memberResults.reduce((sum, m) => sum + m.amount, 0);
+    const loisirCount = memberResults.filter(m => m.recommendedTarif === "Kidssport & Loisir").length;
+
+    return {
+      members: memberResults,
+      families,
+      summary: {
+        totalExpected,
+        potentialSavings,
+        familyCount: families.length,
+        loisirCount,
+        memberCount: memberResults.length,
+      },
+    };
+  }
+
+  async generateFees(year: number, createdBy: number) {
+    const analysis = await this.getFeeAnalysis(year);
+    const allRules = await db.select().from(feeRules).where(eq(feeRules.active, true)).all();
+    const familyRule = allRules.find(r => r.name === "Family Tarif");
+
+    // Get existing fees for this year to avoid overwriting paid ones
+    const existingFees = await db.select().from(memberFees).where(eq(memberFees.year, year)).all();
+    const existingByMember = new Map(existingFees.map(f => [f.memberId, f]));
+
+    // Identify family members that should use family tarif
+    const familyMemberIds = new Set<number>();
+    for (const fam of analysis.families) {
+      if (fam.recommendation === "family" && familyRule) {
+        for (const m of fam.members) familyMemberIds.add(m.memberId);
+      }
+    }
+
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+    const now = new Date().toISOString();
+
+    for (const mr of analysis.members) {
+      if (mr.amount === 0 && mr.recommendedTarif !== "Officiels") {
+        // Skip donateurs, ehrenmitglied, etc. (0€)
+        skipped++;
+        continue;
+      }
+
+      const existing = existingByMember.get(mr.memberId);
+      let feeRuleId = mr.feeRuleId;
+
+      // Override with family tarif if applicable
+      if (familyMemberIds.has(mr.memberId) && familyRule) {
+        feeRuleId = familyRule.id;
+      }
+
+      if (!feeRuleId) {
+        skipped++;
+        continue;
+      }
+
+      const finalAmount = familyMemberIds.has(mr.memberId) && familyRule
+        ? familyRule.amount
+        : mr.amount;
+
+      if (existing) {
+        if (existing.status === "paid") {
+          skipped++;
+          continue;
+        }
+        // Update existing open/partial fee
+        await this.updateMemberFee(existing.id, {
+          feeRuleId,
+          amount: finalAmount,
+        });
+        updated++;
+      } else {
+        await this.createMemberFee({
+          memberId: mr.memberId,
+          feeRuleId,
+          year,
+          amount: finalAmount,
+          status: "open",
+          paidAmount: 0,
+          dueDate: null,
+          notes: null,
+        } as any);
+        created++;
+      }
+    }
+
+    return { created, updated, skipped, total: analysis.members.length };
+  }
+
   // ── Email Settings ───────────────────────────────────────
   async getEmailSettings() {
     return db.select().from(emailSettings).get();
@@ -2280,6 +2631,34 @@ export class DatabaseStorage implements IStorage {
       processedAt: new Date().toISOString(),
       processedNotes: reason,
     }).where(eq(registrations.id, id)).returning().get();
+  }
+  async convertRegistration(id: number, processedById: number) {
+    const reg = await this.getRegistration(id);
+    if (!reg) return null;
+    if (reg.status !== "approved") return null;
+    // Name aus first/last name konstruéieren
+    const name = [reg.firstName, reg.lastName].filter(Boolean).join(" ").trim();
+    // Member erstellen aus Registrationsdaten
+    const member = await this.createMember({
+      name,
+      firstName: reg.firstName,
+      lastName: reg.lastName,
+      email: reg.email,
+      phone: reg.phone || null,
+      birthdate: reg.birthdate || null,
+      address: reg.address || null,
+      teamId: reg.teamId || null,
+      membershipStatus: "pending",
+      memberType: "spieler",
+    } as any);
+    // Registration als converted markéieren
+    await db.update(registrations).set({
+      status: "converted",
+      processedById,
+      processedAt: new Date().toISOString(),
+      memberId: member.id,
+    }).where(eq(registrations.id, id)).run();
+    return member;
   }
 
   // ── Statistics ───────────────────────────────────────────

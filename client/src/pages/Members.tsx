@@ -26,6 +26,7 @@ import { isActiveClubMember } from "@shared/memberStatus";
 const MEMBER_TYPE_LABELS: Record<string, string> = {
   honoraire: "Ehrenmitglied", ehrenmitglied: "Ehrenmitglied", sponsor: "Sponsor",
   donateur: "Donateur", donateur_licence: "Donateur (Lizenz)", donateur_lizenz: "Donateur (Lizenz)", contact: "Kontakt",
+  loisir: "Kidssport & Loisir",
 };
 // Nachname komplett groß, Vorname nur erster Buchstabe je Wort groß.
 const formatLastName = (s: string) => s.toUpperCase();
@@ -63,28 +64,147 @@ export default function Members() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [openNew, setOpenNew] = useState(false);
   const [newForm, setNewForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    birthdate: "",
+    lastName: "",
+    firstName: "",
+    cardId: "",
+    language: "",
+    nationality: "",
+    gender: "",
     address: "",
+    postalCode: "",
+    locality: "",
+    courrier: "",
+    catCode: "",
+    internalCategory: "",
+    flhCategory: "",
+    isStudent: false,
+    passNumber: "",
+    licenceOff: "",
+    licenceZS: "",
+    licenceSR: "",
+    licenceCL: "",
+    comments: "",
+    transferEndSeason: "",
+    licenseStartDate: "",
+    joinDate: "",
+    medicoNext: "",
+    birthdate: "",
+    matricule: "",
+    birthPlace: "",
+    phone: "",
+    phoneOffice: "",
+    gsm: "",
+    email: "",
     teamId: "",
-    licenseNumber: "",
-    membershipStatus: "active",
+    memberType: "spieler",
+    familyCode: "",
+    membershipStatus: "pending",
   });
 
   const { data: members = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
 
+  const [savedCount, setSavedCount] = useState(0);
+
+  const generateCardId = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let id = "";
+    for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    return id;
+  };
+
+  const autoMatchTeam = (cat: string, teams: Team[]): string => {
+    if (!cat) return "";
+    const catUpper = cat.toUpperCase().trim();
+    const match = teams.find(t => t.name?.toUpperCase().includes(catUpper));
+    return match ? String(match.id) : "";
+  };
+
+  // Alter → Kategorie (Handball-Saison: 1. Aug → 31. Juli)
+  // Bis U13: Mixte (F+M zesummen). Vun U15 un: getrennt baséiert op Geschlecht (gender).
+  const ageToCategory = (birthdate: string, gender: string): { catCode: string; internalCat: string; flhCat: string } => {
+    if (!birthdate) return { catCode: "", internalCat: "", flhCat: "" };
+    const bd = new Date(birthdate);
+    if (isNaN(bd.getTime())) return { catCode: "", internalCat: "", flhCat: "" };
+    const now = new Date();
+    const seasonYear = now.getMonth() >= 7 ? now.getFullYear() + 1 : now.getFullYear();
+    const age = seasonYear - bd.getFullYear();
+    const g = gender === "F" ? "F" : "H";
+    let label: string;
+    let code: number;
+    if (age <= 4) { label = "U4 Mixte"; code = 19; }
+    else if (age <= 6) { label = "U7 Mixte"; code = 18; }
+    else if (age <= 8) { label = "U9 Mixte"; code = 17; }
+    else if (age <= 10) { label = "U11 Mixte"; code = 16; }
+    else if (age <= 12) { label = "U13 Mixte"; code = 15; }
+    else if (age <= 14) { label = `U15${g}`; code = g === "F" ? 34 : 14; }
+    else if (age <= 16) { label = `U17${g}`; code = g === "F" ? 33 : 13; }
+    else if (age <= 20) { label = `U21${g}`; code = g === "F" ? 32 : 12; }
+    else { label = g === "F" ? "Seniors FE" : "Seniors H"; code = g === "F" ? 31 : 11; }
+    return { catCode: String(code), internalCat: label, flhCat: label };
+  };
+
+  const buildPayload = (data: any) => {
+    const { lastName, firstName, ...rest } = data;
+    const name = [firstName, lastName].filter(Boolean).join(" ").trim() || lastName;
+    return { ...rest, name, firstName: firstName || null, lastName: lastName || null, teamId: data.teamId ? Number(data.teamId) : null, catCode: data.catCode ? Number(data.catCode) : null };
+  };
+
+  const resetFormKeepFamily = (famFields: { address: string; postalCode: string; locality: string; familyCode: string; courrier: string }) => {
+    setNewForm({
+      lastName: "", firstName: "", cardId: "", language: "", nationality: "", gender: "",
+      address: famFields.address, postalCode: famFields.postalCode, locality: famFields.locality, courrier: famFields.courrier, catCode: "",
+      internalCategory: "", flhCategory: "", isStudent: false, passNumber: "",
+      licenceOff: "", licenceZS: "", licenceSR: "", licenceCL: "", comments: "",
+      transferEndSeason: "", licenseStartDate: "", joinDate: "", medicoNext: "",
+      birthdate: "", matricule: "", birthPlace: "", phone: "", phoneOffice: "",
+      gsm: "", email: "", teamId: "", memberType: "spieler", familyCode: famFields.familyCode,
+      membershipStatus: "pending",
+    });
+  };
+
   const createMut = useMutation({
-    mutationFn: async (data: any) => (await apiRequest("POST", "/api/members", { ...data, teamId: data.teamId ? Number(data.teamId) : null })).json(),
+    mutationFn: async (data: any) => (await apiRequest("POST", "/api/members", buildPayload(data))).json(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/members"] });
-      setOpenNew(false);
-      setNewForm({ name: "", email: "", phone: "", birthdate: "", address: "", teamId: "", licenseNumber: "", membershipStatus: "active" });
+      setSavedCount(c => c + 1);
       toast({ title: "Mitglied angelegt" });
     },
   });
+
+  const handleSaveAndNext = () => {
+    const famFields = {
+      address: newForm.address,
+      postalCode: newForm.postalCode,
+      locality: newForm.locality,
+      familyCode: newForm.familyCode,
+      courrier: newForm.courrier,
+    };
+    createMut.mutate(newForm, {
+      onSuccess: () => {
+        resetFormKeepFamily(famFields);
+      },
+    });
+  };
+
+  const handleSaveAndClose = () => {
+    createMut.mutate(newForm, {
+      onSuccess: () => {
+        setOpenNew(false);
+        setNewForm({
+          lastName: "", firstName: "", cardId: "", language: "", nationality: "", gender: "",
+          address: "", postalCode: "", locality: "", courrier: "", catCode: "",
+          internalCategory: "", flhCategory: "", isStudent: false, passNumber: "",
+          licenceOff: "", licenceZS: "", licenceSR: "", licenceCL: "", comments: "",
+          transferEndSeason: "", licenseStartDate: "", joinDate: "", medicoNext: "",
+          birthdate: "", matricule: "", birthPlace: "", phone: "", phoneOffice: "",
+          gsm: "", email: "", teamId: "", memberType: "spieler", familyCode: "",
+          membershipStatus: "pending",
+        });
+        setSavedCount(0);
+      },
+    });
+  };
 
   const activeCount = useMemo(() => members.filter(isActiveClubMember).length, [members]);
 
@@ -134,26 +254,195 @@ export default function Members() {
               <DialogTrigger asChild>
                 <Button data-testid="button-new-member"><Plus className="size-4 mr-1" /> Mitglied</Button>
               </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Neues Mitglied</DialogTitle></DialogHeader>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Name" className="col-span-2">
-                  <Input value={newForm.name} onChange={e => setNewForm(f => ({ ...f, name: e.target.value }))} data-testid="input-name" />
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Neues Mitglied{savedCount > 0 && ` (${savedCount} angelegt)`}</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {/* Identitéit */}
+                <Field label="Nom(s) *" className="col-span-2 md:col-span-1">
+                  <Input value={newForm.lastName} onChange={e => setNewForm(f => ({ ...f, lastName: e.target.value }))} data-testid="input-name" placeholder="NOM" />
                 </Field>
-                <Field label="E-Mail">
-                  <Input type="email" value={newForm.email} onChange={e => setNewForm(f => ({ ...f, email: e.target.value }))} />
+                <Field label="Prénom(s) *" className="col-span-2 md:col-span-1">
+                  <Input value={newForm.firstName} onChange={e => setNewForm(f => ({ ...f, firstName: e.target.value }))} placeholder="Prénom" />
                 </Field>
-                <Field label="Telefon">
+                <Field label="Sexe">
+                  <Select value={newForm.gender} onValueChange={v => {
+                    const cats = ageToCategory(newForm.birthdate, v);
+                    const teamId = autoMatchTeam(cats.internalCat, teams);
+                    setNewForm(f => ({ ...f, gender: v, catCode: cats.catCode || f.catCode, internalCategory: cats.internalCat || f.internalCategory, flhCategory: cats.flhCat || f.flhCategory, teamId: teamId || f.teamId }));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">M (Männlech)</SelectItem>
+                      <SelectItem value="F">F (Weiblech)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Card-ID">
+                  <Select
+                    value={newForm.cardId ? "J" : "N"}
+                    onValueChange={v => {
+                      if (v === "J") {
+                        setNewForm(f => ({ ...f, cardId: generateCardId() }));
+                      } else {
+                        setNewForm(f => ({ ...f, cardId: "" }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="N" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="N">Neen</SelectItem>
+                      <SelectItem value="J">Jo – generéieren</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={newForm.cardId}
+                    onChange={e => setNewForm(f => ({ ...f, cardId: e.target.value.toUpperCase().slice(0, 8) }))}
+                    className="mt-1 text-xs font-mono"
+                    placeholder="XXXXXXXX (8 Zeechen)"
+                    maxLength={8}
+                  />
+                </Field>
+                <Field label="Langue">
+                  <Select value={newForm.language} onValueChange={v => setNewForm(f => ({ ...f, language: v }))}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="L">L</SelectItem>
+                      <SelectItem value="F">F</SelectItem>
+                      <SelectItem value="D">D</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Nationalité">
+                  <Input value={newForm.nationality} onChange={e => setNewForm(f => ({ ...f, nationality: e.target.value }))} placeholder="z.B. LU, FR, PT" />
+                </Field>
+                {/* Adress */}
+                <Field label="Adresse" className="col-span-2 md:col-span-2">
+                  <Input value={newForm.address} onChange={e => setNewForm(f => ({ ...f, address: e.target.value }))} />
+                </Field>
+                <Field label="Code postale">
+                  <Input value={newForm.postalCode} onChange={e => setNewForm(f => ({ ...f, postalCode: e.target.value }))} placeholder="z.B. L-7512" />
+                </Field>
+                <Field label="Localité">
+                  <Input value={newForm.locality} onChange={e => setNewForm(f => ({ ...f, locality: e.target.value }))} />
+                </Field>
+                <Field label="Code courrier">
+                  <Input value={newForm.courrier} onChange={e => setNewForm(f => ({ ...f, courrier: e.target.value }))} placeholder="F999 / S / D" />
+                </Field>
+                {/* Kategorien */}
+                <Field label="Cat (Code)">
+                  <Input type="number" value={newForm.catCode} onChange={e => setNewForm(f => ({ ...f, catCode: e.target.value }))} placeholder="1-30 / 31-" />
+                </Field>
+                <Field label="Cat. interne M75">
+                  <Input value={newForm.internalCategory} onChange={e => {
+                    const val = e.target.value;
+                    const teamId = autoMatchTeam(val, teams);
+                    setNewForm(f => ({ ...f, internalCategory: val, teamId: teamId || f.teamId }));
+                  }} placeholder="z.B. U13H" />
+                </Field>
+                <Field label="Cat. FLH">
+                  <Input value={newForm.flhCategory} onChange={e => {
+                    const val = e.target.value;
+                    const teamId = autoMatchTeam(val, teams);
+                    setNewForm(f => ({ ...f, flhCategory: val, teamId: teamId || f.teamId }));
+                  }} placeholder="z.B. U13H" />
+                </Field>
+                <Field label="Etudiant">
+                  <Select value={newForm.isStudent ? "yes" : "no"} onValueChange={v => setNewForm(f => ({ ...f, isStudent: v === "yes" }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no">Neen</SelectItem>
+                      <SelectItem value="yes">Jo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                {/* Lizenzen */}
+                <Field label="Pass Nummer">
+                  <Input value={newForm.passNumber} onChange={e => {
+                    const val = e.target.value;
+                    setNewForm(f => ({ ...f, passNumber: val, membershipStatus: val.trim() ? "active" : f.membershipStatus }));
+                  }} />
+                </Field>
+                <Field label="Licence Off">
+                  <Input value={newForm.licenceOff} onChange={e => setNewForm(f => ({ ...f, licenceOff: e.target.value }))} />
+                </Field>
+                <Field label="Licence ZS">
+                  <Input value={newForm.licenceZS} onChange={e => setNewForm(f => ({ ...f, licenceZS: e.target.value }))} />
+                </Field>
+                <Field label="Licence SR">
+                  <Input value={newForm.licenceSR} onChange={e => setNewForm(f => ({ ...f, licenceSR: e.target.value }))} />
+                </Field>
+                <Field label="Licence CL">
+                  <Input value={newForm.licenceCL} onChange={e => setNewForm(f => ({ ...f, licenceCL: e.target.value }))} />
+                </Field>
+                {/* Sekretariat */}
+                <Field label="Commentaires / Changements" className="col-span-2 md:col-span-3">
+                  <Input value={newForm.comments} onChange={e => setNewForm(f => ({ ...f, comments: e.target.value }))} />
+                </Field>
+                <Field label="Transfer à faire en fin de saison">
+                  <Input value={newForm.transferEndSeason} onChange={e => setNewForm(f => ({ ...f, transferEndSeason: e.target.value }))} />
+                </Field>
+                {/* Daten */}
+                <Field label="Date début licence">
+                  <Input type="date" value={newForm.licenseStartDate} onChange={e => setNewForm(f => ({ ...f, licenseStartDate: e.target.value }))} />
+                </Field>
+                <Field label="Date début membre">
+                  <Input type="date" value={newForm.joinDate} onChange={e => setNewForm(f => ({ ...f, joinDate: e.target.value }))} />
+                </Field>
+                <Field label="Prochain Médico">
+                  <Input type="date" value={newForm.medicoNext} onChange={e => setNewForm(f => ({ ...f, medicoNext: e.target.value }))} />
+                </Field>
+                <Field label="Naissance (Geburtsdatum)">
+                  <Input type="date" value={newForm.birthdate} onChange={e => {
+                    const val = e.target.value;
+                    const cats = ageToCategory(val, newForm.gender);
+                    const teamId = autoMatchTeam(cats.internalCat, teams);
+                    setNewForm(f => ({
+                      ...f,
+                      birthdate: val,
+                      catCode: cats.catCode || f.catCode,
+                      internalCategory: cats.internalCat || f.internalCategory,
+                      flhCategory: cats.flhCat || f.flhCategory,
+                      teamId: teamId || f.teamId,
+                    }));
+                  }} />
+                </Field>
+                <Field label="Matricule">
+                  <Input value={newForm.matricule} onChange={e => setNewForm(f => ({ ...f, matricule: e.target.value }))} />
+                </Field>
+                <Field label="Lieu et pays de naissance">
+                  <Input value={newForm.birthPlace} onChange={e => setNewForm(f => ({ ...f, birthPlace: e.target.value }))} />
+                </Field>
+                {/* Kontakt */}
+                <Field label="Tél.">
                   <Input value={newForm.phone} onChange={e => setNewForm(f => ({ ...f, phone: e.target.value }))} />
                 </Field>
-                <Field label="Geburtsdatum">
-                  <Input type="date" value={newForm.birthdate} onChange={e => setNewForm(f => ({ ...f, birthdate: e.target.value }))} />
+                <Field label="Tél.-Bureau">
+                  <Input value={newForm.phoneOffice} onChange={e => setNewForm(f => ({ ...f, phoneOffice: e.target.value }))} />
                 </Field>
-                <Field label="Lizenz-Nr.">
-                  <Input value={newForm.licenseNumber} onChange={e => setNewForm(f => ({ ...f, licenseNumber: e.target.value }))} />
+                <Field label="GSM">
+                  <Input value={newForm.gsm} onChange={e => setNewForm(f => ({ ...f, gsm: e.target.value }))} />
                 </Field>
-                <Field label="Adresse" className="col-span-2">
-                  <Input value={newForm.address} onChange={e => setNewForm(f => ({ ...f, address: e.target.value }))} />
+                <Field label="Email" className="col-span-2 md:col-span-1">
+                  <Input type="email" value={newForm.email} onChange={e => setNewForm(f => ({ ...f, email: e.target.value }))} />
+                </Field>
+                {/* Zouordnung */}
+                <Field label="Member-Typ">
+                  <Select value={newForm.memberType} onValueChange={v => setNewForm(f => ({ ...f, memberType: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="spieler">Spieler</SelectItem>
+                      <SelectItem value="loisir">Kidssport & Loisir</SelectItem>
+                      <SelectItem value="donateur">Donateur</SelectItem>
+                      <SelectItem value="donateur_lizenz">Donateur (Lizenz)</SelectItem>
+                      <SelectItem value="ehrenmitglied">Ehrenmitglied</SelectItem>
+                      <SelectItem value="sponsor">Sponsor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Famillencode">
+                  <Input value={newForm.familyCode} onChange={e => setNewForm(f => ({ ...f, familyCode: e.target.value }))} placeholder="F999 / S / D" />
                 </Field>
                 <Field label="Team">
                   <Select value={newForm.teamId} onValueChange={v => setNewForm(f => ({ ...f, teamId: v }))}>
@@ -176,7 +465,17 @@ export default function Members() {
               </div>
               <DialogFooter>
                 <Button variant="ghost" onClick={() => setOpenNew(false)}>Abbrechen</Button>
-                <Button onClick={() => createMut.mutate(newForm)} disabled={!newForm.name || createMut.isPending}>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveAndNext}
+                  disabled={(!newForm.lastName && !newForm.firstName) || createMut.isPending}
+                >
+                  Weiteres Familienmitglied
+                </Button>
+                <Button
+                  onClick={handleSaveAndClose}
+                  disabled={(!newForm.lastName && !newForm.firstName) || createMut.isPending}
+                >
                   Speichern
                 </Button>
               </DialogFooter>

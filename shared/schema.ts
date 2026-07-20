@@ -16,6 +16,7 @@ export const users = sqliteTable("users", {
   qualifications: text("qualifications"), // Trainer-Lizenz (LUXQF3, LUXQF2Bis, etc.)
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   icalToken: text("ical_token").unique(), // Geheimer Token für Kalender-Feed
+  pinHash: text("pin_hash"), // Gehashter PIN für Member-PIN-Login
   createdAt: text("created_at").notNull().default("CURRENT_TIMESTAMP"),
 });
 
@@ -96,6 +97,22 @@ export const members = sqliteTable("members", {
   contactInfoType: text("contact_info_type"), // contact_famille | mere_accueil (rein informativ, Nicht-Mitglied)
   familyCode: text("family_code"), // = code courrier (F999 = Familie+Nr, S = einzeln, D = Donateur); gruppiert Familien
   extraTeamIds: text("extra_team_ids"), // JSON-Array zusätzlicher team_ids (z.B. Aufsteiger: U13 -> U15)
+  // ─── Erweiterte Sekretariats-Felder ───
+  language: text("language"), // Langue (L/F/D)
+  postalCode: text("postal_code"), // Code postale
+  locality: text("locality"), // Localité
+  courrier: text("courrier"), // code courrier / courrier ???
+  isStudent: integer("is_student", { mode: "boolean" }).default(false), // Etudiant
+  licenceOff: text("licence_off"), // Licences Off (officiels)
+  licenceZS: text("licence_zs"), // Licences ZS (secrétaires / chronométreurs)
+  licenceSR: text("licence_sr"), // Licences SR (arbitre)
+  licenceCL: text("licence_cl"), // Licences CL (Carte de Légitimation)
+  comments: text("comments"), // Commentaires & changements (Secrétaire)
+  transferEndSeason: text("transfer_end_season"), // Transfert à faire en fin de saison
+  licenseStartDate: text("license_start_date"), // Date début licence
+  birthPlace: text("birth_place"), // Lieu et pays de naissance
+  phoneOffice: text("phone_office"), // Tél.-Bureau
+  gsm: text("gsm"), // GSM
 });
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true });
 export type InsertMember = z.infer<typeof insertMemberSchema>;
@@ -382,7 +399,7 @@ export type MemberFunctionType = typeof MEMBER_FUNCTIONS[number];
 export const LICENCE_STATUSES = ["aktiv", "keine", "behalten", "geloescht"] as const;
 export const MEMBERSHIP_STATUSES = ["aktiv", "inaktiv", "arret_temporaire", "pausiert_verletzung", "abbruch", "abbruch_jung", "ehemalig", "intern_gesperrt"] as const;
 export const TRANSFER_STATUSES = ["pret_raus", "pret_rein", "transfer_rein", "pret_gratis", "transfer_raus"] as const;
-export const MEMBER_TYPES = ["spieler", "donateur", "donateur_lizenz", "ehrenmitglied", "sponsor"] as const;
+export const MEMBER_TYPES = ["spieler", "loisir", "donateur", "donateur_lizenz", "ehrenmitglied", "sponsor"] as const;
 
 // Spielkategorie-Code → Label (H 11-21 / D 31-41)
 export const CAT_CODE_LABELS: Record<number, string> = {

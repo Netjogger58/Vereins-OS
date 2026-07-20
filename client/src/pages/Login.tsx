@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Smartphone, Lock, ArrowLeft, CheckCircle, CreditCard, ShieldCheck, UserCircle2 } from "lucide-react";
+import { Mail, Smartphone, Lock, ArrowLeft, CheckCircle, CreditCard, ShieldCheck, UserCircle2, KeyRound, User } from "lucide-react";
 
 const DEMO = [
   { label: "Präsident", email: "praesident@mersch75.lu", pw: "demo123" },
@@ -24,7 +24,7 @@ const COUNTRY_CODES = [
 ];
 
 export default function Login() {
-  const { login, cardLogin, adminLogin, verifyTwoFactor } = useAuth();
+  const { login, cardLogin, adminLogin, verifyTwoFactor, identifyMember, registerOtp, registerComplete, pinLogin, pinResetRequest, pinResetComplete } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("card");
   
@@ -45,6 +45,21 @@ export default function Login() {
   const [cardId, setCardId] = useState("");
   const [cardLoading, setCardLoading] = useState(false);
   const [identity, setIdentity] = useState<{ name: string; clubFunction?: string; teamCategory?: string | null } | null>(null);
+
+  // PIN registration/login state
+  const [pinStep, setPinStep] = useState<"identify" | "otp" | "setPin" | "login" | "resetIdentify" | "resetOtp" | "resetPin">("identify");
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
+  const [regBirthdate, setRegBirthdate] = useState("");
+  const [regMemberId, setRegMemberId] = useState<number | null>(null);
+  const [regMemberName, setRegMemberName] = useState("");
+  const [regOtpMethod, setRegOtpMethod] = useState<"sms" | "email">("sms");
+  const [regOtpMasked, setRegOtpMasked] = useState("");
+  const [regOtpCode, setRegOtpCode] = useState("");
+  const [regPin, setRegPin] = useState("");
+  const [regPinConfirm, setRegPinConfirm] = useState("");
+  const [pinLoading, setPinLoading] = useState(false);
+  const [loginPin, setLoginPin] = useState("");
 
   // Admin login (logo ball)
   const [adminOpen, setAdminOpen] = useState(false);
@@ -169,6 +184,136 @@ export default function Login() {
     }
   };
 
+  // ─── PIN Handlers ───────────────────────────────────────
+  const resetPinState = () => {
+    setPinStep("identify");
+    setRegFirstName("");
+    setRegLastName("");
+    setRegBirthdate("");
+    setRegMemberId(null);
+    setRegMemberName("");
+    setRegOtpCode("");
+    setRegPin("");
+    setRegPinConfirm("");
+    setLoginPin("");
+  };
+
+  const onIdentifyMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regFirstName.trim() || !regLastName.trim() || !regBirthdate) return;
+    setPinLoading(true);
+    try {
+      const data = await identifyMember(regFirstName.trim(), regLastName.trim(), regBirthdate);
+      if (!data.found) {
+        toast({ title: "Nicht gefunden", description: data.reason === "inactive" ? "Mitglied ist nicht mehr aktiv." : "Kein Mitglied mit diesen Daten gefunden.", variant: "destructive" });
+        return;
+      }
+      setRegMemberId(data.memberId!);
+      setRegMemberName(data.name!);
+      setPinStep("otp");
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err?.message?.replace(/^\d+:\s*/, "") || "Bitte erneut versuchen", variant: "destructive" });
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const onRegisterOtp = async () => {
+    if (!regMemberId) return;
+    setPinLoading(true);
+    try {
+      const data = await registerOtp(regMemberId, countryCode);
+      setRegOtpMethod(data.method as "sms" | "email");
+      setRegOtpMasked(data.masked);
+      if (data.fallback) {
+        toast({ title: "Dev-Modus", description: "Code wurde in der Console ausgegeben (kein SMS Provider konfiguriert).", variant: "default" });
+      } else {
+        toast({ title: "Code gesendet", description: `Code an ${data.masked} gesendet.` });
+      }
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err?.message?.replace(/^\d+:\s*/, "") || "Code konnte nicht gesendet werden", variant: "destructive" });
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const onRegisterComplete = async () => {
+    if (!regMemberId || !regOtpCode.trim() || !regPin) return;
+    if (regPin !== regPinConfirm) {
+      toast({ title: "Fehler", description: "PINs stimmen nicht überein", variant: "destructive" });
+      return;
+    }
+    if (!/^\d{6}$/.test(regPin)) {
+      toast({ title: "Fehler", description: "PIN muss genau 6 Ziffern haben", variant: "destructive" });
+      return;
+    }
+    setPinLoading(true);
+    try {
+      const r = await registerComplete(regMemberId, regOtpCode.trim(), regPin, regOtpMethod, countryCode);
+      handleMaybeTwoFa(r);
+    } catch (err: any) {
+      toast({ title: "Registrierung fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Bitte erneut versuchen", variant: "destructive" });
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const onPinLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regFirstName.trim() || !regLastName.trim() || !regBirthdate || !loginPin) return;
+    setPinLoading(true);
+    try {
+      const r = await pinLogin(regFirstName.trim(), regLastName.trim(), regBirthdate, loginPin);
+      handleMaybeTwoFa(r);
+    } catch (err: any) {
+      toast({ title: "Anmeldung fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Falscher PIN oder Mitglied nicht gefunden", variant: "destructive" });
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const onPinResetRequest = async () => {
+    if (!regFirstName.trim() || !regLastName.trim() || !regBirthdate) return;
+    setPinLoading(true);
+    try {
+      const data = await pinResetRequest(regFirstName.trim(), regLastName.trim(), regBirthdate, countryCode);
+      setRegMemberId(data.memberId);
+      setRegOtpMethod(data.method as "sms" | "email");
+      setRegOtpMasked(data.masked);
+      setPinStep("resetOtp");
+      if (data.fallback) {
+        toast({ title: "Dev-Modus", description: "Code wurde in der Console ausgegeben.", variant: "default" });
+      } else {
+        toast({ title: "Code gesendet", description: `Code an ${data.masked} gesendet.` });
+      }
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err?.message?.replace(/^\d+:\s*/, "") || "Bitte erneut versuchen", variant: "destructive" });
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
+  const onPinResetComplete = async () => {
+    if (!regMemberId || !regOtpCode.trim() || !regPin) return;
+    if (regPin !== regPinConfirm) {
+      toast({ title: "Fehler", description: "PINs stimmen nicht überein", variant: "destructive" });
+      return;
+    }
+    if (!/^\d{6}$/.test(regPin)) {
+      toast({ title: "Fehler", description: "PIN muss genau 6 Ziffern haben", variant: "destructive" });
+      return;
+    }
+    setPinLoading(true);
+    try {
+      const r = await pinResetComplete(regMemberId, regOtpCode.trim(), regPin, regOtpMethod, countryCode);
+      handleMaybeTwoFa(r);
+    } catch (err: any) {
+      toast({ title: "Reset fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Bitte erneut versuchen", variant: "destructive" });
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
   const fillDemo = (e: string, p: string) => {
     setEmail(e);
     setPassword(p);
@@ -202,14 +347,17 @@ export default function Login() {
         {/* Login Card */}
         <div className="bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-white/[0.08]">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-5 h-9 rounded-lg bg-muted/60">
-              <TabsTrigger value="card" className="text-[12px] rounded-md data-[state=active]:shadow-sm">
+            <TabsList className="grid w-full grid-cols-4 mb-5 h-9 rounded-lg bg-muted/60">
+              <TabsTrigger value="card" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
                 Random-No
               </TabsTrigger>
-              <TabsTrigger value="password" className="text-[12px] rounded-md data-[state=active]:shadow-sm">
+              <TabsTrigger value="pin" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
+                PIN
+              </TabsTrigger>
+              <TabsTrigger value="password" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
                 Passwort
               </TabsTrigger>
-              <TabsTrigger value="magic" className="text-[12px] rounded-md data-[state=active]:shadow-sm">
+              <TabsTrigger value="magic" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
                 Magic
               </TabsTrigger>
             </TabsList>
@@ -257,6 +405,173 @@ export default function Login() {
                   </Button>
                 </form>
               )}
+            </TabsContent>
+
+            {/* PIN Login / Registration */}
+            <TabsContent value="pin">
+              {/* Sub-tabs: Login vs Registrieren */}
+              <Tabs value={pinStep === "identify" || pinStep === "otp" || pinStep === "setPin" ? "register" : "login"} onValueChange={(v) => { resetPinState(); setPinStep(v === "login" ? "login" : "identify"); }} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4 h-8 rounded-lg bg-muted/60">
+                  <TabsTrigger value="login" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
+                    Einloggen
+                  </TabsTrigger>
+                  <TabsTrigger value="register" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
+                    Registrieren
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* PIN Login */}
+                <TabsContent value="login" className="mt-0">
+                  <form onSubmit={onPinLogin} className="space-y-3.5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="pin-firstName" className="text-[12px] font-medium flex items-center gap-1.5">
+                        <User className="size-3.5" /> Vorname
+                      </Label>
+                      <Input id="pin-firstName" value={regFirstName} onChange={e => setRegFirstName(e.target.value)} placeholder="Max" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="pin-lastName" className="text-[12px] font-medium">Nachname</Label>
+                      <Input id="pin-lastName" value={regLastName} onChange={e => setRegLastName(e.target.value)} placeholder="Mustermann" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="pin-birthdate" className="text-[12px] font-medium">Geburtsdatum</Label>
+                      <Input id="pin-birthdate" type="date" value={regBirthdate} onChange={e => setRegBirthdate(e.target.value)} className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="login-pin" className="text-[12px] font-medium flex items-center gap-1.5">
+                        <KeyRound className="size-3.5" /> PIN (6 Ziffern)
+                      </Label>
+                      <Input id="login-pin" inputMode="numeric" maxLength={6} value={loginPin} onChange={e => setLoginPin(e.target.value.replace(/\D/g, ""))} placeholder="000000" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px] text-center tracking-[4px] font-mono" required />
+                    </div>
+                    <Button type="submit" className="w-full h-10 rounded-xl text-[13px] font-semibold" disabled={pinLoading}>
+                      {pinLoading ? "Anmeldung …" : "Anmelden"}
+                    </Button>
+                    <button type="button" onClick={() => { resetPinState(); setPinStep("resetIdentify"); }} className="w-full text-[11px] text-muted-foreground hover:text-foreground transition">
+                      PIN vergessen?
+                    </button>
+                  </form>
+                </TabsContent>
+
+                {/* PIN Registrierung */}
+                <TabsContent value="register" className="mt-0">
+                  {pinStep === "identify" && (
+                    <form onSubmit={onIdentifyMember} className="space-y-3.5">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="reg-firstName" className="text-[12px] font-medium flex items-center gap-1.5">
+                          <User className="size-3.5" /> Vorname
+                        </Label>
+                        <Input id="reg-firstName" value={regFirstName} onChange={e => setRegFirstName(e.target.value)} placeholder="Max" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="reg-lastName" className="text-[12px] font-medium">Nachname</Label>
+                        <Input id="reg-lastName" value={regLastName} onChange={e => setRegLastName(e.target.value)} placeholder="Mustermann" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="reg-birthdate" className="text-[12px] font-medium">Geburtsdatum</Label>
+                        <Input id="reg-birthdate" type="date" value={regBirthdate} onChange={e => setRegBirthdate(e.target.value)} className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                      </div>
+                      <Button type="submit" className="w-full h-10 rounded-xl text-[13px] font-semibold" disabled={pinLoading}>
+                        {pinLoading ? "Prüfen …" : "Identifizieren"}
+                      </Button>
+                    </form>
+                  )}
+
+                  {pinStep === "otp" && (
+                    <div className="space-y-4">
+                      <div className="flex flex-col items-center text-center py-2">
+                        <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                          <UserCircle2 className="size-8 text-primary" />
+                        </div>
+                        <div className="text-[16px] font-semibold">{regMemberName}</div>
+                        <p className="text-[12px] text-muted-foreground mt-1">Bestätige deine Identität mit einem Code.</p>
+                      </div>
+                      <Button onClick={onRegisterOtp} className="w-full h-10 rounded-xl text-[13px] font-semibold" disabled={pinLoading}>
+                        {pinLoading ? "Wird gesendet …" : "Code senden"}
+                      </Button>
+                      {regOtpMasked && (
+                        <div className="space-y-3">
+                          <p className="text-[11px] text-muted-foreground text-center">Code wurde gesendet an: {regOtpMasked}</p>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="reg-otp" className="text-[12px] font-medium">Bestätigungscode</Label>
+                            <Input id="reg-otp" inputMode="numeric" maxLength={6} value={regOtpCode} onChange={e => setRegOtpCode(e.target.value.replace(/\D/g, ""))} placeholder="000000" className="h-12 rounded-xl bg-muted/40 border-border/50 text-center text-[20px] tracking-[8px] font-mono" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="reg-pin" className="text-[12px] font-medium flex items-center gap-1.5">
+                              <KeyRound className="size-3.5" /> Neuer PIN (6 Ziffern)
+                            </Label>
+                            <Input id="reg-pin" inputMode="numeric" maxLength={6} value={regPin} onChange={e => setRegPin(e.target.value.replace(/\D/g, ""))} placeholder="000000" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px] text-center tracking-[4px] font-mono" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="reg-pin-confirm" className="text-[12px] font-medium">PIN bestätigen</Label>
+                            <Input id="reg-pin-confirm" inputMode="numeric" maxLength={6} value={regPinConfirm} onChange={e => setRegPinConfirm(e.target.value.replace(/\D/g, ""))} placeholder="000000" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px] text-center tracking-[4px] font-mono" />
+                          </div>
+                          <Button onClick={onRegisterComplete} className="w-full h-10 rounded-xl text-[13px] font-semibold" disabled={pinLoading || regOtpCode.length !== 6 || regPin.length !== 6}>
+                            {pinLoading ? "Registrierung …" : "Registrieren & Anmelden"}
+                          </Button>
+                        </div>
+                      )}
+                      <Button variant="ghost" onClick={() => setPinStep("identify")} className="w-full text-[12px]">
+                        <ArrowLeft className="size-3.5 mr-1.5" /> Zurück
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* PIN Reset Flow */}
+                  {pinStep === "resetIdentify" && (
+                    <form onSubmit={(e) => { e.preventDefault(); onPinResetRequest(); }} className="space-y-3.5">
+                      <div className="text-center mb-2">
+                        <KeyRound className="size-8 text-primary mx-auto mb-2" />
+                        <h3 className="text-[15px] font-semibold">PIN zurücksetzen</h3>
+                        <p className="text-[12px] text-muted-foreground mt-1">Gib deine Daten ein, um einen Code zu erhalten.</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[12px] font-medium">Vorname</Label>
+                        <Input value={regFirstName} onChange={e => setRegFirstName(e.target.value)} placeholder="Max" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[12px] font-medium">Nachname</Label>
+                        <Input value={regLastName} onChange={e => setRegLastName(e.target.value)} placeholder="Mustermann" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[12px] font-medium">Geburtsdatum</Label>
+                        <Input type="date" value={regBirthdate} onChange={e => setRegBirthdate(e.target.value)} className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]" required />
+                      </div>
+                      <Button type="submit" className="w-full h-10 rounded-xl text-[13px] font-semibold" disabled={pinLoading}>
+                        {pinLoading ? "Wird gesendet …" : "Code senden"}
+                      </Button>
+                      <Button variant="ghost" onClick={() => { resetPinState(); setPinStep("login"); }} className="w-full text-[12px]">
+                        <ArrowLeft className="size-3.5 mr-1.5" /> Zurück zum Login
+                      </Button>
+                    </form>
+                  )}
+
+                  {pinStep === "resetOtp" && (
+                    <div className="space-y-4">
+                      <p className="text-[11px] text-muted-foreground text-center">Code gesendet an: {regOtpMasked}</p>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="reset-otp" className="text-[12px] font-medium">Bestätigungscode</Label>
+                        <Input id="reset-otp" inputMode="numeric" maxLength={6} value={regOtpCode} onChange={e => setRegOtpCode(e.target.value.replace(/\D/g, ""))} placeholder="000000" className="h-12 rounded-xl bg-muted/40 border-border/50 text-center text-[20px] tracking-[8px] font-mono" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="reset-pin" className="text-[12px] font-medium flex items-center gap-1.5">
+                          <KeyRound className="size-3.5" /> Neuer PIN (6 Ziffern)
+                        </Label>
+                        <Input id="reset-pin" inputMode="numeric" maxLength={6} value={regPin} onChange={e => setRegPin(e.target.value.replace(/\D/g, ""))} placeholder="000000" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px] text-center tracking-[4px] font-mono" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="reset-pin-confirm" className="text-[12px] font-medium">PIN bestätigen</Label>
+                        <Input id="reset-pin-confirm" inputMode="numeric" maxLength={6} value={regPinConfirm} onChange={e => setRegPinConfirm(e.target.value.replace(/\D/g, ""))} placeholder="000000" className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px] text-center tracking-[4px] font-mono" />
+                      </div>
+                      <Button onClick={onPinResetComplete} className="w-full h-10 rounded-xl text-[13px] font-semibold" disabled={pinLoading || regOtpCode.length !== 6 || regPin.length !== 6}>
+                        {pinLoading ? "Wird gesetzt …" : "PIN zurücksetzen & Anmelden"}
+                      </Button>
+                      <Button variant="ghost" onClick={() => { resetPinState(); setPinStep("login"); }} className="w-full text-[12px]">
+                        <ArrowLeft className="size-3.5 mr-1.5" /> Abbrechen
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             {/* Passwort Login */}
