@@ -53,13 +53,13 @@ export function registerMemberRoutes(app: any) {
     let m: any = null;
     if (Object.keys(mainFields).length) m = await storage.updateMember(id, mainFields);
     if (Object.keys(extraFields).length) {
-      const db = (storage as any).db || require("../server/storage").db;
+      const db = (storage as any).db || require("../storage").db;
       const sets = Object.entries(extraFields).map(([k]) => {
         const col = k.replace(/([A-Z])/g, "_$1").toLowerCase();
         return col+" = ?";
       }).join(", ");
       const vals = [...Object.values(extraFields), id];
-      require("better-sqlite3")("/Users/deisadm1/CascadeProjects/m75-manager-test/mersch75v2/data.db")
+      require("better-sqlite3")((storage as any).sqlite?.name || "./data.db")
         .prepare("UPDATE members SET "+sets+" WHERE id = ?").run(...vals);
     }
     if (!m) m = (await storage.getMember(id)) || {};
