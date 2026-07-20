@@ -48,8 +48,55 @@ Den M75-Manager kann d'Websäit iwwert den **Website-Hub** (`/website`) verwalte
 
 ## Lescht Ännerungen (Juli 2026)
 
+- **Security: Admin-Login reforméiert** — Email + bcrypt amplaz plain-text Passwort; Roll-Check (admin/präsident).
+- **Security: Vitest 3.2.7** — kritesch Schwachstell (CVSS 9.8) fixt.
+- **Route-Refactoring** — `routes.ts` vun 3.321 op 1.274 Linnen reduzeiert; 15 modulair Route-Dateien.
+- **Lineup-Editor** — Drag & Drop Aufstellung mam Formations-Selector.
+- **Event Groups** — Spiller-Gruppen an Terminen (Trainer kann Spiller an Gruppen opdeelen).
+- **Watchdog** — PM2-Process-Monitoring fir automatesch Restarts.
 - **Sekretärs-Member-Form** — comprehensive Form mat Auto-Fill (Gebuertsdag→Kategori, Geschlecht, Team-Match, Pass→Status), Dual-Button (Famill/Späicheren).
 - **Fee-Analyse & Generéierung** — automatiséiert Beitragsberechnung mat Famill-Spuer.
 - **Registratioun → Member** — Online-Anmeldunge kënne mat ee Klick an Member konvertéiert ginn.
 - **Card-ID 8 Zeechen** — all Random-Nummeren standardiséiert op 8 Zeechen.
 - **Member PIN-Login** — Login ouni Passwort/Kaart via SMS/Email-OTP + PIN.
+
+## Architektur
+
+```
+server/
+├── index.ts              # Express-Server Entry Point
+├── routes.ts             # Restlech Routes (1.274 Linnen)
+├── storage.ts            # DatabaseStorage Klass (SQLite + Drizzle ORM)
+├── auth.ts               # Auth-Middleware, Session-Management
+├── twofactor.ts          # 2FA (Email-Code)
+├── sms.ts                # SMS/OTP Versand
+├── email.ts              # Email-Queue & Versand
+├── security.ts           # Rate-Limiting, Threat-Detection, Audit-Log
+├── routes/               # Modulair Route-Dateien
+│   ├── auth.routes.ts        # Login, Logout, Card-Login, PIN, 2FA
+│   ├── team.routes.ts        # Teams, Trainer-Codes
+│   ├── member.routes.ts      # Members, Secretary, Médico-Convocation
+│   ├── event.routes.ts       # Events, Event-Groups, Lineups, Availability
+│   ├── match.routes.ts       # Matches, Match Goals, Standings
+│   ├── chat.routes.ts        # Chat
+│   ├── attendance.routes.ts  # Attendance
+│   ├── announcement.routes.ts # Announcements
+│   ├── finance.routes.ts     # Meetings, Accounts, Transactions, Budgets
+│   ├── admin.routes.ts       # Users, Nominations, Parent-Accounts, Audit
+│   ├── fee.routes.ts         # Fee-Management, Fee-Analysis
+│   ├── email-settings.routes.ts # Email-Settings, Emails, Email-Actions
+│   ├── document.routes.ts    # Documents, Registrations
+│   ├── statistic.routes.ts   # Statistics, Training-Schedules, FLH-Import
+│   ├── magic-link.routes.ts  # Magic-Links, QR-Code Mitgliedsausweis
+│   └── ... (weider modulair Routes)
+├── services/             # Business-Logik Services
+└── tests/                # Vitest Testen
+
+client/
+├── src/pages/            # 56 Säiten (React + TailwindCSS + shadcn/ui)
+├── src/components/       # UI Komponenten (50+ shadcn/ui)
+└── src/lib/              # Auth, QueryClient, i18n, Permissions, Utils
+
+shared/
+└── schema.ts             # Drizzle ORM Schema (1.761 Linnen)
+```
