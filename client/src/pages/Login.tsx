@@ -63,6 +63,7 @@ export default function Login() {
 
   // Admin login (logo ball)
   const [adminOpen, setAdminOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("");
   const [adminPw, setAdminPw] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
 
@@ -132,10 +133,10 @@ export default function Login() {
     e.preventDefault();
     setAdminLoading(true);
     try {
-      const r = await adminLogin(adminPw);
+      const r = await adminLogin(adminEmail, adminPw);
       handleMaybeTwoFa(r);
     } catch (err: any) {
-      toast({ title: "Admin-Login fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Falsches Passwort", variant: "destructive" });
+      toast({ title: "Admin-Login fehlgeschlagen", description: err?.message?.replace(/^\d+:\s*/, "") || "Ungültige Anmeldedaten", variant: "destructive" });
     } finally {
       setAdminLoading(false);
     }
@@ -746,11 +747,22 @@ export default function Login() {
               </div>
               <form onSubmit={onAdminSubmit} className="space-y-3.5">
                 <div className="space-y-1.5">
+                  <Label htmlFor="adminEmail" className="text-[12px] font-medium">E-Mail</Label>
+                  <Input
+                    id="adminEmail"
+                    type="email"
+                    autoFocus
+                    value={adminEmail}
+                    onChange={e => setAdminEmail(e.target.value)}
+                    className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="adminPw" className="text-[12px] font-medium">Passwort</Label>
                   <Input
                     id="adminPw"
                     type="password"
-                    autoFocus
                     value={adminPw}
                     onChange={e => setAdminPw(e.target.value)}
                     className="h-10 rounded-xl bg-muted/40 border-border/50 text-[13px]"

@@ -362,32 +362,22 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
 
   // Admin-Login (Punkt im Logo) per Passwort
   app.post("/api/auth/admin-login", async (req: AuthedRequest, res: Response) => {
-    const password = String((req.body || {}).password || "");
-    const key = loginKey(req, "admin-login");
+    const { email, password } = req.body || {};
+    if (!email || !password) return res.status(400).json({ message: "E-Mail und Passwort erforderlich" });
+    const key = loginKey(req, `admin:${email}`);
     const lock = checkLockout(key);
     if (lock.locked) return res.status(429).json({ message: "Zu viele Fehlversuche. Bitte später erneut versuchen.", retryAfter: lock.retryAfter });
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.NODE_ENV === "production" ? undefined : "mersch75");
-    if (!ADMIN_PASSWORD) {
-      console.error("[security] ADMIN_PASSWORD ist in Produktion nicht gesetzt");
-      return res.status(500).json({ message: "Server nicht konfiguriert" });
-    }
-    if (!password || password !== ADMIN_PASSWORD) {
+    const user = await storage.getUserByEmail(email);
+    if (!user || !user.passwordHash || !['admin','präsident'].includes(user.role)) {
       recordLoginFailure(key);
-      return res.status(401).json({ message: "Falsches Passwort" });
+      return res.status(401).json({ message: "Ungültige Anmeldedaten" });
+    }
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) {
+      recordLoginFailure(key);
+      return res.status(401).json({ message: "Ungültige Anmeldedaten" });
     }
     clearLoginFailures(key);
-    const email = "admin@mersch75.lu";
-    let user = await storage.getUserByEmail(email);
-    if (!user) {
-      const hash = await bcrypt.hash(randomBytes(16).toString("hex"), 10);
-      user = await storage.createUser({
-        email,
-        passwordHash: hash,
-        name: "Administrator",
-        role: "admin" as any,
-        active: true,
-      });
-    }
     const twoFa = await maybeStartTwoFactor(req, user);
     if (twoFa) return res.json(twoFa);
     const token = createSession(user.id);

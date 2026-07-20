@@ -16,7 +16,7 @@ interface AuthCtx {
   loading: boolean;
   login: (email: string, password: string) => Promise<TwoFaChallenge | void>;
   cardLogin: (cardId: string) => Promise<TwoFaChallenge | { name: string; clubFunction?: string }>;
-  adminLogin: (password: string) => Promise<TwoFaChallenge | void>;
+  adminLogin: (email: string, password: string) => Promise<TwoFaChallenge | void>;
   verifyTwoFactor: (challenge: string, code: string, trustDevice: boolean) => Promise<{ memberName?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -82,8 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { name: memberName as string, clubFunction: clubFunction as string | undefined };
   };
 
-  const adminLogin = async (password: string): Promise<TwoFaChallenge | void> => {
-    const res = await apiRequest("POST", "/api/auth/admin-login", { password, deviceToken: getDeviceToken() });
+  const adminLogin = async (email: string, password: string): Promise<TwoFaChallenge | void> => {
+    const res = await apiRequest("POST", "/api/auth/admin-login", { email, password, deviceToken: getDeviceToken() });
     const data = await res.json();
     if (data.twoFactorRequired) return data as TwoFaChallenge;
     if (data._token) setAuthToken(data._token);
