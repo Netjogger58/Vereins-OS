@@ -41,7 +41,7 @@ export default function Login() {
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
 
-  // Random-No (card) login state
+  // Card-ID (card) login state
   const [cardId, setCardId] = useState("");
   const [cardLoading, setCardLoading] = useState(false);
   const [identity, setIdentity] = useState<{ name: string; clubFunction?: string; teamCategory?: string | null } | null>(null);
@@ -106,7 +106,7 @@ export default function Login() {
       const data = await res.json();
       if (!data.found) {
         setIdentity(null);
-        toast({ title: "Nicht gefunden", description: "Diese Random-No ist unbekannt.", variant: "destructive" });
+        toast({ title: "Nicht gefunden", description: "Diese Card-ID ist unbekannt.", variant: "destructive" });
         return;
       }
       setIdentity({ name: data.name, clubFunction: data.clubFunction, teamCategory: data.teamCategory });
@@ -350,7 +350,7 @@ export default function Login() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-5 h-9 rounded-lg bg-muted/60">
               <TabsTrigger value="card" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
-                Random-No
+                Card-ID
               </TabsTrigger>
               <TabsTrigger value="pin" className="text-[11px] rounded-md data-[state=active]:shadow-sm">
                 PIN
@@ -363,7 +363,7 @@ export default function Login() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Random-No Login */}
+            {/* Card-ID Login */}
             <TabsContent value="card">
               {identity ? (
                 <div className="space-y-4">
@@ -381,14 +381,14 @@ export default function Login() {
                     {cardLoading ? "Anmeldung …" : `Als ${identity.name.split(" ")[0]} anmelden`}
                   </Button>
                   <Button variant="ghost" onClick={() => { setIdentity(null); setCardId(""); }} className="w-full text-[12px]">
-                    <ArrowLeft className="size-3.5 mr-1.5" /> Andere Random-No
+                    <ArrowLeft className="size-3.5 mr-1.5" /> Andere Card-ID
                   </Button>
                 </div>
               ) : (
                 <form onSubmit={identifyCard} className="space-y-3.5">
                   <div className="space-y-1.5">
                     <Label htmlFor="cardId" className="text-[12px] font-medium flex items-center gap-1.5">
-                      <CreditCard className="size-3.5" /> Random-No (Mitgliedskarte)
+                      <CreditCard className="size-3.5" /> Card-ID (Mitgliedskarte)
                     </Label>
                     <Input
                       id="cardId"

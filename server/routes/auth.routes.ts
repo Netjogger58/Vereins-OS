@@ -78,7 +78,7 @@ export function registerAuthRoutes(app: any) {
     res.json(publicUser(req.user));
   });
 
-  // ─── Random-No (Karten-)Login ──────────────────────────
+  // ─── Card-ID (Karten-)Login ──────────────────────────
   // Mapping Vereinsfunktion -> App-Rolle (Test-Version).
   // HINWEIS: In Produktion sollten erhöhte Rollen (Comité/Officiel/Trainer)
   // eine 2. Stufe (Passwort/Code) erfordern – siehe Admin-Login.
@@ -96,7 +96,7 @@ export function registerAuthRoutes(app: any) {
   // Nur Identität anzeigen (Name + Funktion), ohne Login
   router.post("/identify-card", async (req: AuthedRequest, res: Response) => {
     const cardId = String((req.body || {}).cardId || "").trim();
-    if (!cardId) return res.status(400).json({ message: "Random-No erforderlich" });
+    if (!cardId) return res.status(400).json({ message: "Card-ID erforderlich" });
     const member = await storage.getMemberByCardId(cardId);
     if (!member) return res.json({ found: false });
     res.json({
@@ -108,15 +108,15 @@ export function registerAuthRoutes(app: any) {
     });
   });
 
-  // Login per Random-No: verknüpften User finden/anlegen + Session
+  // Login per Card-ID: verknüpften User finden/anlegen + Session
   router.post("/card-login", async (req: AuthedRequest, res: Response) => {
     const cardId = String((req.body || {}).cardId || "").trim();
-    if (!cardId) return res.status(400).json({ message: "Random-No erforderlich" });
+    if (!cardId) return res.status(400).json({ message: "Card-ID erforderlich" });
     const key = loginKey(req, `card:${cardId}`);
     const lock = checkLockout(key);
     if (lock.locked) return res.status(429).json({ message: "Zu viele Fehlversuche. Bitte später erneut versuchen.", retryAfter: lock.retryAfter });
     const member = await storage.getMemberByCardId(cardId);
-    if (!member) { recordLoginFailure(key); return res.status(401).json({ message: "Unbekannte Random-No" }); }
+    if (!member) { recordLoginFailure(key); return res.status(401).json({ message: "Unbekannte Card-ID" }); }
     clearLoginFailures(key);
 
     const role = roleForFunction(member.clubFunction);

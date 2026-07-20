@@ -494,7 +494,7 @@ export default function Secretariat() {
 
   // Excel-Rohspalten in Original-Reihenfolge (Membres 2026_2027)
   const EXCEL_COLUMN_ORDER = [
-    "Nom", "Prénom ou les prénoms", "Random-No", "Langue", "Nationalité", "Adresse", "Code postale", "Localité",
+    "Nom", "Prénom ou les prénoms", "Card-ID", "Langue", "Nationalité", "Adresse", "Code postale", "Localité",
     "code courrier", "courrier ???", "AL Cat", "Nei CAT", "Catégorie interne Mersch75 2026-2027",
     "Al Cat", "Nei Cat", "Catégorie Listing FLH 2026-2027", "Etudiant", "U17H", "U15H", "U13H", "U11M", "U9M", "U7M",
     "U17F", "U15F", "U13F", "Pass Nummer (Licences Joueurs / Joueuses)", "Licences Off (officiels)",
