@@ -5057,3 +5057,12 @@ export function ensurePostalCodeLocality() {
   sqlite.prepare("COMMIT").run();
   console.log(`[members] backfilled postal code / locality for ${updated} members`);
 }
+
+// ─── Former Bisenius members: clear family_code to avoid wrong family links ──
+export function ensureBiseniusFamilyFix() {
+  const stmt = sqlite.prepare("UPDATE members SET family_code = NULL, membership_status = 'ehemalig' WHERE last_name = 'BISENIUS' AND first_name IN ('Jeannine', 'Carlo')");
+  const result = stmt.run();
+  if (result.changes) {
+    console.log(`[members] cleared family_code for ${result.changes} former Bisenius members`);
+  }
+}
