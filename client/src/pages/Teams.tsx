@@ -298,56 +298,71 @@ export default function Teams() {
       </div>
 
       {(() => {
-        const sortRank = (name: string) => {
-          if (name === "Seniors 1") return 0;
-          if (name === "Seniors 2") return 1;
-          if (name === "Frauen") return 2;
-          return 3;
+        const tierOf = (name?: string | null) => name ? (/Elite/i.test(name) ? 2 : /Espoir/i.test(name) ? 1 : 0) : 0;
+        const categoryRank = (cat?: string | null) => {
+          const c = cat || "";
+          if (/^Seniors/i.test(c)) return -2;
+          if (/^Frauen/i.test(c)) return -1;
+          const match = c.match(/U(\d+)/i);
+          if (match) return 100 - parseInt(match[1], 10);
+          return 1000;
         };
-        const sortedTeams = [...teams].sort((a, b) => sortRank(a.name) - sortRank(b.name) || a.name.localeCompare(b.name));
-        return sortedTeams.map(team => {
-          const count = members.filter(m => m.teamId === team.id && isActiveClubMember(m)).length;
-          const trainer = users.find(u => u.id === team.trainerId);
-          return (
-            <Link
-              key={team.id}
-              href={`/teams/${team.id}`}
-              data-testid={`card-team-${team.id}`}
-              className="group"
-            >
-              <Card className="overflow-hidden hover-elevate transition-all h-full">
-                <div className="relative bg-gradient-to-br from-primary to-[#001A3A] p-5 text-primary-foreground">
-                  <div className="absolute top-3 right-3">
-                    <Shield className="size-5 text-secondary opacity-80" />
-                  </div>
-                  <Badge className="bg-secondary text-secondary-foreground text-[10px]">{team.category}</Badge>
-                  <h3 className="text-lg font-extrabold mt-3">{team.name}</h3>
-                </div>
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2">
-                      {members.filter(m => m.teamId === team.id && isActiveClubMember(m)).slice(0, 4).map(m => (
-                        <Avatar key={m.id} className="size-7 ring-2 ring-card">
-                          <AvatarImage src={m.photoUrl || undefined} />
-                          <AvatarFallback className="text-[10px] bg-muted">{initials(m.name)}</AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {count > 4 && (
-                        <div className="size-7 rounded-full bg-muted ring-2 ring-card flex items-center justify-center text-[10px] font-bold">
-                          +{count - 4}
+        const sortedTeams = [...teams].sort((a, b) => {
+          const ra = categoryRank(a.category);
+          const rb = categoryRank(b.category);
+          if (ra !== rb) return ra - rb;
+          const ta = tierOf(a.name);
+          const tb = tierOf(b.name);
+          if (ta !== tb) return tb - ta;
+          return a.name.localeCompare(b.name);
+        });
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedTeams.map(team => {
+              const count = members.filter(m => m.teamId === team.id && isActiveClubMember(m)).length;
+              const trainer = users.find(u => u.id === team.trainerId);
+              return (
+                <Link
+                  key={team.id}
+                  href={`/teams/${team.id}`}
+                  data-testid={`card-team-${team.id}`}
+                  className="group block h-full"
+                >
+                  <Card className="overflow-hidden hover-elevate transition-all h-full">
+                    <div className="relative bg-gradient-to-br from-primary to-[#001A3A] p-3 text-primary-foreground">
+                      <div className="absolute top-2 right-2">
+                        <Shield className="size-4 text-secondary opacity-80" />
+                      </div>
+                      <Badge className="bg-secondary text-secondary-foreground text-[10px]">{team.category}</Badge>
+                      <h3 className="text-base font-extrabold mt-2">{team.name}</h3>
+                    </div>
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex -space-x-2">
+                          {members.filter(m => m.teamId === team.id && isActiveClubMember(m)).slice(0, 4).map(m => (
+                            <Avatar key={m.id} className="size-7 ring-2 ring-card">
+                              <AvatarImage src={m.photoUrl || undefined} />
+                              <AvatarFallback className="text-[10px] bg-muted">{initials(m.name)}</AvatarFallback>
+                            </Avatar>
+                          ))}
+                          {count > 4 && (
+                            <div className="size-7 rounded-full bg-muted ring-2 ring-card flex items-center justify-center text-[10px] font-bold">
+                              +{count - 4}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      <div>{count} Spieler</div>
-                      {trainer && <div className="truncate max-w-[120px]">{trainer.name}</div>}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })
+                        <div className="text-xs text-muted-foreground">
+                          <div>{count} Spieler</div>
+                          {trainer && <div className="truncate max-w-[120px]">{trainer.name}</div>}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        );
       })()}
     </div>
   );
