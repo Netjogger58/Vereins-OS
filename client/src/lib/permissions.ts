@@ -25,6 +25,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/": ALL,
   "/announcements": ALL,
   "/my-events": ALL,
+  "/parent": ["elternteil", "präsident", "admin"],
   "/calendar": ALL,
   "/calendar-feed": ALL,
   "/chat": ["präsident", "admin", "secretaire", "trainer", "spieler", "elternteil"],

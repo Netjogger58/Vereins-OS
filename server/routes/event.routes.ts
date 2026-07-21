@@ -116,6 +116,11 @@ export function registerEventRoutes(app: any) {
   app.get("/api/availability/event/:eventId", requireAuth(), async (req: Request, res: Response) => {
     res.json(await storage.listAvailabilityByEvent(Number(req.params.eventId)));
   });
+  app.get("/api/availability/member/:memberId", requireAuth(), async (req: Request, res: Response) => {
+    const memberId = Number(req.params.memberId);
+    const rows = sqlite.prepare("SELECT * FROM availability WHERE member_id = ?").all(memberId) as any[];
+    res.json(rows.map(r => ({ id: r.id, memberId: r.member_id, eventId: r.event_id, available: r.available === 1, note: r.note })));
+  });
   app.post("/api/availability", requireAuth(), async (req: Request, res: Response) => {
     const parsed = insertAvailabilitySchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });

@@ -36,6 +36,15 @@ export function registerMemberRoutes(app: any) {
     if (!m) return res.status(404).json({ message: "Nicht gefunden" });
     res.json(m);
   });
+  router.get("/children", requireAuth(), async (req: AuthedRequest, res: Response) => {
+    const childUsers = await storage.getChildrenOfParent(req.user!.id);
+    const children: any[] = [];
+    for (const u of childUsers) {
+      const m = await storage.getMemberByUserId(u.id);
+      if (m) children.push({ ...m, childUserId: u.id });
+    }
+    res.json(children);
+  });
   router.post("/", requireAuth(["präsident", "admin", "trainer"]), async (req: Request, res: Response) => {
     const parsed = insertMemberSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });

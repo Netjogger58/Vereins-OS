@@ -17,6 +17,7 @@ import Announcements from "@/pages/Announcements";
 import Members from "@/pages/Members";
 import MemberDetail from "@/pages/MemberDetail";
 import MyEvents from "@/pages/MyEvents";
+import ParentDashboard from "@/pages/ParentDashboard";
 import Teams from "@/pages/Teams";
 import Inventory from "@/pages/Inventory";
 import Polls from "@/pages/Polls";
@@ -101,6 +102,7 @@ function AppRouter() {
         <Route path="/members/:id" component={MemberDetail} />
         <GuardedRoute path="/members" component={Members} />
         <GuardedRoute path="/my-events" component={MyEvents} />
+        <GuardedRoute path="/parent" component={ParentDashboard} />
         <Route path="/teams/:id" component={Teams} />
         <GuardedRoute path="/teams" component={Teams} />
         <GuardedRoute path="/calendar" component={Calendar} />
