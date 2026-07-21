@@ -1,10 +1,10 @@
-import type { Express, Response } from "express";
+import type { Express, Request, Response } from "express";
 import express from "express";
 import type { Server } from "node:http";
 import { randomBytes } from "node:crypto";
 import { getArchiveDir } from "./sboArchive";
 import bcrypt from "bcryptjs";
-import { storage, seedIfEmpty, seedTestCards, ensureAdminUsers, ensureSeniors2Team, ensurePostalCodeLocality, ensureBiseniusFamilyFix, sqlite } from "./storage";
+import { storage, seedIfEmpty, seedTestCards, ensureAdminUsers, ensureSeniors2Team, ensureAddressPostalLocality, ensureBiseniusFamilyFix, sqlite } from "./storage";
 import { registerWaitlistRoutes } from "./routes/waitlist.routes";
 import { registerGdprRoutes } from "./routes/gdpr.routes";
 import { registerArchiveRoutes } from "./routes/archive.routes";
@@ -111,6 +111,15 @@ async function generateUniqueTrainerCode(): Promise<string> {
   for (let tries = 0; tries < 8; tries++) {
     const id = generateCardId();
     const existing = await storage.getTrainerCodeByCode(id);
+    if (!existing) return id;
+  }
+  return generateCardId();
+}
+
+async function generateUniqueMemberCardId(): Promise<string> {
+  for (let tries = 0; tries < 8; tries++) {
+    const id = generateCardId();
+    const existing = await storage.getMemberByCardId(id);
     if (!existing) return id;
   }
   return generateCardId();
@@ -241,8 +250,70 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   seedTestCards();
   ensureAdminUsers();
   ensureSeniors2Team();
-  ensurePostalCodeLocality();
+  ensureAddressPostalLocality();
   ensureBiseniusFamilyFix();
+
+  // ─── JoinUs auto-insert endpoint ───────────────────────
+  app.post("/api/joinus", async (req: Request, res: Response) => {
+    try {
+      if (req.body.website) return res.status(400).json({ message: "Spam detected" });
+      const nom = String(req.body.Nom || "").trim();
+      const prenom = String(req.body.Prenom || "").trim();
+      if (!nom || !prenom) return res.status(400).json({ message: "Nom et Prénom requis" });
+
+      const toIsoDate = (d: string) => {
+        const m = String(d).trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+        return m ? `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}` : String(d).trim() || null;
+      };
+      const categorie = String(req.body.Categorie || "").trim();
+      const role = String(req.body.Role || "").trim();
+      const gender = /M$/i.test(categorie) ? "M" : /F$/i.test(categorie) ? "F" : null;
+      const memberType = /spieler|joueur/i.test(role)
+        ? "spieler"
+        : /arbit/i.test(role)
+          ? "arbitre"
+          : /offiz|offic/i.test(role)
+            ? "officiel"
+            : /benevole|bénévole/i.test(role)
+              ? "benevole"
+              : "spieler";
+
+      let cardId = "";
+      const clientCardId = String(req.body.CardInternalId || "").trim().toUpperCase();
+      if (/^[A-Z2-9]{8}$/.test(clientCardId) && !(await storage.getMemberByCardId(clientCardId))) {
+        cardId = clientCardId;
+      } else {
+        cardId = await generateUniqueMemberCardId();
+      }
+      const member = await storage.createMember({
+        name: `${prenom} ${nom}`,
+        firstName: prenom,
+        lastName: nom,
+        email: String(req.body.Email || "").trim() || null,
+        phone: String(req.body.GSM1 || "").trim() || null,
+        gsm: String(req.body.GSM1 || "").trim() || null,
+        address: String(req.body.Strasse || "").trim() || null,
+        postalCode: String(req.body.Postcode || "").trim() || null,
+        locality: String(req.body.Ortschaft || "").trim() || null,
+        nationality: String(req.body.Nationalite || "").trim() || null,
+        matricule: String(req.body.CNS || "").trim() || null,
+        birthdate: toIsoDate(String(req.body.DateNaissance || "")),
+        language: String(req.body.Langue || "").trim() || null,
+        gender,
+        teamCategory: categorie || null,
+        flhCategory: categorie || null,
+        clubFunction: role || null,
+        memberType,
+        membershipStatus: "pending",
+        joinDate: new Date().toISOString().slice(0, 10),
+        cardId,
+      });
+      return res.status(201).json({ ok: true, member: { id: member.id, cardId: member.cardId, name: member.name } });
+    } catch (err) {
+      console.error("JoinUs insert error:", err);
+      return res.status(500).json({ message: "Erreur lors de l'insertion" });
+    }
+  });
 
   // Health check endpoint (used by Docker HEALTHCHECK)
   app.get("/api/health", (_req, res) => {

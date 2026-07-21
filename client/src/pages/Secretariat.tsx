@@ -752,24 +752,61 @@ export default function Secretariat() {
     oldCode: "Cat",
     catCode: "Nei Cat",
   };
+  function groupBg(key: string): string | undefined {
+    const n = cleanLabel(key)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+    if (n === "codecourrier") return "#FFF8E1";
+    if (n === "courrier???") return "#FBF7F2";
+    if (n === "cat" || n === "neicat" || n === "categorieinternemersch7520262027") return "#E0F7FA";
+    if (n === "alcat" || n === "categorielistingflh20262027") return "#FCE4EC";
+    if (/^u\d+[hmf]$/.test(n)) return "#FCE4EC";
+    if (n === "commentairesetchangementssecretaire" || n === "transfertafaierenfinsaison") return "#DFFFE3";
+    if (n.includes("1920") && !n.startsWith("catcot")) return "#FADF81";
+    if (n.includes("2021") && !n.startsWith("catcot")) return "#FFF9C4";
+    if ((n.includes("2122") && !n.startsWith("commentaires")) || n === "go2sports") return "#FFEEDD";
+    if (n === "commentaires202122") return "#FFFF00";
+    return undefined;
+  }
   function headStyle(k: string, label: string): React.CSSProperties | undefined {
     const rawKey = k.startsWith("raw:") ? cleanLabel(k.slice(4)) : (SORT_TO_HEADER[k] || label);
     const s = headerStylesLower[normalizeHeader(rawKey)];
-    if (!s || (!s.bg && !s.fg)) return undefined;
-    return { backgroundColor: s.bg, color: s.fg };
+    const group = groupBg(rawKey) ?? groupBg(label);
+    const style: React.CSSProperties = {};
+    if (s?.bg) style.backgroundColor = s.bg;
+    if (s?.fg) style.color = s.fg;
+    if (group) style.backgroundColor = group;
+    if (Object.keys(style).length === 0) return undefined;
+    return style;
   }
   function cellStyle(m: RosterMember, k: string): React.CSSProperties | undefined {
     const rawKey = k.startsWith("raw:") ? cleanLabel(k.slice(4)) : (SORT_TO_HEADER[k] || labelForKey(k));
     const s = m.raw?.__styles?.[normalizeHeader(rawKey)];
-    if (!s || (!s.bg && !s.fg)) return undefined;
-    return { backgroundColor: s.bg, color: s.fg };
+    const group = groupBg(rawKey);
+    const style: React.CSSProperties = {};
+    if (s?.bg) style.backgroundColor = s.bg;
+    if (s?.fg) style.color = s.fg;
+    if (group) style.backgroundColor = group;
+    if (Object.keys(style).length === 0) return undefined;
+    return style;
   }
   function labelForKey(k: string): string {
     return {
       name: "Nom", firstName: "Prénom ou les prénoms", gender: "Sexe", cardId: "Card-Id", langue: "Langue",
       nationalite: "Nationalité", address: "Adresse", postalCode: "Code postale", locality: "Localité",
       newMeaning: "Catégorie interne Mersch75 2026-2027", catText: "Catégorie Listing FLH 2026-2027",
+      status: "Status (DB)", type: "Typ", functions: "Funktionen", tr: "TR", ma: "MA",
+      phone: "GSM", email: "Email", license: "Lizenz-Nr", matricule: "Matricule", medico: "Médico",
     }[k] || "";
+  }
+  function inactiveNameStyle(m: RosterMember, key: string): React.CSSProperties | undefined {
+    const base = cellStyle(m, key);
+    if (String(oldCodeValue(m)).trim() === '252') {
+      return { ...base, color: '#dc2626' };
+    }
+    return base;
   }
 
   const HeadCell = ({ k, children, className = "" }: { k: string; children: React.ReactNode; className?: string }) => {
@@ -1049,8 +1086,8 @@ export default function Secretariat() {
               <table className="w-max min-w-full text-sm border-collapse">
                 <thead>
                   <tr className="border-b bg-muted/50 text-left">
-                    <HeadCell k="name" className="sticky left-0 bg-muted/50 z-10 min-w-[180px]">Nom</HeadCell>
-                    <HeadCell k="firstName">Prénom</HeadCell>
+                    <HeadCell k="name" className="sticky left-0 bg-muted/50 z-20 min-w-[180px]">Nom</HeadCell>
+                    <HeadCell k="firstName" className="sticky left-[180px] bg-muted/50 z-10 border-r min-w-[120px]">Prénom</HeadCell>
                     <HeadCell k="gender">Sexe</HeadCell>
                     <HeadCell k="cardId">Card-ID</HeadCell>
                     <HeadCell k="langue">Langue</HeadCell>
@@ -1059,7 +1096,7 @@ export default function Secretariat() {
                     <HeadCell k="postalCode">Code Postale</HeadCell>
                     <HeadCell k="locality">Localité</HeadCell>
                     <HeadCell k="oldCourrier">Alt. Courrier</HeadCell>
-                    <HeadCell k="courrierNew">Neu. Courrier</HeadCell>
+                    <HeadCell k="courrierNew">Courrier ???</HeadCell>
                     <HeadCell k="oldCode">AL Cat</HeadCell>
                     <HeadCell k="catCode">Nei CAT</HeadCell>
                     <HeadCell k="newMeaning">Catégorie interne Mersch75 2026-2027</HeadCell>
@@ -1084,31 +1121,31 @@ export default function Secretariat() {
                 <tbody>
                   {sorted.map((m) => (
                     <tr key={m.id} className="border-b hover:bg-muted/30">
-                      <td className="sticky left-0 bg-background z-10 px-3 py-2 border-r">
-                        <Link href={`/members/${m.id}`} className="flex items-center gap-1 hover:text-primary">
-                          <span className="font-bold">
+                      <td style={inactiveNameStyle(m, 'name')} className="sticky left-0 bg-background z-20 px-3 py-2 border-r max-w-[180px]" title={m.lastName ? formatLastName(m.lastName) : m.name}>
+                        <Link href={`/members/${m.id}`} className="flex items-center gap-1 hover:text-primary min-w-0">
+                          <span className="font-bold truncate">
                             {m.lastName ? formatLastName(m.lastName) : m.name}
                           </span>
                           <ChevronRight className="size-3 opacity-40 shrink-0" />
                         </Link>
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap">{formatFirstName(m.firstName || "")}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-center">{m.gender || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.cardId || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{langNat(m).lang || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{langNat(m).nat || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap max-w-[220px] truncate" title={m.address || ""}>{m.address || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.postalCode || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{m.locality || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "code courrier", "Alter Courrier-Code") || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "courrier ???") || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{m.internalCategory || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{m.flhCategory || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">
+                      <td style={inactiveNameStyle(m, 'firstName')} className="sticky left-[180px] bg-background z-10 px-3 py-2 whitespace-nowrap border-r">{formatFirstName(m.firstName || "")}</td>
+                      <td style={cellStyle(m, 'gender')} className="px-3 py-2 whitespace-nowrap text-center">{m.gender || "—"}</td>
+                      <td style={cellStyle(m, 'cardId')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.cardId || "—"}</td>
+                      <td style={cellStyle(m, 'langue')} className="px-3 py-2 whitespace-nowrap">{langNat(m).lang || "—"}</td>
+                      <td style={cellStyle(m, 'nationalite')} className="px-3 py-2 whitespace-nowrap">{langNat(m).nat || "—"}</td>
+                      <td style={cellStyle(m, 'address')} className="px-3 py-2 whitespace-nowrap max-w-[220px] truncate" title={m.address || ""}>{m.address || "—"}</td>
+                      <td style={cellStyle(m, 'postalCode')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.postalCode || "—"}</td>
+                      <td style={cellStyle(m, 'locality')} className="px-3 py-2 whitespace-nowrap">{m.locality || "—"}</td>
+                      <td style={cellStyle(m, 'oldCourrier')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "code courrier", "Alter Courrier-Code") || "—"}</td>
+                      <td style={cellStyle(m, 'courrierNew')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "courrier ???") || "—"}</td>
+                      <td style={cellStyle(m, 'oldCode')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
+                      <td style={cellStyle(m, 'catCode')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
+                      <td style={cellStyle(m, 'newMeaning')} className="px-3 py-2 whitespace-nowrap">{m.internalCategory || "—"}</td>
+                      <td style={cellStyle(m, 'oldCode')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
+                      <td style={cellStyle(m, 'catCode')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
+                      <td style={cellStyle(m, 'catText')} className="px-3 py-2 whitespace-nowrap">{m.flhCategory || "—"}</td>
+                      <td style={cellStyle(m, 'status')} className="px-3 py-2 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <span className={isActiveMember(m) ? "" : "text-muted-foreground"}>
                             {STATUS_LABELS[m.membershipStatus || ""] || m.membershipStatus || "—"}
@@ -1116,8 +1153,8 @@ export default function Secretariat() {
                           {!isActiveMember(m) && <Badge variant="outline" className="text-[9px] border-amber-400 text-amber-600">nur Liste</Badge>}
                         </div>
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap">{TYPE_LABELS[m.memberType || ""] || m.memberType || "—"}</td>
-                      <td className="px-3 py-2">
+                      <td style={cellStyle(m, 'type')} className="px-3 py-2 whitespace-nowrap">{TYPE_LABELS[m.memberType || ""] || m.memberType || "—"}</td>
+                      <td style={cellStyle(m, 'functions')} className="px-3 py-2">
                         <div className="flex flex-wrap gap-1">
                           {(() => {
                             const details = m.functionDetails?.length
@@ -1132,7 +1169,7 @@ export default function Secretariat() {
                           })()}
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-center whitespace-nowrap">
+                      <td style={cellStyle(m, 'tr')} className="px-3 py-2 text-center whitespace-nowrap">
                         {m.trainingTotal > 0 ? (
                           <span title={`${m.trainingPresent}/${m.trainingTotal}`}>
                             <span className={m.trainingRate! >= 60 ? "text-green-600 font-medium" : "text-amber-600"}>
@@ -1142,14 +1179,14 @@ export default function Secretariat() {
                           </span>
                         ) : <span className="text-muted-foreground">—</span>}
                       </td>
-                      <td className="px-3 py-2 text-center">
+                      <td style={cellStyle(m, 'ma')} className="px-3 py-2 text-center">
                         {m.matchCount > 0 ? m.matchCount : <span className="text-muted-foreground">—</span>}
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap">{m.phone || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap max-w-[200px] truncate" title={m.email || ""}>{m.email || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.licenseNumber || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.matricule || "—"}</td>
-                      <td className={`px-3 py-2 whitespace-nowrap ${medicoCellClass(medicoYearOf(m))}`}>
+                      <td style={cellStyle(m, 'phone')} className="px-3 py-2 whitespace-nowrap">{m.phone || "—"}</td>
+                      <td style={cellStyle(m, 'email')} className="px-3 py-2 whitespace-nowrap max-w-[200px] truncate" title={m.email || ""}>{m.email || "—"}</td>
+                      <td style={cellStyle(m, 'license')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.licenseNumber || "—"}</td>
+                      <td style={cellStyle(m, 'matricule')} className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.matricule || "—"}</td>
+                      <td style={cellStyle(m, 'medico')} className={`px-3 py-2 whitespace-nowrap ${medicoCellClass(medicoYearOf(m))}`}>
                         <div className="flex items-center gap-1.5">
                           <span>{m.medicoNext || "—"}</span>
                           {medicoOnly && (

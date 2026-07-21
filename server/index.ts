@@ -18,7 +18,7 @@ declare module "http" {
   }
 }
 
-const allowedOrigins = (process.env.WEBSITE_ORIGIN || "https://mersch75.lu,https://www.mersch75.lu,http://localhost:4000")
+const allowedOrigins = (process.env.WEBSITE_ORIGIN || "https://mersch75.lu,https://www.mersch75.lu,https://mersch75test.github.io,http://localhost:4000")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
