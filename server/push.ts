@@ -43,7 +43,6 @@ function ensurePushSubscriptionsTable() {
   )`).run();
   try { sqlite.prepare("CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id)").run(); } catch {}
 }
-ensurePushSubscriptionsTable();
 
 export function saveSubscription(userId: number, subscription: PushSubscription) {
   const now = new Date().toISOString();
@@ -100,6 +99,8 @@ export async function sendPushToTeam(teamId: number, payload: { title: string; b
 }
 
 export function registerPushRoutes(app: any) {
+  ensurePushSubscriptionsTable();
+
   app.get("/api/push/vapid-public-key", (_req: Request, res: Response) => {
     res.json({ publicKey: getVapidPublicKey() });
   });
