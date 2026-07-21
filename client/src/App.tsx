@@ -51,6 +51,7 @@ import Statistics from "@/pages/Statistics";
 import TrainingSchedules from "@/pages/TrainingSchedules";
 import TrainerCodes from "@/pages/TrainerCodes";
 import Matches from "@/pages/Matches";
+import ScheduleImport from "@/pages/ScheduleImport";
 import PlayerStatistics from "@/pages/PlayerStatistics";
 import Sponsors from "@/pages/Sponsors";
 import Gallery from "@/pages/Gallery";
@@ -137,6 +138,7 @@ function AppRouter() {
         <GuardedRoute path="/training-schedules" component={TrainingSchedules} />
         <GuardedRoute path="/trainer-codes" component={TrainerCodes} />
         <GuardedRoute path="/matches" component={Matches} />
+        <GuardedRoute path="/schedule-import" component={ScheduleImport} />
         <GuardedRoute path="/player-statistics" component={PlayerStatistics} />
         <GuardedRoute path="/sponsors" component={Sponsors} />
         <GuardedRoute path="/gallery" component={Gallery} />

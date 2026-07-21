@@ -115,5 +115,101 @@ export function registerMatchRoutes(app: any) {
   });
 
 
+  // ─── Spielplan Import (Premium: .ics / .csv) ────────────
+  function parseSchedule(content: string, type: string, teamId: number, season: string, competition: string, teamName: string) {
+    const rows: any[] = [];
+    if (type === "ics") {
+      const events = content.split("BEGIN:VEVENT").slice(1);
+      for (const raw of events) {
+        const lines = raw.split(/\r?\n/);
+        let summary = "";
+        let dt = "";
+        let location = "";
+        let description = "";
+        for (const line of lines) {
+          if (line.startsWith("SUMMARY")) summary = line.split(":").slice(1).join(":").replace(/\\,/g, ",").replace(/\\n/g, " ").trim();
+          if (line.startsWith("DTSTART")) dt = (line.split(":").pop() || "").trim();
+          if (line.startsWith("LOCATION")) location = line.split(":").slice(1).join(":").replace(/\\,/g, ",").replace(/\\n/g, " ").trim();
+          if (line.startsWith("DESCRIPTION")) description = line.split(":").slice(1).join(":").replace(/\\n/g, " ").trim();
+        }
+        if (!dt) continue;
+        const date = `${dt.slice(0, 4)}-${dt.slice(4, 6)}-${dt.slice(6, 8)}`;
+        const time = dt.length > 8 ? `${dt.slice(9, 11)}:${dt.slice(11, 13)}` : null;
+        let home = "";
+        let away = "";
+        for (const sep of [" - ", " – ", " vs ", " vs. ", " -", "–"]) {
+          if (summary.includes(sep)) { [home, away] = summary.split(sep); break; }
+        }
+        if (!home || !away) continue;
+        const comp = competition || description.split(/\\n|\n/)[0].trim() || "Liga";
+        const isHome = home.toLowerCase().includes(teamName.toLowerCase());
+        rows.push({ teamId, season, competition: comp, matchType: "league", matchDate: date, matchTime: time, homeTeam: home.trim(), awayTeam: away.trim(), venue: location || null, isHome, status: "scheduled" });
+      }
+    } else if (type === "csv") {
+      const lines = content.replace(/\r\n/g, "\n").split("\n").filter(l => l.trim());
+      if (lines.length < 2) return rows;
+      const delimiter = lines[0].includes(";") ? ";" : ",";
+      const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase());
+      const homeIdx = headers.findIndex(h => ["heim", "home", "heimmannschaft", "heimteam"].includes(h));
+      const awayIdx = headers.findIndex(h => ["gast", "away", "auswärts", "auswaerts", "gegner"].includes(h));
+      const dateIdx = headers.findIndex(h => ["datum", "date", "spieldatum", "tag"].includes(h));
+      const timeIdx = headers.findIndex(h => ["zeit", "time", "uhrzeit", "anpfiff"].includes(h));
+      const venueIdx = headers.findIndex(h => ["halle", "ort", "spielort", "location", "venue", "spielstätte"].includes(h));
+      const compIdx = headers.findIndex(h => ["liga", "wettbewerb", "competition", "runde"].includes(h));
+      if (homeIdx === -1 || awayIdx === -1 || dateIdx === -1) return rows;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(delimiter).map(c => c.trim());
+        const home = cols[homeIdx];
+        const away = cols[awayIdx];
+        const rawDate = cols[dateIdx];
+        let date = rawDate;
+        const dotMatch = rawDate.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+        if (dotMatch) date = `${dotMatch[3]}-${dotMatch[2]}-${dotMatch[1]}`;
+        else {
+          const slashMatch = rawDate.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+          if (slashMatch) date = `${slashMatch[3]}-${slashMatch[2]}-${slashMatch[1]}`;
+          else if (/^\d{8}$/.test(rawDate)) date = `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}`;
+        }
+        const time = timeIdx >= 0 ? cols[timeIdx].slice(0, 5) : null;
+        const venue = venueIdx >= 0 ? cols[venueIdx] || null : null;
+        const comp = (compIdx >= 0 ? cols[compIdx] : null) || competition || "Liga";
+        const isHome = home.toLowerCase().includes(teamName.toLowerCase());
+        rows.push({ teamId, season, competition: comp, matchType: "league", matchDate: date, matchTime: time, homeTeam: home, awayTeam: away, venue, isHome, status: "scheduled" });
+      }
+    }
+    return rows;
+  }
+
+  app.post("/api/matches/import/preview", requireAuth(), async (req: Request, res: Response) => {
+    const authed = req as AuthedRequest;
+    if (!["präsident", "admin", "trainer", "secretaire"].includes(authed.user!.role)) {
+      return res.status(403).json({ message: "Keine Berechtigung" });
+    }
+    const { teamId, season, competition, type, content } = req.body;
+    if (!teamId || !season || !type || !content) return res.status(400).json({ message: "teamId, season, type, content erforderlich" });
+    const team = await storage.getTeam(Number(teamId));
+    if (!team) return res.status(404).json({ message: "Team nicht gefunden" });
+    const rows = parseSchedule(content, type, Number(teamId), season, competition || "", team.name);
+    res.json({ rows });
+  });
+
+  app.post("/api/matches/import", requireAuth(), async (req: Request, res: Response) => {
+    const authed = req as AuthedRequest;
+    if (!["präsident", "admin", "trainer", "secretaire"].includes(authed.user!.role)) {
+      return res.status(403).json({ message: "Keine Berechtigung" });
+    }
+    const { teamId, season, competition, type, content } = req.body;
+    if (!teamId || !season || !type || !content) return res.status(400).json({ message: "teamId, season, type, content erforderlich" });
+    const team = await storage.getTeam(Number(teamId));
+    if (!team) return res.status(404).json({ message: "Team nicht gefunden" });
+    const rows = parseSchedule(content, type, Number(teamId), season, competition || "", team.name);
+    let created = 0;
+    for (const row of rows) {
+      await storage.createMatch({ ...row, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), notes: "" } as any);
+      created++;
+    }
+    res.json({ created, rows });
+  });
+
   app.use("/api/matches", router);
 }

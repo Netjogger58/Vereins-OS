@@ -40,6 +40,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/attendance": TRAINER_ONLY,
   "/trial-registrations": ["präsident", "admin", "secretaire", "trainer"],
   "/matches": SPORT_LEITER_PLUS_SPIELER,
+  "/schedule-import": SPORT_LEITER,
   "/carpools": ALL,
   "/player-statistics": SPORT_LEITER_PLUS_SPIELER,
   "/nominations": SPIELER_ERWEITERT,
