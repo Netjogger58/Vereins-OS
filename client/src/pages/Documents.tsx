@@ -158,18 +158,18 @@ export default function Documents() {
         </div>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl shadow-sm border-none overflow-hidden">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Dokument</TableHead>
-                <TableHead>Kategorie</TableHead>
-                <TableHead>Zuordnung</TableHead>
-                <TableHead>Sichtbarkeit</TableHead>
-                <TableHead>Größe</TableHead>
-                <TableHead>Datum</TableHead>
-                <TableHead>Aktionen</TableHead>
+              <TableRow className="bg-gradient-to-r from-primary to-[#001A3A] hover:from-primary hover:to-[#001A3A] border-none">
+                <TableHead className="text-primary-foreground">Dokument</TableHead>
+                <TableHead className="text-primary-foreground">Kategorie</TableHead>
+                <TableHead className="text-primary-foreground">Zuordnung</TableHead>
+                <TableHead className="text-primary-foreground">Sichtbarkeit</TableHead>
+                <TableHead className="text-primary-foreground">Größe</TableHead>
+                <TableHead className="text-primary-foreground">Datum</TableHead>
+                <TableHead className="text-primary-foreground">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -234,9 +234,9 @@ export default function Documents() {
 
       {/* Upload Dialog */}
       <Dialog open={openUpload} onOpenChange={setOpenUpload}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Dokument hochladen</DialogTitle>
+        <DialogContent className="max-w-lg rounded-2xl">
+          <DialogHeader className="bg-gradient-to-br from-primary to-[#001A3A] text-primary-foreground rounded-t-2xl -mx-6 -mt-6 px-6 pt-6 pb-4">
+            <DialogTitle className="text-primary-foreground">Dokument hochladen</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={(e) => {
