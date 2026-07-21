@@ -492,11 +492,11 @@ export default function Secretariat() {
   const viewDonBenevole = () => { setStatusFilter("all"); setTypeFilter("don_benevole"); setFuncFilter(false); setMedicoOnly(false); setSort({ key: "name", dir: "asc" }); };
   const viewSponsors = () => { setStatusFilter("all"); setTypeFilter("sponsor"); setFuncFilter(false); setMedicoOnly(false); setSort({ key: "name", dir: "asc" }); };
 
-  // Excel-Rohspalten in Original-Reihenfolge (Membres 2026_2027)
+  // Excel-Rohspalten in Original-Reihenfolge (GC 2026-07-21)
   const EXCEL_COLUMN_ORDER = [
-    "Nom", "Prénom ou les prénoms", "Card-ID", "Langue", "Nationalité", "Adresse", "Code postale", "Localité",
-    "code courrier", "courrier ???", "AL Cat", "Nei CAT", "Catégorie interne Mersch75 2026-2027",
-    "Al Cat", "Nei Cat", "Catégorie Listing FLH 2026-2027", "Etudiant", "U17H", "U15H", "U13H", "U11M", "U9M", "U7M",
+    "Nom", "Prénom ou les prénoms", "Sexe", "Card-Id", "Langue", "Nationalité", "Adresse", "Code postale", "Localité",
+    "code courrier", "courrier ???", "Cat", "Nei Cat", "Catégorie interne Mersch75 2026-2027",
+    "Cat", "Nei Cat", "Catégorie Listing FLH 2026-2027", "Etudiant", "U17H", "U15H", "U13H", "U11M", "U9M", "U7M",
     "U17F", "U15F", "U13F", "Pass Nummer (Licences Joueurs / Joueuses)", "Licences Off (officiels)",
     "Licences ZS (secrétaires / chronométreurs)", "Licences SR (arbitre)", "Licences CL (Carte de Légitimation)",
     "Commentaires & changements (Secrétaire)", "Transfert à faire en fin de saison", "Date début licence (JJ/MM/AA)",
@@ -1024,8 +1024,9 @@ export default function Secretariat() {
                     <HeadCell k="cardId">Card-ID</HeadCell>
                     <HeadCell k="langue">Langue</HeadCell>
                     <HeadCell k="nationalite">Nationalité</HeadCell>
+                    <HeadCell k="address">Adresse</HeadCell>
                     <HeadCell k="oldCourrier">Alt. Courrier</HeadCell>
-                    <HeadCell k="family">Neu. Courrier</HeadCell>
+                    <HeadCell k="courrierNew">Neu. Courrier</HeadCell>
                     <HeadCell k="oldCode">AL Cat</HeadCell>
                     <HeadCell k="catCode">Nei CAT</HeadCell>
                     <HeadCell k="newMeaning">Catégorie interne Mersch75 2026-2027</HeadCell>
@@ -1063,8 +1064,9 @@ export default function Secretariat() {
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.cardId || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{langNat(m).lang || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{langNat(m).nat || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap max-w-[220px] truncate" title={m.address || ""}>{m.address || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "code courrier", "Alter Courrier-Code") || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.familyCode || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "courrier ???") || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.catCode ?? "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{m.internalCategory || "—"}</td>
