@@ -1,4 +1,4 @@
-const CACHE_NAME = "m75-v2";
+const CACHE_NAME = "m75-v3";
 const urlsToCache = ["/", "/index.html"];
 
 self.addEventListener("install", (event) => {
@@ -17,6 +17,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const url = event.request.url;
+  if (url.includes("/api/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetched = fetch(event.request).then((response) => {
