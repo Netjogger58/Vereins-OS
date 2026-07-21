@@ -416,6 +416,117 @@ export default function MemberDetail() {
           })()}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">All Felder</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const skip = new Set(['id','userId','photoUrl','faceDescriptor','rawData','extraTeamIds','guardianName','guardianPhone','guardianEmail','guardian2Name','guardian2Phone','teams','trainingPresent','trainingTotal','trainingRate','trainingLast','matchCount','active']);
+            const main = new Set(['email','phone','gsm','birthdate','language','nationality','gender','address','postalCode','locality','licenseNumber','matricule']);
+            const labels: Record<string,string> = {
+              name: 'Numm (Display)',
+              firstName: 'Virnumm',
+              lastName: 'Numm',
+              birthName: 'Gebuertsnumm',
+              phoneOwner: 'Telefon gehéiert',
+              teamId: 'Team',
+              cardId: 'Card-ID',
+              clubFunction: 'Veräins-Funktioun',
+              internalCategory: 'Intern Kategorie',
+              flhCategory: 'FLH Kategorie',
+              teamCategory: 'Team Kategorie',
+              passNumber: 'Passnummer',
+              medicoNext: 'Nächste Médico',
+              medicoList: 'Médico-List',
+              medicoComment: 'Médico-Kommentar',
+              medicoResult: 'Médico-Resultat',
+              medicoResultDate: 'Médico-Resultat Datum',
+              joinDate: 'Aufanksdatum',
+              catCode: 'Kategorie-Code',
+              licenceStatus: 'Lizenz-Status',
+              transferStatus: 'Transfer-Status',
+              membershipStatus: 'Member-Status',
+              memberType: 'Member-Typ',
+              contactInfoType: 'Kontakt-Typ',
+              familyCode: 'Familljen-Code',
+              courrier: 'Courrier',
+              isStudent: 'Student',
+              licenceOff: 'Licence Off',
+              licenceZS: 'Licence ZS',
+              licenceSR: 'Licence SR',
+              licenceCL: 'Licence CL',
+              comments: 'Kommentarer',
+              transferEndSeason: 'Transfer-Enn Saison',
+              licenseStartDate: 'Lizenz-Start',
+              birthPlace: 'Gebuertsuert',
+              phoneOffice: 'Büro-Telefon',
+              squadStatus: 'Kader-Status'
+            };
+            const keys = Object.keys(member as any).filter(k => !skip.has(k) && !main.has(k)).sort();
+            return (
+              <div className="grid sm:grid-cols-3 gap-x-6 gap-y-3">
+                {keys.map(k => {
+                  const val = (member as any)[k];
+                  if (k === 'teamId') {
+                    return (
+                      <EditableSelect
+                        key={k}
+                        label={labels[k] || k}
+                        value={String(val ?? '')}
+                        onSave={(v) => updateMut.mutate({ teamId: v ? Number(v) : null })}
+                        canEdit={!!canEdit}
+                        options={[{ value: '', label: '—' }, ...teams.map(t => ({ value: String(t.id), label: t.name }))]}
+                      />
+                    );
+                  }
+                  if (k === 'isStudent') {
+                    return (
+                      <EditableSelect
+                        key={k}
+                        label={labels[k] || k}
+                        value={String(val ?? '')}
+                        onSave={(v) => updateMut.mutate({ isStudent: v === 'true' })}
+                        canEdit={!!canEdit}
+                        options={[{ value: 'true', label: 'Jo' }, { value: 'false', label: 'Neen' }]}
+                      />
+                    );
+                  }
+                  if (k === 'medicoList') {
+                    return (
+                      <EditableSelect
+                        key={k}
+                        label={labels[k] || k}
+                        value={String(val ?? '')}
+                        onSave={(v) => updateMut.mutate({ medicoList: v ? Number(v) : null })}
+                        canEdit={!!canEdit}
+                        options={[{ value: '', label: '—' }, { value: '1', label: 'Jo' }, { value: '0', label: 'Neen' }]}
+                      />
+                    );
+                  }
+                  if (k === 'catCode') {
+                    return (
+                      <EditableField
+                        key={k}
+                        label={labels[k] || k}
+                        value={String(val ?? '')}
+                        onSave={(v) => updateMut.mutate({ catCode: v ? Number(v) : null })}
+                        canEdit={!!canEdit}
+                        type="number"
+                      />
+                    );
+                  }
+                  if (['medicoResultDate','joinDate','licenseStartDate'].includes(k)) {
+                    return <EditableField key={k} label={labels[k] || k} value={String(val ?? '')} onSave={save(k)} canEdit={!!canEdit} type="date" />;
+                  }
+                  return <EditableField key={k} label={labels[k] || k} value={String(val ?? '')} onSave={save(k)} canEdit={!!canEdit} />;
+                })}
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
     </div>
   );
 }
