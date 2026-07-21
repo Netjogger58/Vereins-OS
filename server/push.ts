@@ -1,4 +1,5 @@
-import * as webpush from "web-push";
+import webpush from "web-push";
+import type { PushSubscription } from "web-push";
 import { type Request, type Response } from "express";
 import { sqlite } from "./storage";
 import { requireAuth, type AuthedRequest } from "./auth";
@@ -44,7 +45,7 @@ function ensurePushSubscriptionsTable() {
 }
 ensurePushSubscriptionsTable();
 
-export function saveSubscription(userId: number, subscription: webpush.PushSubscription) {
+export function saveSubscription(userId: number, subscription: PushSubscription) {
   const now = new Date().toISOString();
   sqlite.prepare(`INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, created_at)
     VALUES (?, ?, ?, ?, ?)
@@ -64,7 +65,7 @@ function getRows(userIds?: number[]) {
   return sqlite.prepare("SELECT * FROM push_subscriptions").all() as any[];
 }
 
-function toSub(row: any): webpush.PushSubscription {
+function toSub(row: any): PushSubscription {
   return { endpoint: row.endpoint, keys: { p256dh: row.p256dh, auth: row.auth } };
 }
 
