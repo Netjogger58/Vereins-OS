@@ -204,10 +204,10 @@ export default function PlayerStatistics() {
         </CardContent>
       </Card>
 
-      {/* Top Scorers Table */}
-      <Card>
+      {/* Top Scorers — SpielerPlus-Styl */}
+      <Card className="rounded-2xl shadow-sm border-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base">
             <Award className="w-5 h-5" />
             Torschützen-Rangliste
           </CardTitle>
@@ -220,70 +220,54 @@ export default function PlayerStatistics() {
               Keine Spielerstatistiken vorhanden
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 w-16">Rang</th>
-                    <th className="text-left py-3 px-4">Spieler</th>
-                    <th className="text-left py-3 px-4">Team</th>
-                    <th className="text-center py-3 px-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <Target className="w-4 h-4" />
-                        Tore
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredScorers.map((player, index) => {
+                const avg = player.matches > 0 ? (player.goals / player.matches).toFixed(2) : "0.00";
+                const gradient =
+                  index === 0 ? "from-yellow-500 to-amber-600" :
+                  index === 1 ? "from-slate-400 to-slate-500" :
+                  index === 2 ? "from-amber-600 to-orange-700" :
+                  "from-primary to-[#001A3A]";
+
+                return (
+                  <Card
+                    key={`${player.playerId || 'guest'}-${player.playerName}`}
+                    className="rounded-2xl overflow-hidden border-none shadow-sm"
+                  >
+                    <div className={`bg-gradient-to-br ${gradient} p-4 text-primary-foreground`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <div className="font-bold truncate max-w-[160px]">{player.playerName}</div>
+                            <div className="text-xs text-white/80">{player.teamName}</div>
+                          </div>
+                        </div>
+                        <Trophy className="size-5 text-white/70" />
                       </div>
-                    </th>
-                    <th className="text-center py-3 px-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <Activity className="w-4 h-4" />
-                        Vorlagen
+                    </div>
+                    <CardContent className="p-4 grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <div className="text-lg font-extrabold text-blue-600">{player.goals}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase">Tore</div>
                       </div>
-                    </th>
-                    <th className="text-center py-3 px-4">Spiele</th>
-                    <th className="text-center py-3 px-4">Ø Tore/Spiel</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredScorers.map((player, index) => {
-                    const avg = player.matches > 0 ? (player.goals / player.matches).toFixed(2) : "0.00";
-                    const isTop3 = index < 3;
-                    
-                    return (
-                      <tr 
-                        key={`${player.playerId || 'guest'}-${player.playerName}`}
-                        className={`border-b hover:bg-muted/50 ${isTop3 ? 'bg-primary/5' : ''}`}
-                      >
-                        <td className="py-3 px-4">
-                          {isTop3 ? (
-                            <Badge className={
-                              index === 0 ? "bg-yellow-500" : 
-                              index === 1 ? "bg-gray-400" : "bg-amber-600"
-                            }>
-                              {index + 1}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">{index + 1}</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 font-medium">{player.playerName}</td>
-                        <td className="py-3 px-4 text-sm text-muted-foreground">{player.teamName}</td>
-                        <td className="py-3 px-4 text-center">
-                          <span className="font-bold text-lg">{player.goals}</span>
-                        </td>
-                        <td className="py-3 px-4 text-center text-muted-foreground">
-                          {player.assists}
-                        </td>
-                        <td className="py-3 px-4 text-center text-muted-foreground">
-                          {player.matches}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <Badge variant="outline">{avg}</Badge>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      <div>
+                        <div className="text-lg font-extrabold text-green-600">{player.assists}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase">Vorlagen</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-extrabold text-purple-600">{player.matches}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase">Spiele</div>
+                      </div>
+                      <div className="col-span-3 pt-2 border-t">
+                        <div className="text-sm font-medium">Ø {avg} Tore/Spiel</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </CardContent>
