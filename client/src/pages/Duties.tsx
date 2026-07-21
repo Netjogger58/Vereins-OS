@@ -47,9 +47,11 @@ export default function Duties() {
       </div>
 
       {showForm && (
-        <Card>
-          <CardHeader><CardTitle>{t("common.create")}</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
+        <Card className="rounded-2xl shadow-sm border-none">
+          <CardHeader className="bg-gradient-to-br from-primary to-[#001A3A] text-primary-foreground rounded-t-2xl">
+            <CardTitle className="text-base">{t("common.create")}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 space-y-3">
             <div className="grid gap-3">
               <div>
                 <Label>{t("common.name")}</Label>
@@ -67,16 +69,17 @@ export default function Duties() {
         </Card>
       )}
 
-      <div className="grid gap-3">
+      <div className="grid gap-4">
         {items.length === 0 ? (
-          <Card><CardContent className="py-8 text-center text-muted-foreground">{t("common.no_data")}</CardContent></Card>
+          <Card className="rounded-2xl shadow-sm border-none p-8 text-center text-muted-foreground">{t("common.no_data")}</Card>
         ) : items.map((item: any) => (
-          <Card key={item.id} className="hover:shadow-md transition-shadow">
+          <Card key={item.id} className="rounded-2xl shadow-sm border-none overflow-hidden">
+            <div className="bg-gradient-to-br from-primary to-[#001A3A] p-4 text-primary-foreground flex items-center justify-between">
+              <div className="font-bold truncate pr-2">{item.title || item.name}</div>
+              {item.date && <Badge className="bg-white/20 text-white text-[10px]">{item.date}</Badge>}
+            </div>
             <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <div className="font-semibold">{item.name}</div>
-                {item.description && <div className="text-sm text-muted-foreground">{item.description}</div>}
-              </div>
+              <div className="text-sm text-muted-foreground">{item.description || "—"}</div>
               <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(item.id)} className="text-destructive">
                 <Trash2 className="size-4" />
               </Button>
