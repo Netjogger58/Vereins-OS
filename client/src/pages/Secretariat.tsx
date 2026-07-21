@@ -744,10 +744,39 @@ export default function Secretariat() {
     );
   }
 
+  const headerStyles = useMemo(() => (roster[0]?.raw?.__headerStyles || {}) as Record<string, { bg?: string; fg?: string }>, [roster]);
+  const headerStylesLower = useMemo(() => Object.fromEntries(Object.entries(headerStyles).map(([k, v]) => [k.toLowerCase(), v])), [headerStyles]);
+  const SORT_TO_HEADER: Record<string, string> = {
+    oldCourrier: "code courrier",
+    courrierNew: "courrier ???",
+    oldCode: "Cat",
+    catCode: "Nei Cat",
+  };
+  function headStyle(k: string, label: string): React.CSSProperties | undefined {
+    const rawKey = k.startsWith("raw:") ? cleanLabel(k.slice(4)) : (SORT_TO_HEADER[k] || label);
+    const s = headerStylesLower[normalizeHeader(rawKey)];
+    if (!s || (!s.bg && !s.fg)) return undefined;
+    return { backgroundColor: s.bg, color: s.fg };
+  }
+  function cellStyle(m: RosterMember, k: string): React.CSSProperties | undefined {
+    const rawKey = k.startsWith("raw:") ? cleanLabel(k.slice(4)) : (SORT_TO_HEADER[k] || labelForKey(k));
+    const s = m.raw?.__styles?.[normalizeHeader(rawKey)];
+    if (!s || (!s.bg && !s.fg)) return undefined;
+    return { backgroundColor: s.bg, color: s.fg };
+  }
+  function labelForKey(k: string): string {
+    return {
+      name: "Nom", firstName: "Prénom ou les prénoms", gender: "Sexe", cardId: "Card-Id", langue: "Langue",
+      nationalite: "Nationalité", address: "Adresse", postalCode: "Code postale", locality: "Localité",
+      newMeaning: "Catégorie interne Mersch75 2026-2027", catText: "Catégorie Listing FLH 2026-2027",
+    }[k] || "";
+  }
+
   const HeadCell = ({ k, children, className = "" }: { k: string; children: React.ReactNode; className?: string }) => {
     const on = sort?.key === k;
+    const style = headStyle(k, typeof children === "string" ? children : "");
     return (
-      <th className={`px-3 py-2 font-semibold text-xs uppercase tracking-wide whitespace-nowrap ${on ? "text-primary" : "text-muted-foreground"} ${className}`}>
+      <th style={style} className={`px-3 py-2 font-semibold text-xs uppercase tracking-wide whitespace-nowrap ${on ? "text-primary" : "text-muted-foreground"} ${className}`}>
         <button type="button" onClick={() => toggleSort(k)} className="inline-flex items-center gap-1 hover:text-foreground">
           <span>{children}</span>
           {on ? (sort!.dir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />) : <ArrowUpDown className="size-3 opacity-30" />}
@@ -1169,7 +1198,7 @@ export default function Secretariat() {
                         const rawV = getRawValue(m, k);
                         const v = isDateColumn(k) ? formatDateRaw(rawV) : rawV;
                         return (
-                          <td key={k} className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground max-w-[200px] truncate" title={String(v ?? "")}>
+                          <td key={k} style={cellStyle(m, `raw:${k}`)} className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground max-w-[200px] truncate" title={String(v ?? "")}>
                             {v != null && v !== "" ? String(v) : "—"}
                           </td>
                         );
