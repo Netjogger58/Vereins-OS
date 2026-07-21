@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { initials, formatMemberName, isoToday } from "@/lib/utils";
 import { isActiveClubMember } from "@shared/memberStatus";
+import EventGroupManager from "@/components/EventGroupManager";
 import type { Event, Team, Member, Availability } from "@shared/schema";
-import { CalendarDays, MapPin, CheckCircle, XCircle, Users, ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarDays, MapPin, CheckCircle, XCircle, Users, ChevronDown, ChevronUp, UsersRound } from "lucide-react";
 
 const typeLabel: Record<string, string> = {
   training: "Training",
@@ -32,6 +36,7 @@ export default function TrainerEvents() {
   const { toast } = useToast();
   const [teamId, setTeamId] = useState<string>(String(user?.teamId || ""));
   const [openEvent, setOpenEvent] = useState<number | null>(null);
+  const [openGroup, setOpenGroup] = useState<number | null>(null);
 
   const { data: teams = [] } = useQuery<Team[]>({ queryKey: ["/api/teams"] });
   const { data: members = [] } = useQuery<Member[]>({ queryKey: ["/api/members"] });
@@ -208,6 +213,21 @@ export default function TrainerEvents() {
                         </div>
                       );
                     })}
+                  </div>
+                  <div className="pt-3 flex justify-end">
+                    <Dialog open={openGroup === ev.id} onOpenChange={(v) => setOpenGroup(v ? ev.id : null)}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline" className="gap-1">
+                          <UsersRound className="size-3.5" /> Gruppen
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl rounded-2xl">
+                        <DialogHeader className="bg-gradient-to-br from-primary to-[#001A3A] text-primary-foreground rounded-t-2xl -mx-6 -mt-6 px-6 pt-6 pb-4">
+                          <DialogTitle className="text-primary-foreground">Gruppen - {ev.title}</DialogTitle>
+                        </DialogHeader>
+                        <EventGroupManager eventId={ev.id} members={teamMembers} />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardContent>
               )}
