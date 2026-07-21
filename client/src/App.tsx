@@ -34,6 +34,7 @@ import LiveMatch from "@/pages/LiveMatch";
 import TrialRegistrations from "@/pages/TrialRegistrations";
 import Calendar from "@/pages/Calendar";
 import Attendance from "@/pages/Attendance";
+import TrainerEvents from "@/pages/TrainerEvents";
 import Meetings from "@/pages/Meetings";
 import Finance from "@/pages/Finance";
 import Profile from "@/pages/Profile";
@@ -104,6 +105,7 @@ function AppRouter() {
         <GuardedRoute path="/teams" component={Teams} />
         <GuardedRoute path="/calendar" component={Calendar} />
         <GuardedRoute path="/attendance" component={Attendance} />
+        <GuardedRoute path="/trainer-events" component={TrainerEvents} />
         <GuardedRoute path="/meetings" component={Meetings} />
         <GuardedRoute path="/finance" component={Finance} />
         <Route path="/profile" component={Profile} />
