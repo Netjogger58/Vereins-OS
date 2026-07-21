@@ -1971,7 +1971,26 @@ export class DatabaseStorage implements IStorage {
       (m.name && m.name.toLowerCase().includes(lowerLast))
     );
   }
-  async createMember(m: InsertMember) { return db.insert(members).values(m).returning().get(); }
+  async createMember(m: InsertMember) {
+    const data = { ...m };
+    if (!data.familyCode) {
+      const next = await this.nextFamilyCode();
+      data.familyCode = next;
+      data.courrier = next;
+    }
+    return db.insert(members).values(data).returning().get();
+  }
+  async nextFamilyCode(): Promise<string> {
+    const rows = db.select({ familyCode: members.familyCode }).from(members).where(like(members.familyCode, "F%")).all();
+    const used = new Set<number>();
+    for (const r of rows) {
+      const n = parseInt((r.familyCode || "").slice(1), 10);
+      if (!Number.isNaN(n)) used.add(n);
+    }
+    let i = 1;
+    while (used.has(i)) i++;
+    return i < 100 ? `F${String(i).padStart(2, "0")}` : `F${i}`;
+  }
   async updateMember(id: number, data: Partial<InsertMember>) {
     return db.update(members).set(data).where(eq(members.id, id)).returning().get();
   }
