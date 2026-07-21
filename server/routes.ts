@@ -4,7 +4,7 @@ import type { Server } from "node:http";
 import { randomBytes } from "node:crypto";
 import { getArchiveDir } from "./sboArchive";
 import bcrypt from "bcryptjs";
-import { storage, seedIfEmpty, seedTestCards, ensureAdminUsers, ensureSeniors2Team, sqlite } from "./storage";
+import { storage, seedIfEmpty, seedTestCards, ensureAdminUsers, ensureSeniors2Team, ensurePostalCodeLocality, sqlite } from "./storage";
 import { registerWaitlistRoutes } from "./routes/waitlist.routes";
 import { registerGdprRoutes } from "./routes/gdpr.routes";
 import { registerArchiveRoutes } from "./routes/archive.routes";
@@ -241,6 +241,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   seedTestCards();
   ensureAdminUsers();
   ensureSeniors2Team();
+  ensurePostalCodeLocality();
 
   // Health check endpoint (used by Docker HEALTHCHECK)
   app.get("/api/health", (_req, res) => {

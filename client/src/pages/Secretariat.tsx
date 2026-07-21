@@ -106,6 +106,8 @@ interface RosterMember {
   email?: string | null;
   phone?: string | null;
   address?: string | null;
+  postalCode?: string | null;
+  locality?: string | null;
   birthdate?: string | null;
   nationality?: string | null;
   licenseNumber?: string | null;
@@ -1025,6 +1027,8 @@ export default function Secretariat() {
                     <HeadCell k="langue">Langue</HeadCell>
                     <HeadCell k="nationalite">Nationalité</HeadCell>
                     <HeadCell k="address">Adresse</HeadCell>
+                    <HeadCell k="postalCode">Code Postale</HeadCell>
+                    <HeadCell k="locality">Localité</HeadCell>
                     <HeadCell k="oldCourrier">Alt. Courrier</HeadCell>
                     <HeadCell k="courrierNew">Neu. Courrier</HeadCell>
                     <HeadCell k="oldCode">AL Cat</HeadCell>
@@ -1065,6 +1069,8 @@ export default function Secretariat() {
                       <td className="px-3 py-2 whitespace-nowrap">{langNat(m).lang || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{langNat(m).nat || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap max-w-[220px] truncate" title={m.address || ""}>{m.address || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{m.postalCode || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{m.locality || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "code courrier", "Alter Courrier-Code") || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{getRawValue(m, "courrier ???") || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-mono text-xs">{oldCodeValue(m)}</td>

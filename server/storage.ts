@@ -5037,3 +5037,23 @@ export function ensureSeniors2Team() {
     console.log(`[teams] migrated ${reserve.length} reserve players from Seniors 1 → Seniors 2`);
   }
 }
+
+// ─── Postal code / locality backfill from rawData ─────────────────────
+export function ensurePostalCodeLocality() {
+  const stmt = sqlite.prepare("UPDATE members SET postal_code = ?, locality = ? WHERE id = ?");
+  const rows = sqlite.prepare("SELECT id, raw_data FROM members WHERE postal_code IS NULL OR postal_code = ''").all();
+  let updated = 0;
+  sqlite.prepare("BEGIN").run();
+  for (const m of rows) {
+    let raw: any = {};
+    try { raw = m.raw_data ? JSON.parse(m.raw_data) : {}; } catch {}
+    const cp = String(raw["Code postale"] || raw["Code\npostale"] || "").trim();
+    const loc = String(raw["Localité"] || "").trim();
+    if (cp || loc) {
+      stmt.run(cp || null, loc || null, m.id);
+      updated++;
+    }
+  }
+  sqlite.prepare("COMMIT").run();
+  console.log(`[members] backfilled postal code / locality for ${updated} members`);
+}
