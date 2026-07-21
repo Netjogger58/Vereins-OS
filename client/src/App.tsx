@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, Router, Redirect } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
@@ -8,6 +9,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/lib/theme";
 import { Layout } from "@/components/Layout";
 import { canAccess } from "@/lib/permissions";
+import { registerPush } from "@/lib/push";
 import type { Role } from "@shared/schema";
 import "./lib/i18n";
 import NotFound from "@/pages/not-found";
@@ -81,6 +83,10 @@ function GuardedRoute({ path, component: Comp }: { path: string; component: Reac
 
 function AppRouter() {
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (user) registerPush();
+  }, [user]);
 
   if (loading) {
     return (

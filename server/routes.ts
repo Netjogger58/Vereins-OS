@@ -21,6 +21,7 @@ import { registerDonationRoutes } from "./routes/donation.routes";
 import { registerIcalRoutes } from "./routes/ical.routes";
 import { registerExerciseRoutes } from "./routes/exercise.routes";
 import { registerMatchEventRoutes } from "./routes/matchEvent.routes";
+import { registerPushRoutes } from "./push";
 import { registerTrialRegistrationRoutes } from "./routes/trialRegistration.routes";
 import { registerPublicRoutes } from "./routes/public.routes";
 import { registerAuthRoutes } from "./routes/auth.routes";
@@ -340,6 +341,7 @@ export async function registerRoutes(_httpServer: Server, app: Express): Promise
   registerEventRoutes(app);
   registerChatRoutes(app);
   registerMatchRoutes(app);
+  registerPushRoutes(app);
   registerFinanceRoutes(app);
   registerAdminRoutes(app);
   registerFeeRoutes(app);
