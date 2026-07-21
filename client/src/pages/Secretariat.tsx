@@ -110,6 +110,7 @@ interface RosterMember {
   locality?: string | null;
   birthdate?: string | null;
   nationality?: string | null;
+  language?: string | null;
   licenseNumber?: string | null;
   matricule?: string | null;
   medicoNext?: string | null;
@@ -169,13 +170,29 @@ function getRawValue(m: RosterMember, ...names: string[]): any {
     }
     const alias = RAW_KEY_ALIASES[target];
     if (alias != null && raw[alias] !== undefined && raw[alias] !== null && raw[alias] !== "") return raw[alias];
-    // Langue / Nationalité aufsplitten
+    // Langue / Nationalité - separierte Felder oder kombinierte Raw-Zelle
     if (target === "langue" || target === "nationalite") {
-      const combined: string = m.nationality || getRawValue(m, "Langue / Nationalité") || "";
-      const parts: string[] = String(combined).split(" / ");
-      return target === "langue"
-        ? mapLangCode((parts[0] || "").trim())
-        : (parts[1] || "").trim();
+      const hasCombined = String(m.nationality || "").includes(" / ");
+      if (target === "langue") {
+        if (m.language) return mapLangCode(String(m.language).trim());
+        if (hasCombined) {
+          const parts = String(m.nationality).split(" / ");
+          return mapLangCode((parts[0] || "").trim());
+        }
+        const raw = getRawValue(m, "Langue / Nationalité") || "";
+        const parts = String(raw).split(" / ");
+        return mapLangCode((parts[0] || "").trim());
+      }
+      if (target === "nationalite") {
+        if (m.nationality && !hasCombined) return String(m.nationality).trim();
+        if (hasCombined) {
+          const parts = String(m.nationality).split(" / ");
+          return (parts[1] || "").trim();
+        }
+        const raw = getRawValue(m, "Langue / Nationalité") || "";
+        const parts = String(raw).split(" / ");
+        return (parts[1] || "").trim();
+      }
     }
   }
   return undefined;
@@ -227,6 +244,13 @@ function mapLangCode(code: string): string {
   return DISPLAY_LANG_MAP[code.toUpperCase()] || code;
 }
 function langNat(m: RosterMember): { lang: string; nat: string } {
+  const hasCombined = String(m.nationality || "").includes(" / ");
+  if (m.language || (m.nationality && !hasCombined)) {
+    return {
+      lang: mapLangCode(String(m.language || "").trim()),
+      nat: String(m.nationality || "").trim(),
+    };
+  }
   const raw = m.nationality || getRawValue(m, "Langue / Nationalité") || "";
   const parts = String(raw).split(" / ");
   return { lang: mapLangCode((parts[0] || "").trim()), nat: (parts[1] || "").trim() };
@@ -337,6 +361,11 @@ const LANG_CODE_MAP: Record<string, MailLang> = {
   lb: "LB", l: "LB",
 };
 function medicoLang(m: RosterMember): MailLang {
+  const langCode = String(m.language || "").toLowerCase().trim();
+  if (langCode) {
+    if (langCode === "lu" || langCode === "lb" || langCode === "l") return "LB";
+    if (LANG_CODE_MAP[langCode]) return LANG_CODE_MAP[langCode];
+  }
   const raw = (m.nationality || "").toLowerCase().trim();
   const [langPart = "", natPart = ""] = raw.split("/").map((s) => s.trim());
   if (natPart.includes("luxembourg") || langPart === "lb" || langPart === "l") return "LB";
