@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { Plus, Trash2, Users } from "lucide-react";
+import { Plus, Trash2, Users, CalendarDays, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { Carpool, CarpoolPassenger, Event, User } from "@shared/schema";
 
 type CarpoolWithPassengers = Carpool & { passengers: CarpoolPassenger[] };
@@ -79,18 +80,30 @@ export default function Carpools() {
           const isDriver = c.driverId === user?.id;
           const isPassenger = c.passengers?.some((p) => p.passengerId === user?.id);
           return (
-            <Card key={c.id}>
-              <CardHeader>
-                <CardTitle className="text-base flex justify-between items-center">
-                  <span>{event?.title || `Event #${c.eventId}`}</span>
-                  {isDriver && <Button variant="ghost" size="icon" onClick={() => c.id && remove.mutate(c.id)}><Trash2 className="size-4" /></Button>}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm space-y-3">
-                <p className="text-muted-foreground">{event?.date} {event?.time} · {event?.location}</p>
-                <div className="flex items-center gap-2">
-                  <Users className="size-4" />
-                  <span>{taken + 1} / {c.availableSeats + 1} Plätze belegt</span>
+            <Card key={c.id} className="rounded-2xl shadow-sm border-none overflow-hidden">
+              <div className="bg-gradient-to-br from-primary to-[#001A3A] p-4 text-primary-foreground flex items-start justify-between">
+                <div>
+                  <div className="font-bold text-base truncate max-w-[200px]">{event?.title || `Event #${c.eventId}`}</div>
+                  <div className="text-xs text-white/80 flex items-center gap-2 mt-1">
+                    <CalendarDays className="size-3" /> {event?.date} {event?.time}
+                  </div>
+                </div>
+                {isDriver && <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 h-8 w-8" onClick={() => c.id && remove.mutate(c.id)}><Trash2 className="size-4" /></Button>}
+              </div>
+              <CardContent className="text-sm space-y-3 p-4">
+                {event?.location && (
+                  <div className="text-muted-foreground flex items-center gap-1.5">
+                    <MapPin className="size-3.5" /> {event.location}
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1"><Users className="size-3.5" /> {taken + 1} / {c.availableSeats + 1} Plätze</span>
+                    <Badge className={taken >= c.availableSeats ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}>{taken >= c.availableSeats ? "Voll" : "Frei"}</Badge>
+                  </div>
+                  <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, ((taken + 1) / (c.availableSeats + 1)) * 100)}%` }} />
+                  </div>
                 </div>
                 <p><span className="font-medium">Fahrer:</span> {getUser(c.driverId)?.name || `User #${c.driverId}`}</p>
                 <p><span className="font-medium">Abfahrt:</span> {c.departureTime} · {c.departureLocation}</p>
@@ -101,11 +114,11 @@ export default function Carpools() {
                     {c.passengers.map((p) => getUser(p.passengerId)?.name || `User #${p.passengerId}`).join(", ")}
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-1">
                   {isDriver ? null : isPassenger ? (
-                    <Button size="sm" variant="outline" onClick={() => c.id && leave.mutate(c.id)}>Austragen</Button>
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => c.id && leave.mutate(c.id)}>Austragen</Button>
                   ) : (
-                    <Button size="sm" onClick={() => c.id && join.mutate(c.id)} disabled={taken >= c.availableSeats}>Einsteigen</Button>
+                    <Button size="sm" className="w-full" onClick={() => c.id && join.mutate(c.id)} disabled={taken >= c.availableSeats}>Einsteigen</Button>
                   )}
                 </div>
               </CardContent>
