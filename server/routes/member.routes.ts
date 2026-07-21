@@ -41,7 +41,7 @@ export function registerMemberRoutes(app: any) {
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     res.json(await storage.createMember(parsed.data));
   });
-  router.patch("/:id", requireAuth(["präsident", "admin", "trainer", "spieler"]), async (req: any, res: any) => {
+  router.patch("/:id", requireAuth(["präsident", "admin", "trainer", "spieler", "secretaire"]), async (req: any, res: any) => {
     const id = Number(req.params.id);
     const extra = ["guardianName","guardianPhone","guardianEmail","guardian2Name","guardian2Phone","nationality","contactPerson"];
     const mainFields: any = {};

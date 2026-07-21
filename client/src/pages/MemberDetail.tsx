@@ -151,6 +151,7 @@ export default function MemberDetail() {
   const { data: member, isLoading } = useQuery<Member & {
     guardianName?: string; guardianPhone?: string; guardianEmail?: string;
     guardian2Name?: string; guardian2Phone?: string; nationality?: string;
+    language?: string | null;
   }>({
     queryKey: ["/api/members", id],
     queryFn: async () => (await apiRequest("GET", `/api/members/${id}`)).json(),
@@ -198,7 +199,7 @@ export default function MemberDetail() {
   const presentCount = attendance.filter((a: any) => a.present).length;
   const totalSessions = attendance.length;
   const attendanceRate = totalSessions ? Math.round((presentCount / totalSessions) * 100) : null;
-  const canEdit = user && ["präsident", "admin", "trainer"].includes(user.role);
+  const canEdit = user && ["präsident", "admin", "trainer", "secretaire"].includes(user.role);
   const child = isChild(member.birthdate);
 
   const onUpload = async (file: File) => {
@@ -257,10 +258,16 @@ export default function MemberDetail() {
               <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3 pt-1">
                 <EditableField label="E-Mail" value={member.email} onSave={save("email")} canEdit={!!canEdit} />
                 <EditableField label="Telefon / GSM" value={member.phone} onSave={save("phone")} canEdit={!!canEdit} />
+                <EditableField label="GSM (2)" value={(member as any).gsm} onSave={save("gsm")} canEdit={!!canEdit} />
                 <EditableField label="Geburtsdatum" value={member.birthdate} onSave={save("birthdate")} canEdit={!!canEdit} type="date" />
+                <EditableField label="Sproch" value={(member as any).language} onSave={save("language")} canEdit={!!canEdit} />
                 <EditableField label="Nationalität" value={(member as any).nationality} onSave={save("nationality")} canEdit={!!canEdit} />
                 <EditableSelect label="Sexe (M/F)" value={(member as any).gender} onSave={save("gender")} canEdit={!!canEdit} options={[{ value: "M", label: "M (Männlech)" }, { value: "F", label: "F (Weiblech)" }]} />
                 <EditableField label="Adresse" value={member.address} onSave={save("address")} canEdit={!!canEdit} />
+                <EditableField label="Postleitzuel" value={(member as any).postalCode} onSave={save("postalCode")} canEdit={!!canEdit} />
+                <EditableField label="Uertschaft" value={(member as any).locality} onSave={save("locality")} canEdit={!!canEdit} />
+                <EditableField label="Lizenznummer" value={member.licenseNumber} onSave={save("licenseNumber")} canEdit={!!canEdit} />
+                <EditableField label="Matricule" value={(member as any).matricule} onSave={save("matricule")} canEdit={!!canEdit} />
               </div>
             </div>
           </div>
