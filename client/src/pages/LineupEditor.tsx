@@ -17,14 +17,12 @@ import { isActiveClubMember } from "@shared/memberStatus";
 import type { Match, Team, Member } from "@shared/schema";
 
 const FORMATIONS = [
-  { value: "1-4-3-3", label: "1-4-3-3", rows: [1, 4, 3, 3] },
-  { value: "1-4-4-2", label: "1-4-4-2", rows: [1, 4, 4, 2] },
-  { value: "1-3-2-1-2", label: "1-3-2-1-2", rows: [1, 3, 2, 1, 2] },
-  { value: "1-5-3-2", label: "1-5-3-2", rows: [1, 5, 3, 2] },
-  { value: "1-4-2-3-1", label: "1-4-2-3-1", rows: [1, 4, 2, 3, 1] },
+  { value: "1-6", label: "Handball 1-6", rows: [1, 6] },
+  { value: "1-3-3", label: "Handball 1-3-3", rows: [1, 3, 3] },
+  { value: "1-2-4", label: "Handball 1-2-4", rows: [1, 2, 4] },
 ];
 
-const POSITIONS = ["TW", "LA", "RL", "RR", "RA", "HL", "HR", "RM", "LM", "M", "RN", "LN", "ST"];
+const POSITIONS = ["TW", "LA", "RA", "RL", "RR", "KM", "RM", "LM", "HM", "ST"];
 
 interface Slot {
   row: number;
