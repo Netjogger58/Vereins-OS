@@ -74,9 +74,27 @@ export function registerMemberRoutes(app: any) {
     if (!m) m = (await storage.getMember(id)) || {};
     res.json(m);
   });
-  router.delete("/:id", requireAuth(["präsident", "admin"]), async (req: Request, res: Response) => {
-    await storage.deleteMember(Number(req.params.id));
-    res.json({ ok: true });
+  router.delete("/:id", requireAuth(["präsident", "admin", "secretaire"]), async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    // Statt hart löschen: Status auf "ehemalig" setzen und Card-ID entfernen (Archiv)
+    await storage.updateMember(id, { membershipStatus: "ehemalig", cardId: null });
+    res.json({ ok: true, archived: true });
+  });
+
+  // ─── Saisonende: alle Pré-Archiv-Member (inaktiv/arret_temporaire/pausiert_verletzung) → Archiv (ehemalig) ──
+  // Card-ID wird entfernt. Nur Präsident, Admin, Sekretär.
+  router.post("/archive-inactive", requireAuth(["präsident", "admin", "secretaire"]), async (_req: Request, res: Response) => {
+    const allMembers = await storage.listMembers();
+    const preArchiveStatuses = ["inaktiv", "arret_temporaire", "pausiert_verletzung"];
+    let count = 0;
+    for (const m of allMembers) {
+      const status = (m.membershipStatus || "").toLowerCase();
+      if (preArchiveStatuses.includes(status)) {
+        await storage.updateMember(m.id, { membershipStatus: "ehemalig", cardId: null });
+        count++;
+      }
+    }
+    res.json({ ok: true, archivedCount: count });
   });
 
   // ─── Sekretariat: komplette Mitgliederliste (Excel-Daten + neue Codierung + Präsenz) ──

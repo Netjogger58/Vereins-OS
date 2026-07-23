@@ -211,13 +211,18 @@ export default function Members() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return members.filter(m => {
-      const archived = !isActiveClubMember(m);
-      // Ex-Mitglieder (Ancien Membres) nur zeigen, wenn explizit ausgewählt; sonst ausblenden.
+      const status = (m.membershipStatus || "").toLowerCase();
+      const isArchived = ["ehemalig", "abbruch", "abbruch_jeune", "abbruch_jung", "geloescht"].includes(status);
+      const isPreArchive = ["inaktiv", "arret_temporaire", "pausiert_verletzung"].includes(status);
+      // Archiv (Ancien Membres) nur zeigen, wenn explizit ausgewählt
       if (statusFilter === "ehemalig") {
-        if (!archived) return false;
+        if (!isArchived) return false;
+      } else if (statusFilter === "inaktiv") {
+        if (!isPreArchive) return false;
       } else {
-        if (archived) return false;
-        if (statusFilter !== "all" && m.membershipStatus !== statusFilter) return false;
+        // "all" oder "active": keine Archiv-Member zeigen
+        if (isArchived) return false;
+        if (statusFilter !== "all" && status !== statusFilter) return false;
       }
       if (teamFilter !== "all" && m.teamId !== Number(teamFilter)) return false;
       if (!q) return true;
@@ -457,7 +462,7 @@ export default function Members() {
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">Aktiv</SelectItem>
-                      <SelectItem value="inactive">Inaktiv</SelectItem>
+                      <SelectItem value="inaktiv">Inaktiv (Pré-Archiv)</SelectItem>
                       <SelectItem value="pending">Wartend</SelectItem>
                     </SelectContent>
                   </Select>
@@ -506,13 +511,13 @@ export default function Members() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="md:w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="md:w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Alle (aktiv)</SelectItem>
               <SelectItem value="active">Aktiv</SelectItem>
-              <SelectItem value="inactive">Inaktiv</SelectItem>
+              <SelectItem value="inaktiv">Pré-Archiv (Inaktiv)</SelectItem>
+              <SelectItem value="ehemalig">Archiv (Ancien Membres)</SelectItem>
               <SelectItem value="pending">Wartend</SelectItem>
-              <SelectItem value="ehemalig">Ancien Membres (Archiv)</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
@@ -563,6 +568,11 @@ function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
     active: { label: "Aktiv", className: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
     inactive: { label: "Inaktiv", className: "bg-muted text-muted-foreground border-border" },
+    inaktiv: { label: "Inaktiv (Pré-Archiv)", className: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
+    arret_temporaire: { label: "Arrêt temp.", className: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
+    pausiert_verletzung: { label: "Pausiert", className: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
+    ehemalig: { label: "Archiv", className: "bg-red-500/10 text-red-700 border-red-500/30" },
+    abbruch: { label: "Abbruch", className: "bg-red-500/10 text-red-700 border-red-500/30" },
     pending: { label: "Wartend", className: "bg-secondary/20 text-secondary-foreground border-secondary/40" },
   };
   const m = map[status] || map.active;

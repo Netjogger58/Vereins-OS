@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Mail, Phone, MapPin, Calendar, Upload, AlertCircle, User, Users, Shield, CreditCard, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Calendar, Upload, AlertCircle, User, Users, Shield, CreditCard, Pencil, Check, X, Archive, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
@@ -175,6 +175,17 @@ export default function MemberDetail() {
       toast({ title: "Gespeichert" });
     },
   });
+
+  const archiveMut = useMutation({
+    mutationFn: async () => (await apiRequest("DELETE", `/api/members/${id}`)).json(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/members"] });
+      toast({ title: "Member archivéiert (Ancien Membres)", description: "Card-ID gouf ewechgeholl." });
+      window.location.href = "/members";
+    },
+  });
+
+  const canArchive = user && ["präsident", "admin", "secretaire"].includes(user.role);
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -416,6 +427,61 @@ export default function MemberDetail() {
           })()}
         </CardContent>
       </Card>
+
+      {/* Member Status / Archive */}
+      {canArchive && (
+        <Card className="border-amber-200 dark:border-amber-900">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Archive className="size-4" /> Member-Status & Archiv
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
+              <EditableSelect
+                label="Member-Status"
+                value={member.membershipStatus}
+                onSave={(v) => updateMut.mutate({ membershipStatus: v })}
+                canEdit={!!canArchive}
+                options={[
+                  { value: "active", label: "Aktiv" },
+                  { value: "inaktiv", label: "Inaktiv (Pré-Archiv)" },
+                  { value: "arret_temporaire", label: "Arrêt temporaire (Pré-Archiv)" },
+                  { value: "pausiert_verletzung", label: "Pausiert (Verletzung, Pré-Archiv)" },
+                  { value: "ehemalig", label: "Ehemalig (Archiv)" },
+                ]}
+              />
+              <div className="space-y-0.5">
+                <Label className="text-xs text-muted-foreground">Card-ID</Label>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-mono">{(member as any).cardId || <span className="text-muted-foreground italic">—</span>}</span>
+                  {member.membershipStatus === "ehemalig" && (
+                    <Badge variant="outline" className="text-[10px] text-destructive border-destructive/30">keng Card-ID (Archiv)</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+            <Separator />
+            <div className="flex items-center gap-3">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (confirm("Dëse Member direkt an den Archiv (Ancien Membres) verschieben? Card-ID gëtt ewechgeholl.")) {
+                    archiveMut.mutate();
+                  }
+                }}
+                disabled={archiveMut.isPending}
+              >
+                <Trash2 className="size-4 mr-1" /> An Archiv verschieben
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Member gëtt op "ehemalig" gesat a verléiert seng Card-ID. E fält aus der aktiver Memberslëscht eraus.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
